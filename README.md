@@ -9,7 +9,7 @@ Repository for our capstone project
 >
 >cd docker-backend
 
-Paste the above files into this folder
+Paste index.js and Dockfile into this folder
 
 ## 2. Build the Docker image
 
@@ -17,9 +17,7 @@ Paste the above files into this folder
 
 ## 3. Run the container
 
->docker run -p 3000:3000 --name
->
->simple-backend rn-backend
+>docker run -p 3000:3000 --name simple-backend rn-backend
 
 ## 4. Test
 
