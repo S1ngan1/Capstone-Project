@@ -4,12 +4,13 @@ import { View, StyleSheet } from 'react-native';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
-import Account from './components/users/Account';
-import Login from './app/(auth)/login';
+import Account from './components/Account';
+import Auth from './components/Auth';
 import Onboarding from './components/Onboarding';
 
+
 export default function App() {
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<Session | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(true);
 
   useEffect(() => {
@@ -27,7 +28,6 @@ export default function App() {
     };
   }, []);
 
-  // Hiện Onboarding 1 lần đầu tiên rồi mới tới Login
   if (showOnboarding && !session) {
     return <Onboarding onFinish={() => setShowOnboarding(false)} />;
   }
@@ -37,7 +37,7 @@ export default function App() {
       {session && session.user ? (
         <Account session={session} />
       ) : (
-        <Login />
+        <Auth />
       )}
     </View>
   );

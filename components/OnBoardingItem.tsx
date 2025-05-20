@@ -15,14 +15,14 @@ const OnboardingItem = ({ item }: OnboardingItemProps) => {
 
   return (
     <View style={[styles.container, { width, height }]}>
-      <ImageBackground source={item.image} style={[styles.image, { width, height }]} resizeMode="cover">
+      <ImageBackground source={item.image} style={[styles.image, { width, height}]} resizeMode="cover">
         
-        <View style={styles.overlay} />
+      <View style={styles.overlay} />
 
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.description}>{item.description}</Text>
-        </View>
+      <View style={styles.textContainer}>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.description}>{item.description}</Text>
+      </View>
       </ImageBackground>
     </View>
   );
@@ -33,6 +33,7 @@ export default OnboardingItem;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
   },
   image: {
     flex: 1,

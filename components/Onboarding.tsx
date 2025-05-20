@@ -26,32 +26,29 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
 
   return (
     <View style={styles.container}>
-      <View style={{ flex: 3 }}>
-        <FlatList
-          data={slides}
-          renderItem={({ item }) => <OnboardingItem item={item} />}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          pagingEnabled
-          bounces={false}
-          keyExtractor={(item) => item.id}
-          onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
-            useNativeDriver: false,
-          })}
-          scrollEventThrottle={32}
-          onViewableItemsChanged={viewableItemsChanged}
-          viewabilityConfig={viewConfig}
-          ref={slidesRef}
-        />
+       <View style={{ flex: 3 }}>
+          <FlatList data={slides} renderItem={({ item }) => <OnboardingItem item={item} />}
+            horizontal
+            showsHorizontalScrollIndicator
+            pagingEnabled
+            bounces={false}
+            keyExtractor={(item) => item.id}
+            onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+              useNativeDriver: false,
+            })}
+            scrollEventThrottle={32}
+            onViewableItemsChanged={viewableItemsChanged}
+            viewabilityConfig={viewConfig}
+          ref={slidesRef} />
+        
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.button} onPress={scrollToNext}>
+            <Text style={styles.buttonText}>
+              {currentSlideIndex === slides.length - 1 ? 'Start' : 'Next'}
+            </Text>
+          </TouchableOpacity>
+        </View>
         <StatusBar style="auto" />
-      </View>
-
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.button} onPress={scrollToNext}>
-          <Text style={styles.buttonText}>
-            {currentSlideIndex === slides.length - 1 ? 'Start' : 'Next'}
-          </Text>
-        </TouchableOpacity>
       </View>
     </View>
   )
@@ -66,9 +63,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 40,
     alignItems: 'center',
+    position: 'absolute',
+    bottom: 0,
+    left: '30%'
   },
   button: {
-    backgroundColor: '#1E90FF',
+    backgroundColor: '#7DDA58',
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 25,

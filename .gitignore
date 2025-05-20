@@ -9,9 +9,6 @@ dist/
 web-build/
 expo-env.d.ts
 
-#env
-.env
-
 # Native
 .kotlin/
 *.orig.*
@@ -20,6 +17,9 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+
+#Env
+.env
 
 # Metro
 .metro-health-check*
