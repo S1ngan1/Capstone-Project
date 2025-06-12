@@ -14,7 +14,6 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
 
   useEffect(() => {
-    // Kiểm tra xem người dùng đã đăng nhập chưa
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
