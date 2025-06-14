@@ -2,14 +2,6 @@ import { Alert, StyleSheet, Text, TextInput, View, ImageBackground, useWindowDim
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-interface LoginProps {
-  item: {
-    id: string;
-    title: string;
-    description: string;
-    image: any;
-  };
-}
 
 AppState.addEventListener('change', (state) => {
     if (state === 'active') {
@@ -20,7 +12,7 @@ AppState.addEventListener('change', (state) => {
   })
   
 
-const Login = () => {
+const Auth = () => {
   const { width, height } = useWindowDimensions();
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -72,19 +64,20 @@ const Login = () => {
                       <Text style={styles.buttonText}>
                         Sign In
                       </Text>
-                    </TouchableOpacity>
+            </TouchableOpacity>
         </View>
       </ImageBackground>
     </View>
   )
 };
 
-export default Login;
+export default Auth;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center'
+    justifyContent: 'center',
+    maxWidth: 762,
   },
   image: {
     flex: 1,
@@ -126,6 +119,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    textAlign: 'center',
   },
   mt20: {
     marginTop: 20,

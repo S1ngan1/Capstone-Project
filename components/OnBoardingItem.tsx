@@ -1,21 +1,14 @@
 import { StyleSheet, Text, View, ImageBackground, useWindowDimensions } from 'react-native';
 import React from 'react';
+import { OnboardingItemProps } from '../interfaces/OnBoarding';
 
-interface OnboardingItemProps {
-  item: {
-    id: string;
-    title: string;
-    description: string;
-    image: any;
-  };
-}
 
 const OnboardingItem = ({ item }: OnboardingItemProps) => {
   const { width, height } = useWindowDimensions();
 
   return (
     <View style={[styles.container, { width, height }]}>
-      <ImageBackground source={item.image} style={[styles.image, { width, height}]} resizeMode="cover">
+      <ImageBackground source={item.image} style={[styles.image, { width, height}]} resizeMode="contain">
         
       <View style={styles.overlay} />
 
