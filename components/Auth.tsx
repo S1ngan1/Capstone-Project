@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // nền tối như em muốn
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   verticallySpaced: {
     marginVertical: 10,

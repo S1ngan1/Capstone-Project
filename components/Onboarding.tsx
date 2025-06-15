@@ -42,12 +42,11 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
           ref={slidesRef} />
         
         <View style={styles.footer}>
-          <Text></Text>
-          {/* <TouchableOpacity style={styles.button} onPress={scrollToNext}>
+          <TouchableOpacity style={styles.button} onPress={scrollToNext}>
             <Text style={styles.buttonText}>
               {currentSlideIndex === slides.length - 1 ? 'Start' : 'Next'}
             </Text>
-          </TouchableOpacity> */}
+          </TouchableOpacity>
         </View>
         <StatusBar style="auto" />
       </View>
@@ -69,6 +68,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 25,
+    position: 'absolute',
+    bottom: 40,
   },
   buttonText: {
     color: '#fff',

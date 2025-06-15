@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { useAuth } from './hooks/useAuth';
-import Account from './components/Account';
+import Account from './screens/Account';
 import Auth from './components/Auth';
 import Onboarding from './components/Onboarding';
+
 
 export default function App() {
   const { session } = useAuth();

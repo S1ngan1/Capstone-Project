@@ -8,7 +8,7 @@ const OnboardingItem = ({ item }: OnboardingItemProps) => {
 
   return (
     <View style={[styles.container, { width, height }]}>
-      <ImageBackground source={item.image} style={[styles.image, { width, height}]} resizeMode="contain">
+      <ImageBackground source={item.image} style={[styles.image, { width, height}]} resizeMode="cover">
         
       <View style={styles.overlay} />
 
