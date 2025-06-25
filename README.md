@@ -7,3 +7,5 @@ run Supabase with docker :
     open docker desktop
 
     npx supabase start
+
+    open Studio URL
