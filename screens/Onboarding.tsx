@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar'
 import React, { useState, useRef } from 'react'
 
 import slides from '../scripts/OnboardingSlides'
-import OnboardingItem from './OnBoardingItem'
+import OnboardingItem from '../components/OnBoardingItem'
 
 export default function Onboarding({ onFinish }: { onFinish: () => void }) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0)

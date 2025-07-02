@@ -5,7 +5,7 @@ import { View, StyleSheet } from 'react-native';
 import { useAuth } from './hooks/useAuth';
 import Account from './screens/Account';
 import Auth from './components/Auth';
-import Onboarding from './components/Onboarding';
+import Onboarding from './screens/Onboarding';
 
 
 export default function App() {
