@@ -2,11 +2,22 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ImageBackground, useWindowDimensions, TouchableOpacity } from 'react-native';
 import { Input, Button } from '@rneui/themed';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { Session } from '@supabase/supabase-js';
+
 import { supabase } from '../lib/supabase';
+
+import { useAuthContext } from '../context/AuthContext';
+import { useNavigation, NavigationProp } from "@react-navigation/native"; // Đã thêm NavigationProp
 import ConfirmLogoutDialog from '../components/Users/ConfirmLogoutDialog';
 
-export default function Account({ session }: { session: Session }) {
+export type RootStackParamList = {
+  Account: undefined;
+  Temperature: undefined;
+};
+
+export default function Account() {
+  const { session } = useAuthContext();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>(); // Đã thêm kiểu cho useNavigation
+  
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState('');
   const [website, setWebsite] = useState('');
@@ -43,7 +54,7 @@ export default function Account({ session }: { session: Session }) {
         setAvatarUrl(data.avatar_url);
       }
     } catch (error) {
-      if (error instanceof Error) alert(error.message);
+      if (error instanceof Error) console.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -60,7 +71,7 @@ export default function Account({ session }: { session: Session }) {
         <Text style={styles.username}>{username || 'Username'}</Text>
 
         <View style={styles.iconRow}>
-          <Ionicons name="home" size={28} color="white" style={styles.icon} />
+          <Ionicons name="home" size={28} color="white" style={styles.icon} onPress={() => navigation.navigate("Temperature")} />
           <MaterialIcons name="edit" size={28} color="white" style={styles.icon} />
           <Ionicons name="notifications" size={28} color="white" style={styles.icon} />
           <MaterialIcons name="logout" size={28} color="white" style={styles.icon} onPress={() => setShowLogoutConfirm(true)} />
