@@ -10,7 +10,7 @@ import { AuthContext } from './context/AuthContext';
 import Account from './screens/Account';
 import Auth from './components/Auth';
 import Onboarding from './screens/Onboarding';
-import { Temperature } from './components/Charts/Temperature';
+import Home from './screens/Home';
 
 const Stack = createStackNavigator();
 
@@ -29,7 +29,7 @@ export default function App() {
           {session && session.user ? (
             <Stack.Navigator>
               <Stack.Screen name="Account" component={Account} />
-              <Stack.Screen name="Temperature" component={Temperature} />
+              <Stack.Screen name="Home" component={Home} />
             </Stack.Navigator>
           ) : (
             <Auth />

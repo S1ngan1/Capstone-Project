@@ -11,7 +11,7 @@ import ConfirmLogoutDialog from '../components/Users/ConfirmLogoutDialog';
 
 export type RootStackParamList = {
   Account: undefined;
-  Temperature: undefined;
+  Home: undefined;
 };
 
 export default function Account() {
@@ -71,7 +71,7 @@ export default function Account() {
         <Text style={styles.username}>{username || 'Username'}</Text>
 
         <View style={styles.iconRow}>
-          <Ionicons name="home" size={28} color="white" style={styles.icon} onPress={() => navigation.navigate("Temperature")} />
+          <Ionicons name="home" size={28} color="white" style={styles.icon} onPress={() => navigation.navigate("Home")} />
           <MaterialIcons name="edit" size={28} color="white" style={styles.icon} />
           <Ionicons name="notifications" size={28} color="white" style={styles.icon} />
           <MaterialIcons name="logout" size={28} color="white" style={styles.icon} onPress={() => setShowLogoutConfirm(true)} />
