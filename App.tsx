@@ -3,14 +3,15 @@ import { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, StyleSheet } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useAuth } from './hooks/useAuth';
 import { AuthContext } from './context/AuthContext';
+import BottomNavigaton from './components/BottomNavigation';
 
-import Account from './screens/Account';
+
 import Auth from './components/Auth';
 import Onboarding from './screens/Onboarding';
-import Home from './screens/Home';
 
 const Stack = createStackNavigator();
 
@@ -24,22 +25,17 @@ export default function App() {
 
   return (
     <AuthContext.Provider value={{ session }}>
-      <NavigationContainer>
-        <View style={styles.container}>
-          {session && session.user ? (
-            <Stack.Navigator
-              screenOptions={{
-                headerShown: false
-              }}
-            >
-              <Stack.Screen name="Account" component={Account} />
-              <Stack.Screen name="Home" component={Home} />
-            </Stack.Navigator>
-          ) : (
-            <Auth />
-          )}
-        </View>
-      </NavigationContainer>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <View style={styles.container}>
+            {session && session.user ? (
+              <BottomNavigaton />
+            ) : (
+              <Auth />
+            )}
+          </View>
+        </NavigationContainer>
+      </SafeAreaProvider>
     </AuthContext.Provider>
   );
 }
