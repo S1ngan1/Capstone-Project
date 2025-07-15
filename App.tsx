@@ -7,7 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useAuth } from './hooks/useAuth';
 import { AuthContext } from './context/AuthContext';
-import BottomNavigaton from './components/BottomNavigation';
+import BottomNavigation from './components/BottomNavigation';
 
 
 import Auth from './components/Auth';
@@ -29,7 +29,7 @@ export default function App() {
         <NavigationContainer>
           <View style={styles.container}>
             {session && session.user ? (
-              <BottomNavigaton />
+              <BottomNavigation />
             ) : (
               <Auth />
             )}

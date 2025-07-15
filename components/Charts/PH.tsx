@@ -2,7 +2,7 @@ import * as React from "react";
 import { View, StyleSheet, Text} from "react-native";
 import { CartesianChart, Line, useChartPressState, useChartTransformState } from "victory-native";
 import { Circle, useFont } from "@shopify/react-native-skia";
-import type { SharedValue } from "react-native-reanimated"; // Đã thêm import này cho kiểu SharedValue
+import type { SharedValue } from "react-native-reanimated"; 
 import { LinearGradient } from "expo-linear-gradient";
 
 // DATA USE FOR FEEDING CHART. WILL TRY TO FIND WAYS TO APPLY REAL-TIME DATA

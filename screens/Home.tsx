@@ -39,7 +39,11 @@ const Home = () => {
                         style={styles.profileIconContainer}
                         onPress={() => navigation.navigate("Account")}
                     >
-                        <Ionicons name="person-circle-outline" size={36} color="white" />
+                        <View style={styles.notiProfile}>
+                            <Ionicons name="notifications" size={36} color="white" style={styles.icon} />
+                            <Ionicons name="person-circle-outline" size={36} color="white" style={styles.icon} />
+                        </View>
+                        
                     </TouchableOpacity>
                 </ImageBackground>
 
@@ -84,6 +88,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#fff',
         marginBottom: 30,
+    },
+    icon: {
+        marginHorizontal: 10,
+    },
+    notiProfile: {
+        flexDirection: 'row',
     },
     chartBox: {
         flexDirection: 'column',

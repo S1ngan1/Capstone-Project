@@ -2,15 +2,18 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Home from '../screens/Home';
 import Account from '../screens/Account';
+import Settings from '../screens/Settings';
 
 export type RootTabParamList = {
   HomeTab: undefined;
   FarmTab: undefined;
   SuggestionTab: undefined;
   ProfileTab: undefined;
+  SettingsTab: undefined;
 };
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
@@ -27,7 +30,10 @@ const SuggestionScreen = () => (
   </View>
 );
 
-const BottomNavigaton = () => {
+
+const BottomNavigation = () => { 
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -43,7 +49,10 @@ const BottomNavigaton = () => {
             iconName = focused ? 'bulb' : 'bulb-outline';
           } else if (route.name === 'ProfileTab') {
             iconName = focused ? 'person' : 'person-outline';
-          } else {
+          } else if (route.name === 'SettingsTab') { // Thêm logic cho SettingsTab
+            iconName = focused ? 'settings' : 'settings-outline';
+          } 
+          else {
             iconName = 'help-circle-outline';
           }
 
@@ -56,8 +65,8 @@ const BottomNavigaton = () => {
           backgroundColor: '#ffffff',
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
-          height: 60,
-          paddingBottom: 5,
+          height: 60 + insets.bottom,
+          paddingBottom: 5 + insets.bottom,
           position: 'absolute',
         },
         tabBarLabelStyle: {
@@ -70,11 +79,12 @@ const BottomNavigaton = () => {
       <Tab.Screen name="FarmTab" component={FarmScreen} options={{ tabBarLabel: 'Farm' }} />
       <Tab.Screen name="SuggestionTab" component={SuggestionScreen} options={{ tabBarLabel: 'Suggestion' }} />
       <Tab.Screen name="ProfileTab" component={Account} options={{ tabBarLabel: 'Profile' }} />
+      <Tab.Screen name="SettingsTab" component={Settings} options={{ tabBarLabel: 'Settings' }} />
     </Tab.Navigator>
   );
 }
 
-export default BottomNavigaton
+export default BottomNavigation;
 
 const styles = StyleSheet.create({
   placeholderScreen: {
