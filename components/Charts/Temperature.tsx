@@ -1,54 +1,63 @@
-import * as React from "react";
-import { View, StyleSheet } from "react-native";
-import { CartesianChart, Line, useChartPressState, useChartTransformState } from "victory-native";
-import { Circle, useFont } from "@shopify/react-native-skia";
-import type { SharedValue } from "react-native-reanimated"; // Đã thêm import này cho kiểu SharedValue
-
-// DATA USE FOR FEEDING CHART. WILL TRY TO FIND WAYS TO APPLY REAL-TIME DATA
-const DATA = Array.from({ length: 31 }, (_, i) => ({
-  day: i,
-  highTmp: 40 + 30 * Math.random(),
-}));
-
-function ToolTip({ x, y }: { x: SharedValue<number>; y: SharedValue<number> }) {
-  return <Circle cx={x} cy={y} r={8} color="black" />;
-}
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export function Temperature() {
-  const font = useFont(require('../../assets/fonts/SpaceMono-Regular.ttf'), 12);
-    const { state: transformChartState } = useChartTransformState(); 
+    //THIS WILL BE REPLACED BY AN ACTUAL DATA FROM API
+    const todayTemp = 20;
+    const tomorrowTemp = 20;
 
-  return (
-    <View style={ styles.container }>
-      <CartesianChart
-        data={DATA}
-        xKey="day"       // Giá trị trục X
-        yKeys={["highTmp"]}     // Giá trị trục Y
-        /* domain={{y: [0, 100]}} */   // GIỚI HẠN TRÊN VÀ GIỚI HẠN DƯỚI (CÓ CẢ CHO TRỤC X)
-        axisOptions={{
-          font,
-        }}
-        /* chartPressState={state} */
-        transformState={transformChartState}
-      >
-        {({ points }) => (
-          <>
-            <Line points={points.highTmp} color="red" strokeWidth={3} />
-            {/* {isActive && (
-              <ToolTip x={state.x.position} y={state.y.highTmp.position} />
-            )} */}
-          </>
-        )}
-      </CartesianChart>
-    </View>
-  );
+    return (
+        <View style={styles.container}>
+            <View style={styles.dayContainer}>
+                <Ionicons name="sunny-outline" size={24} color="#FFD700" style={styles.weatherIcon} />
+                <Text style={styles.dayText}>Today</Text>
+                <Text style={styles.tempText}>{todayTemp}°C</Text>
+            </View>
+
+            <View style={styles.dayContainer}>
+                <Ionicons name="cloudy-outline" size={24} color="#ADD8E6" style={styles.weatherIcon} />
+                <Text style={styles.dayText}>Tomorrow</Text>
+                <Text style={styles.tempText}>{tomorrowTemp}°C</Text>
+            </View>
+
+             <View style={styles.dayContainer}>
+                <Ionicons name="sunny-outline" size={24} color="#FFD700" style={styles.weatherIcon} />
+                <Text style={styles.dayText}>Friday</Text>
+                <Text style={styles.tempText}>20°C</Text>
+            </View>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    height: 240,
-    width: "80%",
-    marginHorizontal: "auto", // Thuộc tính này hoạt động để căn giữa trong React Native
-    backgroundColor: 'white',
-  }
-})
+    container: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        borderRadius: 15,
+        paddingVertical: 15,
+        paddingHorizontal: 10,
+        marginHorizontal: 20,
+        marginTop: 20,
+        width: '90%',
+    },
+    dayContainer: {
+        alignItems: 'center',
+    },
+    weatherIcon: {
+        marginBottom: 5,
+    },
+    dayText: {
+        fontSize: 16,
+        color: '#fff',
+        fontWeight: 'bold',
+        marginBottom: 2,
+    },
+    tempText: {
+        fontSize: 18,
+        color: '#fff',
+        fontWeight: '600',
+    },
+});

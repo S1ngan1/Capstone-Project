@@ -1,24 +1,23 @@
 import React, { useState } from 'react';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
-import { View, StyleSheet, Text } from 'react-native'; // Import Text component
+import { View, StyleSheet, Text } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const UVSimple = () => {
-    // Use useState to manage the fill value, initialized to 0.
     const [currentFill, setCurrentFill] = useState(0);
-    const MAX_CUSTOM_FILL = 11; 
+    const MAX_CUSTOM_FILL = 11;
 
-    // Function to determine the tint color based on the fill value
     const getTintColor = (fillValue: number) => {
         if (fillValue >= 0 && fillValue <= 2) {
-            return '#28a745'; 
+            return '#28a745';
         } else if (fillValue >= 3 && fillValue <= 5) {
-            return '#ffc107'; 
+            return '#ffc107';
         } else if (fillValue >= 6 && fillValue <= 7) {
-            return '#fd7e14'; 
+            return '#fd7e14';
         } else if (fillValue >= 8 && fillValue <= 10) {
-            return '#dc3545'; 
-        } else if (fillValue === MAX_CUSTOM_FILL) { 
-            return '#6f42c1'; 
+            return '#dc3545';
+        } else if (fillValue === MAX_CUSTOM_FILL) {
+            return '#6f42c1';
         }
         return '#00e0ff';
     };
@@ -26,15 +25,21 @@ const UVSimple = () => {
     const scaledFill = (currentFill / MAX_CUSTOM_FILL) * 100;
 
     return (
-        <View style={styles.container}>
+        <LinearGradient
+            colors={['#e7fbe8ff', '#cdffcfff']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={styles.container}
+        >
+            <Text style={styles.UVText}>UV</Text>
             <AnimatedCircularProgress
-                size={120}
-                width={15}
-                fill={scaledFill} 
-                tintColor={getTintColor(currentFill)} 
+                size={200}
+                width={20}
+                fill={scaledFill}
+                tintColor={getTintColor(currentFill)}
                 backgroundColor="#3d5875"
-                rotation={220}
-                arcSweepAngle={280}
+                rotation={240}
+                arcSweepAngle={240}
                 lineCap='butt'
             >
                 {
@@ -45,15 +50,7 @@ const UVSimple = () => {
                     )
                 }
             </AnimatedCircularProgress>
-            <View style={styles.buttonContainer}>
-                <Text
-                    onPress={() => setCurrentFill(Math.floor(Math.random() * (MAX_CUSTOM_FILL + 1)))}
-                    style={styles.button}
-                >
-                    Set Random Fill
-                </Text>
-            </View>
-        </View>
+        </LinearGradient>
     );
 }
 
@@ -61,31 +58,32 @@ export default UVSimple;
 
 const styles = StyleSheet.create({
     container: {
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        margin: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 15,
+        margin: 15,
+        padding: 30,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 15,
+        width: '90%',
+        elevation: 8,
+    },
+    UVText: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: 'black',
+        marginBottom: 20,
+        textAlign: 'left',
+        width: '100%'
     },
     progressText: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: 'bold',
-        color: '#f0f0f0',
+        color: 'black',
     },
     buttonContainer: {
         marginTop: 30,
     },
-    button: {
-        backgroundColor: '#007bff',
-        color: '#fff',
-        paddingVertical: 12,
-        paddingHorizontal: 25,
-        borderRadius: 30,
-        fontSize: 18,
-        fontWeight: '600',
-        overflow: 'hidden', 
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    }
 });

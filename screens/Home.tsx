@@ -1,18 +1,54 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native'; // Import View, Text, and StyleSheet for styling
+import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, ScrollView } from 'react-native'; // Import ScrollView
 import UVSimple from "../components/Charts/UVSimple";
-// Assuming Temperature is also a React Native component as UVSimple is
-// If Temperature is a web component, you would need to adjust accordingly or create a separate web version.
-import { Temperature } from "../components/Charts/Temperature";
+import { PH } from '../components/Charts/PH';
+import { Temperature } from '../components/Charts/Temperature';
+import AccountImage from '../assets/images/account/background_account.png'
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, NavigationProp } from "@react-navigation/native";
+
+export type RootStackParamList = {
+    Home: undefined;
+    Account: undefined;
+    Temperature: undefined;
+};
 
 const Home = () => {
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.usernameText}>Username</Text>
-            <Text style={styles.farmNameText}>Farm 1</Text>
-            <UVSimple />
-            <Temperature />
-        </View>
+        <LinearGradient
+            colors={['#e7fbe8ff', '#cdffcfff']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={styles.container}
+        >
+            <ScrollView>
+                <ImageBackground
+                    source={AccountImage}
+                    style={styles.headerBackground}
+                    imageStyle={styles.headerImageStyle} 
+                >
+                    <View style={styles.headerContent}>
+                        <Text style={styles.usernameText}>Username</Text>
+                        <Text style={styles.farmNameText}>Farm 1</Text>
+                        <Temperature />
+                    </View>
+                    <TouchableOpacity 
+                        style={styles.profileIconContainer}
+                        onPress={() => navigation.navigate("Account")}
+                    >
+                        <Ionicons name="person-circle-outline" size={36} color="white" />
+                    </TouchableOpacity>
+                </ImageBackground>
+
+                <View style={styles.chartBox}>
+                    <UVSimple />
+                </View>
+                <PH />
+            </ScrollView>
+        </LinearGradient>
     );
 }
 
@@ -20,20 +56,44 @@ export default Home;
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1, 
-        backgroundColor: '#1a3b2c', 
-        alignItems: 'center', 
+        flex: 1,
+        backgroundColor: '#cdffcfff',
+    },
+    headerBackground: {
+        width: '100%', 
         paddingTop: 50, 
+        paddingBottom: 30, 
+        backgroundColor: 'rgba(14, 89, 14, 1)',
+        justifyContent: 'center', 
+        alignItems: 'flex-start',
+        borderBottomEndRadius: 20,
+    },
+    headerImageStyle: {
+        resizeMode: 'cover',
+    },
+    headerContent: {
+        paddingLeft: 20, 
     },
     usernameText: {
-        fontSize: 32, 
+        fontSize: 28,
         fontWeight: 'bold',
-        color: '#fff', 
-        marginBottom: 5, 
+        color: '#fff',
+        marginBottom: 20,
     },
     farmNameText: {
-        fontSize: 18, 
-        color: '#fff', 
-        marginBottom: 30, 
+        fontSize: 16,
+        color: '#fff',
+        marginBottom: 30,
+    },
+    chartBox: {
+        flexDirection: 'column',
+        alignItems: 'center', 
+        width: '100%', 
+    },
+    profileIconContainer: {
+        position: 'absolute',
+        top: 50,
+        right: 20,
+        zIndex: 1,
     },
 });
