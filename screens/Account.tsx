@@ -6,8 +6,9 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 
 import { useAuthContext } from '../context/AuthContext';
-import { useNavigation, NavigationProp } from "@react-navigation/native"; // Đã thêm NavigationProp
+import { useNavigation, NavigationProp } from "@react-navigation/native"; 
 import ConfirmLogoutDialog from '../components/Users/ConfirmLogoutDialog';
+import BottomNavigation from '../components/BottomNavigation';
 
 export type RootStackParamList = {
   Account: undefined;
@@ -16,7 +17,7 @@ export type RootStackParamList = {
 
 export default function Account() {
   const { session } = useAuthContext();
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>(); // Đã thêm kiểu cho useNavigation
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>(); 
   
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState('');
@@ -98,6 +99,7 @@ export default function Account() {
           inputStyle={styles.inputText}
           inputContainerStyle={styles.inputContainer}
         />
+        <BottomNavigation />
       </View>
     </ImageBackground>
   );

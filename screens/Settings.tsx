@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons'; 
+import BottomNavigation from '../components/BottomNavigation';
 
 const Settings= () => {
   return (
@@ -59,7 +60,9 @@ const Settings= () => {
           <Ionicons name="chevron-forward" size={24} color="#333" />
         </TouchableOpacity>
 
+       
       </LinearGradient>
+       <BottomNavigation />
     </View>
   );
 };

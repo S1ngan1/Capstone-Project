@@ -1,17 +1,23 @@
 import React from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, ScrollView } from 'react-native'; // Import ScrollView
+import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, ScrollView } from 'react-native';
 import UVSimple from "../components/Charts/UVSimple";
 import { PH } from '../components/Charts/PH';
 import { Temperature } from '../components/Charts/Temperature';
-import AccountImage from '../assets/images/account/background_account.png'
+import AccountImage from '../assets/images/account/background_account.png';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, NavigationProp } from "@react-navigation/native";
+import BottomNavigation from '../components/BottomNavigation';
 
 export type RootStackParamList = {
+    Auth: undefined;
+    Onboarding: undefined;
     Home: undefined;
-    Account: undefined;
-    Temperature: undefined;
+    Farm: undefined;
+    Suggestion: undefined;
+    Profile: undefined;
+    Settings: undefined;
+    Notification: undefined;
 };
 
 const Home = () => {
@@ -24,27 +30,29 @@ const Home = () => {
             end={{ x: 0.5, y: 1 }}
             style={styles.container}
         >
-            <ScrollView>
+            <ScrollView contentContainerStyle={styles.scrollViewContent}>
                 <ImageBackground
                     source={AccountImage}
                     style={styles.headerBackground}
-                    imageStyle={styles.headerImageStyle} 
+                    imageStyle={styles.headerImageStyle}
                 >
-                    <View style={styles.headerContent}>
-                        <Text style={styles.usernameText}>Username</Text>
-                        <Text style={styles.farmNameText}>Farm 1</Text>
-                        <Temperature />
-                    </View>
-                    <TouchableOpacity 
-                        style={styles.profileIconContainer}
-                        onPress={() => navigation.navigate("Account")}
-                    >
-                        <View style={styles.notiProfile}>
-                            <Ionicons name="notifications" size={36} color="white" style={styles.icon} />
-                            <Ionicons name="person-circle-outline" size={36} color="white" style={styles.icon} />
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}}>
+                        <View style={styles.headerTitle}>
+                            <View style={styles.headerContent}>
+                                <Text style={styles.usernameText}>Username</Text>
+                                <Text style={styles.farmNameText}>Farm 1</Text>
+                            </View>
                         </View>
-                        
-                    </TouchableOpacity>
+                        <View style={styles.notiProfile}>
+                            <TouchableOpacity
+                                style={styles.profileIconContainer}
+                                onPress={() => navigation.navigate("Notification")}
+                            >
+                                <Ionicons name="notifications" size={28} color="white" style={styles.icon} />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                    <Temperature />
                 </ImageBackground>
 
                 <View style={styles.chartBox}>
@@ -52,6 +60,8 @@ const Home = () => {
                 </View>
                 <PH />
             </ScrollView>
+
+            <BottomNavigation />
         </LinearGradient>
     );
 }
@@ -62,13 +72,20 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#cdffcfff',
+        paddingBottom: 70,
+    },
+    scrollViewContent: {
+        paddingBottom: 20,
+    },
+    headerTitle: {
+        flexDirection: 'column',
     },
     headerBackground: {
-        width: '100%', 
-        paddingTop: 50, 
-        paddingBottom: 30, 
+        width: '100%',
+        paddingTop: 50,
+        paddingBottom: 30,
         backgroundColor: 'rgba(14, 89, 14, 1)',
-        justifyContent: 'center', 
+        justifyContent: 'center',
         alignItems: 'flex-start',
         borderBottomEndRadius: 20,
     },
@@ -76,7 +93,7 @@ const styles = StyleSheet.create({
         resizeMode: 'cover',
     },
     headerContent: {
-        paddingLeft: 20, 
+        paddingLeft: 20,
     },
     usernameText: {
         fontSize: 28,
@@ -94,16 +111,13 @@ const styles = StyleSheet.create({
     },
     notiProfile: {
         flexDirection: 'row',
+        paddingRight: 20,
     },
     chartBox: {
         flexDirection: 'column',
-        alignItems: 'center', 
-        width: '100%', 
+        alignItems: 'center',
+        width: '100%',
     },
     profileIconContainer: {
-        position: 'absolute',
-        top: 50,
-        right: 20,
-        zIndex: 1,
     },
 });
