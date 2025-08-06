@@ -15,6 +15,7 @@
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
+    "@supabase/supabase-js": "^2.53.0",
     "expo": "~53.0.9",
     "expo-blur": "~14.1.4",
     "expo-constants": "~17.1.6",
@@ -46,5 +47,9 @@
     "supabase": "^2.23.4",
     "typescript": "~5.8.3"
   },
-  "private": true
+  "private": true,
+  "description": "Repository for our capstone project",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
