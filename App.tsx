@@ -14,12 +14,8 @@ import Settings from './screens/Settings';
 import Auth from './components/Auth';
 import Onboarding from './screens/Onboarding';
 import Notification from './screens/Notification';
+import Farm from './screens/Farm';
 
-const FarmScreen = () => (
-  <View style={appStyles.placeholderScreen}>
-    <Text style={appStyles.placeholderText}>Farm Screen</Text>
-  </View>
-);
 
 const SuggestionScreen = () => (
   <View style={appStyles.placeholderScreen}>
@@ -60,7 +56,7 @@ export default function App() {
                         ) : (
                             <Stack.Group>
                                 <Stack.Screen name="Home" component={Home} />
-                                <Stack.Screen name="Farm" component={FarmScreen} />
+                                <Stack.Screen name="Farm" component={Farm} />
                                 <Stack.Screen name="Suggestion" component={SuggestionScreen} />
                                 <Stack.Screen name="Profile" component={Account} />
                                 <Stack.Screen name="Settings" component={Settings} />

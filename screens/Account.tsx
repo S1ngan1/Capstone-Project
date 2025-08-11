@@ -64,9 +64,6 @@ export default function Account() {
   return (
     <ImageBackground source={require('../assets/images/account/background_account.png')} style={styles.background}>
       <View style={styles.overlay}>
-        <TouchableOpacity style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
 
         {/* <Image source={require('../assets/avatar.png')} style={styles.avatar} /> */}
         <Text style={styles.username}>{username || 'Username'}</Text>

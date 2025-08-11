@@ -72,7 +72,7 @@ const Notification: React.FC = () => {
                     <View key={section} style={styles.sectionContainer}>
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionTitle}>{section}</Text>
-                            {section === 'Friend requests' && (
+                            {section === 'Temperature' && (
                                 <TouchableOpacity>
                                     <Text style={styles.seeAllText}>See all</Text>
                                 </TouchableOpacity>
