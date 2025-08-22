@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Constants from 'expo-constants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -40,7 +40,7 @@ const Farm = () => {
             <Text style={styles.headerSubtitle}>{farm.location}</Text>
           </View>
           <TouchableOpacity style={styles.iconButton}>
-            <Ionicons name="leaf-outline" size={24} color="#333" />
+            <MaterialIcons name="switch-access-shortcut" size={24} color="#333" style={styles.itemIcon} />
           </TouchableOpacity>
         </BlurView>
         
@@ -176,6 +176,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     marginTop: 5,
+  },
+  itemIcon: {
+    marginRight: 15,
   },
 });
 

@@ -14,7 +14,6 @@ const BottomNavigation = () => {
         { name: 'Home', label: 'Home', icon: 'home' },
         { name: 'Farm', label: 'Farm', icon: 'leaf' },
         { name: 'Suggestion', label: 'Suggestion', icon: 'bulb' },
-        { name: 'Profile', label: 'Profile', icon: 'person' },
         { name: 'Settings', label: 'Settings', icon: 'settings' },
     ];
 

@@ -1,34 +1,49 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons'; 
+import { useNavigation, useRoute, NavigationProp  } from '@react-navigation/native'; // Add this import
 import BottomNavigation from '../components/BottomNavigation';
+import AddFarm from '../components/AddFarm';
+import { RootStackParamList } from '../App';
 
-const Settings= () => {
+const Settings = () => {
+  const [visible, setVisible] = useState(false);
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+
+  const handleProfilePress = () => {
+    navigation.navigate('Profile');
+  };
+
   return (
-      <View style={styles.outerContainer}>
-           <Text style={styles.settingsTitle}>Settings</Text>
+    <View style={styles.outerContainer}>
+      <Text style={styles.settingsTitle}>Settings</Text>
       <LinearGradient
         colors={['#e7fbe8ff', '#cdffcfff']}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.gradientBox}
       >
-
-        {/* Add farm */}
-        <TouchableOpacity style={styles.settingItem}>
+        {/* Profile - Now with navigation */}
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={handleProfilePress}
+        >
           <View style={styles.itemContent}>
-            <Ionicons name="add-circle-outline" size={24} color="#333" style={styles.itemIcon} />
-            <Text style={styles.itemText}>Add farm</Text>
+            <Ionicons name="person-outline" size={24} color="#333" style={styles.itemIcon} />
+            <Text style={styles.itemText}>Profile</Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color="#333" />
         </TouchableOpacity>
 
-        {/* Switch farm */}
-        <TouchableOpacity style={styles.settingItem}>
+        {/* Add farm */}
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => setVisible(true)}
+        >
           <View style={styles.itemContent}>
-            <MaterialIcons name="switch-access-shortcut" size={24} color="#333" style={styles.itemIcon} />
-            <Text style={styles.itemText}>Switch farm</Text>
+            <Ionicons name="add-circle-outline" size={24} color="#333" style={styles.itemIcon} />
+            <Text style={styles.itemText}>Add farm</Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color="#333" />
         </TouchableOpacity>
@@ -59,10 +74,16 @@ const Settings= () => {
           </View>
           <Ionicons name="chevron-forward" size={24} color="#333" />
         </TouchableOpacity>
-
-       
       </LinearGradient>
-       <BottomNavigation />
+
+      <BottomNavigation />
+
+      {/* Dialog AddFarm */}
+      <AddFarm
+        visible={visible}
+        onClose={() => setVisible(false)}
+        onSelect={(farm) => console.log("Chọn farm:", farm)}
+      />
     </View>
   );
 };
@@ -78,7 +99,7 @@ const styles = StyleSheet.create({
     width: '90%', 
     padding: 20,
     borderRadius: 15,
-    shadowColor: '#000', // Đổ bóng cho hộp
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
