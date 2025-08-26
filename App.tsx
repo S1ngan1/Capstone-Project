@@ -9,7 +9,6 @@ import { useAuth } from './hooks/useAuth';
 import { AuthContext } from './context/AuthContext';
 
 import Home from './screens/Home';
-import Account from './screens/Account';
 import Settings from './screens/Settings';
 import Auth from './components/Auth';
 import Onboarding from './screens/Onboarding';
@@ -59,7 +58,6 @@ export default function App() {
                                 <Stack.Screen name="Home" component={Home} />
                                 <Stack.Screen name="Farm" component={Farm} />
                                 <Stack.Screen name="Suggestion" component={SuggestionScreen} />
-                                <Stack.Screen name="Profile" component={Account} />
                                 <Stack.Screen name="Settings" component={Settings} />
                                 <Stack.Screen name="Notification" component={Notification} />
                                 <Stack.Screen name="UserManagement" component={UserManagement} />

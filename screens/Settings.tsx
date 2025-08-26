@@ -6,14 +6,23 @@ import { useNavigation, useRoute, NavigationProp  } from '@react-navigation/nati
 import BottomNavigation from '../components/BottomNavigation';
 import AddFarm from '../components/AddFarm';
 import { RootStackParamList } from '../App';
+import ConfirmLogoutDialog from '../components/Users/ConfirmLogoutDialog';
+import { supabase } from '../lib/supabase';
 
 const Settings = () => {
   const [visible, setVisible] = useState(false);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const handleProfilePress = () => {
     navigation.navigate('Profile');
   };
+
+  const handleLogout = async () => {
+    setShowLogoutConfirm(false)
+    await supabase.auth.signOut()
+  }
+  
 
   return (
     <View style={styles.outerContainer}>
@@ -24,17 +33,6 @@ const Settings = () => {
         end={{ x: 0.5, y: 1 }}
         style={styles.gradientBox}
       >
-        {/* Profile - Now with navigation */}
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={handleProfilePress}
-        >
-          <View style={styles.itemContent}>
-            <Ionicons name="person-outline" size={24} color="#333" style={styles.itemIcon} />
-            <Text style={styles.itemText}>Profile</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color="#333" />
-        </TouchableOpacity>
 
         {/* Add farm */}
         <TouchableOpacity 
@@ -67,13 +65,29 @@ const Settings = () => {
         </TouchableOpacity>
 
         {/* Privacy Policy */}
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={styles.settingItem} >
           <View style={styles.itemContent}>
             <Ionicons name="lock-closed-outline" size={24} color="#333" style={styles.itemIcon} />
             <Text style={styles.itemText}>Privacy Policy</Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color="#333" />
         </TouchableOpacity>
+
+
+        <TouchableOpacity style={styles.settingItem} onPress={() => setShowLogoutConfirm(true)}>
+          <View style={styles.itemContent}>
+            <Ionicons name="log-out-outline" size={24} color="#333" style={styles.itemIcon} />
+            <Text style={styles.itemText}>Log Out</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#333" />
+        </TouchableOpacity>
+
+        <ConfirmLogoutDialog
+          visible={showLogoutConfirm}
+          onCancel={() => setShowLogoutConfirm(false)}
+          onConfirm={handleLogout}
+        />
+        
       </LinearGradient>
 
       <BottomNavigation />
