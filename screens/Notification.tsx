@@ -10,7 +10,7 @@ import {
     Modal,
     TouchableWithoutFeedback,
 } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons'; 
+import { Ionicons } from '@expo/vector-icons'; 
 import NotiPiece from '../components/NotiPiece';
 import BottomNavigation from '../components/BottomNavigation';
 
@@ -18,7 +18,6 @@ interface NotificationData {
     id: string;
     fullContent: string;
     displayTime: string;
-    section: 'Temperature' | 'Earlier' | 'Other';
     actionButtons?: { label: string; onClick: () => void }[];
 }
 
@@ -27,17 +26,15 @@ const notifications: NotificationData[] = [
         id: 'req1',
         fullContent: 'Temperature is 36 degrees Celcius. Please water your plant',
         displayTime: '5d',
-        section: 'Temperature',
-  },
-  {
+    },
+    {
         id: 'react1',
         fullContent: 'Humidity is 66%',
         displayTime: '3d',
-        section: 'Earlier',
     }
 ];
+
 const Notification: React.FC = () => {
-    const sections = [...new Set(notifications.map(n => n.section))];
     const [isModalVisible, setModalVisible] = useState(false);
     const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
 
@@ -68,58 +65,46 @@ const Notification: React.FC = () => {
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollViewContent}>
-                {sections.map(section => (
-                    <View key={section} style={styles.sectionContainer}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>{section}</Text>
-                            {section === 'Temperature' && (
-                                <TouchableOpacity>
-                                    <Text style={styles.seeAllText}>See all</Text>
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                        {notifications
-                            .filter(n => n.section === section)
-                            .map((notification, index, arr) => (
-                                <View key={notification.id}>
-                                    <NotiPiece
-                                        content={notification.fullContent}
-                                        time={notification.displayTime}
-                                        onPress={() => handleNotiPress(notification.id)}
-                                        onMorePress={() => handleMorePress(notification.id)}
-                                    />
-                                    {notification.actionButtons && notification.actionButtons.length > 0 && (
-                                        <View style={styles.actionButtonsContainer}>
-                                            {notification.actionButtons.map(button => (
-                                                <TouchableOpacity
-                                                    key={button.label}
-                                                    onPress={button.onClick}
-                                                    style={[
-                                                        styles.actionButton,
-                                                        (button.label === 'Confirm' || button.label === 'Join')
-                                                            ? styles.primaryButton
-                                                            : styles.secondaryButton,
-                                                    ]}
-                                                >
-                                                    <Text
-                                                        style={[
-                                                            styles.actionButtonText,
-                                                            (button.label === 'Confirm' || button.label === 'Join')
-                                                                ? styles.primaryButtonText
-                                                                : styles.secondaryButtonText,
-                                                        ]}
-                                                    >
-                                                        {button.label}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            ))}
-                                        </View>
-                                    )}
-                                    {index < arr.length - 1 && <View style={styles.itemDivider} />}
+                <View style={styles.sectionContainer}>
+                    {notifications.map((notification, index) => (
+                        <View key={notification.id}>
+                            <NotiPiece
+                                content={notification.fullContent}
+                                time={notification.displayTime}
+                                onPress={() => handleNotiPress(notification.id)}
+                                onMorePress={() => handleMorePress(notification.id)}
+                            />
+                            {notification.actionButtons && notification.actionButtons.length > 0 && (
+                                <View style={styles.actionButtonsContainer}>
+                                    {notification.actionButtons.map(button => (
+                                        <TouchableOpacity
+                                            key={button.label}
+                                            onPress={button.onClick}
+                                            style={[
+                                                styles.actionButton,
+                                                (button.label === 'Confirm' || button.label === 'Join')
+                                                    ? styles.primaryButton
+                                                    : styles.secondaryButton,
+                                            ]}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.actionButtonText,
+                                                    (button.label === 'Confirm' || button.label === 'Join')
+                                                        ? styles.primaryButtonText
+                                                        : styles.secondaryButtonText,
+                                                ]}
+                                            >
+                                                {button.label}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
                                 </View>
-                            ))}
-                    </View>
-                ))}
+                            )}
+                            {index < notifications.length - 1 && <View style={styles.itemDivider} />}
+                        </View>
+                    ))}
+                </View>
             </ScrollView>
 
             <Modal
@@ -185,24 +170,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 5,
         marginBottom: 10,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingTop: 16,
-        paddingBottom: 8,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#333',
-    },
-    seeAllText: {
-        color: '#00A388',
-        fontSize: 14,
-        fontWeight: '500',
     },
     itemDivider: {
         height: 0.5,

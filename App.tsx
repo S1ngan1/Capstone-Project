@@ -14,7 +14,8 @@ import Auth from './components/Auth';
 import Onboarding from './screens/Onboarding';
 import Notification from './screens/Notification';
 import Farm from './screens/Farm';
-import UserManagement from './screens/UserManagement'; // Add this import
+import UserManagement from './screens/UserManagement';
+import CreateFarm from './screens/CreateFarm';
 
 const SuggestionScreen = () => (
   <View style={appStyles.placeholderScreen}>
@@ -31,7 +32,8 @@ export type RootStackParamList = {
     Profile: undefined;
     Settings: undefined;
     Notification: undefined;
-    UserManagement: undefined; // Add this route
+    UserManagement: undefined;
+    CreateFarm: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -61,6 +63,7 @@ export default function App() {
                                 <Stack.Screen name="Settings" component={Settings} />
                                 <Stack.Screen name="Notification" component={Notification} />
                                 <Stack.Screen name="UserManagement" component={UserManagement} />
+                                <Stack.Screen name="CreateFarm" component={CreateFarm} />
                             </Stack.Group>
                         )}
                     </Stack.Navigator>
