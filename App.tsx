@@ -15,6 +15,9 @@ import Auth from './components/Auth';
 import Onboarding from './screens/Onboarding';
 import Notification from './screens/Notification';
 import Farm from './screens/Farm';
+import FarmDetails from './screens/FarmDetails';
+import UserDetail from './screens/UserDetail'; // Add this import
+import SensorDetail from './screens/SensorDetail'; // Add this import
 import UserManagement from './screens/UserManagement'; // Add this import
 
 const SuggestionScreen = () => (
@@ -27,12 +30,15 @@ export type RootStackParamList = {
     Auth: undefined;
     Onboarding: undefined;
     Home: undefined;
-    Farm: undefined;
+    Farm: { showAddForm?: boolean } | undefined; // Add optional parameter for direct navigation to Add Farm
+    FarmDetails: { farmId: string }; // Add this route with parameters
     Suggestion: undefined;
     Profile: undefined;
     Settings: undefined;
     Notification: undefined;
     UserManagement: undefined; // Add this route
+    UserDetail: { userId: string }; // Add userId parameter
+    SensorDetail: { sensorId: string }; // Add sensorId parameter
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -58,11 +64,14 @@ export default function App() {
                             <Stack.Group>
                                 <Stack.Screen name="Home" component={Home} />
                                 <Stack.Screen name="Farm" component={Farm} />
+                                <Stack.Screen name="FarmDetails" component={FarmDetails} />
                                 <Stack.Screen name="Suggestion" component={SuggestionScreen} />
                                 <Stack.Screen name="Profile" component={Account} />
                                 <Stack.Screen name="Settings" component={Settings} />
                                 <Stack.Screen name="Notification" component={Notification} />
                                 <Stack.Screen name="UserManagement" component={UserManagement} />
+                                <Stack.Screen name="UserDetail" component={UserDetail} />
+                                <Stack.Screen name="SensorDetail" component={SensorDetail} />
                             </Stack.Group>
                         )}
                     </Stack.Navigator>

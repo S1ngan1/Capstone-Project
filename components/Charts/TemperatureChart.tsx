@@ -1,41 +1,40 @@
-import * as React from "react";
-import { View, StyleSheet, Text} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabase";
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { supabase } from '../../lib/supabase';
 
-interface PHReading {
+interface TemperatureReading {
   value: number;
   timestamp: string;
 }
 
-interface PHChartProps {
+interface TemperatureChartProps {
   farmId: string;
 }
 
-export const PH: React.FC<PHChartProps> = ({ farmId }) => {
-  const [phData, setPhData] = useState<PHReading[]>([]);
+const TemperatureChart: React.FC<TemperatureChartProps> = ({ farmId }) => {
+  const [temperatureData, setTemperatureData] = useState<TemperatureReading[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentValue, setCurrentValue] = useState<number>(0);
 
   useEffect(() => {
-    fetchPhData();
+    fetchTemperatureData();
   }, [farmId]);
 
-  const fetchPhData = async () => {
+  const fetchTemperatureData = async () => {
     try {
       setLoading(true);
-      console.log('Fetching pH data for farm:', farmId);
+      console.log('Fetching Temperature data for farm:', farmId);
 
-      // Get pH sensors for this farm
-      const { data: phSensors, error: sensorError } = await supabase
+      // Get temperature sensors for this farm
+      const { data: tempSensors, error: sensorError } = await supabase
         .from('sensor')
         .select('sensor_id, sensor_name, sensor_type, units')
-        .eq('sensor_type', 'Analog pH Sensor')
+        .eq('sensor_type', 'Digital Temperature')
         .eq('farm_id', farmId);
 
-      if (!sensorError && phSensors && phSensors.length > 0) {
-        const sensorIds = phSensors.map(s => s.sensor_id);
+      if (!sensorError && tempSensors && tempSensors.length > 0) {
+        const sensorIds = tempSensors.map(s => s.sensor_id);
 
         // Get last 24 hours of readings
         const twentyFourHoursAgo = new Date();
@@ -54,19 +53,19 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
             timestamp: reading.created_at
           }));
 
-          setPhData(processedData);
+          setTemperatureData(processedData);
           setCurrentValue(readings[readings.length - 1].value);
-          console.log(`Found ${readings.length} pH readings`);
+          console.log(`Found ${readings.length} temperature readings`);
         } else {
-          console.log('No pH readings found');
+          console.log('No temperature readings found');
           generateMockData();
         }
       } else {
-        console.log('No pH sensors found for farm');
+        console.log('No temperature sensors found for farm');
         generateMockData();
       }
     } catch (error) {
-      console.error('Error fetching pH data:', error);
+      console.error('Error fetching temperature data:', error);
       generateMockData();
     } finally {
       setLoading(false);
@@ -75,28 +74,29 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
 
   const generateMockData = () => {
     const mockData = Array.from({ length: 24 }, (_, i) => ({
-      value: 6.0 + Math.random() * 2, // 6.0-8.0 pH
+      value: 20 + Math.random() * 10, // 20-30°C
       timestamp: new Date(Date.now() - (23 - i) * 3600000).toISOString()
     }));
-    setPhData(mockData);
+    setTemperatureData(mockData);
     setCurrentValue(mockData[mockData.length - 1].value);
   };
 
   const getStatusColor = (value: number) => {
-    if (value < 6.0 || value > 7.5) return '#ffc107'; // Suboptimal - yellow
+    if (value < 18 || value > 28) return '#ffc107'; // Suboptimal - yellow
     return '#28a745'; // Optimal - green
   };
 
   const getStatusText = (value: number) => {
-    if (value < 6.0 || value > 7.5) return 'Suboptimal';
+    if (value < 18) return 'Too Cold';
+    if (value > 28) return 'Too Hot';
     return 'Optimal';
   };
 
-  const renderChart = () => {
-    if (phData.length === 0) return null;
+  const renderSimpleChart = () => {
+    if (temperatureData.length === 0) return null;
 
-    const maxValue = Math.max(...phData.map(d => d.value));
-    const minValue = Math.min(...phData.map(d => d.value));
+    const maxValue = Math.max(...temperatureData.map(d => d.value));
+    const minValue = Math.min(...temperatureData.map(d => d.value));
     const range = maxValue - minValue || 1;
 
     // Calculate time range for proper time series display
@@ -105,7 +105,7 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
     const timeRange = now.getTime() - twentyFourHoursAgo.getTime();
 
     // Calculate positions for all points
-    const points = phData.map((point) => {
+    const points = temperatureData.map((point) => {
       const pointTime = new Date(point.timestamp).getTime();
       const timePosition = ((pointTime - twentyFourHoursAgo.getTime()) / timeRange) * 200;
       const height = ((point.value - minValue) / range) * 120;
@@ -150,9 +150,9 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
     return (
       <View style={styles.chartArea}>
         <View style={styles.yAxis}>
-          <Text style={styles.axisLabel}>{maxValue.toFixed(1)}</Text>
-          <Text style={styles.axisLabel}>{((maxValue + minValue) / 2).toFixed(1)}</Text>
-          <Text style={styles.axisLabel}>{minValue.toFixed(1)}</Text>
+          <Text style={styles.axisLabel}>{maxValue.toFixed(1)}°</Text>
+          <Text style={styles.axisLabel}>{((maxValue + minValue) / 2).toFixed(1)}°</Text>
+          <Text style={styles.axisLabel}>{minValue.toFixed(1)}°</Text>
         </View>
         <View style={styles.plotArea}>
           {/* Grid lines for better visualization */}
@@ -173,7 +173,7 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
             <View
               key={`line-${segment.key}`}
               style={[
-                styles.connectionLine,
+                styles.continuousLine,
                 {
                   left: segment.left,
                   bottom: segment.bottom,
@@ -203,6 +203,23 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
     );
   };
 
+  const getTimeLabels = () => {
+    const now = new Date();
+    const labels = [];
+
+    // Create labels for 0h, 6h, 12h, 18h, 24h ago
+    for (let i = 0; i <= 24; i += 6) {
+      const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+      if (i === 0) {
+        labels.unshift('Now');
+      } else {
+        labels.unshift(`${i}h ago`);
+      }
+    }
+
+    return labels;
+  };
+
   if (loading) {
     return (
       <LinearGradient
@@ -211,9 +228,9 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
         end={{ x: 0.5, y: 1 }}
         style={styles.container}
       >
-        <Text style={styles.title}>pH Index</Text>
+        <Text style={styles.title}>Temperature</Text>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading pH data...</Text>
+          <Text style={styles.loadingText}>Loading temperature data...</Text>
         </View>
       </LinearGradient>
     );
@@ -226,12 +243,12 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
       end={{ x: 0.5, y: 1 }}
       style={styles.container}
     >
-      <Text style={styles.title}>pH Index</Text>
+      <Text style={styles.title}>Temperature</Text>
 
       {/* Current Value Display */}
       <View style={styles.currentValueContainer}>
         <Text style={[styles.currentValue, { color: getStatusColor(currentValue) }]}>
-          {currentValue.toFixed(2)} pH
+          {currentValue.toFixed(1)}°C
         </Text>
         <Text style={[styles.statusText, { color: getStatusColor(currentValue) }]}>
           {getStatusText(currentValue)}
@@ -239,13 +256,13 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
       </View>
 
       {/* Chart */}
-      {renderChart()}
+      {renderSimpleChart()}
 
       {/* Time Labels */}
       <View style={styles.timeLabels}>
-        <Text style={styles.timeLabel}>24h ago</Text>
-        <Text style={styles.timeLabel}>12h ago</Text>
-        <Text style={styles.timeLabel}>Now</Text>
+        {getTimeLabels().map((label, index) => (
+          <Text key={index} style={styles.timeLabel}>{label}</Text>
+        ))}
       </View>
     </LinearGradient>
   );
@@ -327,21 +344,14 @@ const styles = StyleSheet.create({
   connectionLine: {
     position: 'absolute',
     height: 2,
-    backgroundColor: '#FF9800',
+    backgroundColor: '#FF5722',
     opacity: 0.7,
   },
-  gridContainer: {
+  continuousLine: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  gridLine: {
-    position: 'absolute',
-    height: 1,
-    backgroundColor: '#e0e0e0',
-    width: '100%',
+    height: 2,
+    backgroundColor: '#007bff',
+    opacity: 0.8,
   },
   timeLabels: {
     flexDirection: 'row',
@@ -361,4 +371,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
+  gridContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '100%',
+    width: '100%',
+  },
+  gridLine: {
+    position: 'absolute',
+    height: 1,
+    backgroundColor: '#ddd',
+    width: '100%',
+  },
 });
+
+export default TemperatureChart;
