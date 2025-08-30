@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    height: 125,
+    height: 100,
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   },
   tabBarLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    marginTop: 4,
+    marginTop: 5,
+    fontWeight: '500',
   },
 });

@@ -98,18 +98,34 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
           style={styles.compactGradient}
         >
           <View style={styles.compactContent}>
-            <View style={styles.compactLeft}>
-              <Ionicons name={weatherIcon as any} size={32} color="#1976D2" />
-              <View style={styles.compactTemp}>
+            {/* Weather Icon and Temperature Section */}
+            <View style={styles.compactMainSection}>
+              <View style={styles.compactIconContainer}>
+                <Ionicons name={weatherIcon as any} size={48} color="#1976D2" />
+              </View>
+              <View style={styles.compactTempSection}>
                 <Text style={[styles.compactTemperature, { color: getTemperatureColor(current.temperature) }]}>
                   {current.temperature}°C
                 </Text>
-                <Text style={styles.compactLocation}>{location}</Text>
+                <Text style={styles.compactFeelsLike}>
+                  Feels {current.feelsLike}°C
+                </Text>
               </View>
             </View>
-            <View style={styles.compactRight}>
+
+            {/* Weather Description and Details */}
+            <View style={styles.compactInfoSection}>
               <Text style={styles.compactDescription}>{weatherDescription}</Text>
-              <Text style={styles.compactDetails}>💧 {current.humidity}% • 💨 {current.windSpeed}km/h</Text>
+              <View style={styles.compactDetailsRow}>
+                <View style={styles.compactDetailItem}>
+                  <Text style={styles.compactDetailIcon}>💧</Text>
+                  <Text style={styles.compactDetailText}>{current.humidity}%</Text>
+                </View>
+                <View style={styles.compactDetailItem}>
+                  <Text style={styles.compactDetailIcon}>💨</Text>
+                  <Text style={styles.compactDetailText}>{current.windSpeed}km/h</Text>
+                </View>
+              </View>
             </View>
           </View>
         </LinearGradient>
@@ -199,20 +215,24 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   compactContainer: {
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
-    elevation: 3,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    marginVertical: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    marginVertical: 0,
+    height: 138, // Match exact height of 2x2 sensor grid (65+8+65)
+    width: '100%',
   },
   gradient: {
     padding: 16,
   },
   compactGradient: {
-    padding: 12,
+    padding: 16,
+    height: '100%',
+    justifyContent: 'center',
   },
   loadingContainer: {
     flexDirection: 'row',
@@ -336,40 +356,75 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   compactContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
     justifyContent: 'space-between',
+    height: '100%',
+    padding: 8,
   },
-  compactLeft: {
+  compactMainSection: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
-  compactTemp: {
-    marginLeft: 12,
+  compactIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  compactTempSection: {
+    flex: 1,
+    justifyContent: 'center',
   },
   compactTemperature: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
+    marginBottom: 2,
+    color: '#1976D2',
   },
-  compactLocation: {
+  compactFeelsLike: {
     fontSize: 12,
-    color: '#666',
-    marginTop: 2,
+    color: '#555',
+    fontWeight: '500',
   },
-  compactRight: {
-    alignItems: 'flex-end',
-    flex: 1,
-    marginLeft: 12,
+  compactInfoSection: {
+    paddingTop: 8,
   },
   compactDescription: {
     fontSize: 14,
     color: '#1976D2',
-    fontWeight: '500',
+    fontWeight: '600',
+    marginBottom: 6,
+    textAlign: 'center',
   },
-  compactDetails: {
+  compactDetailsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  compactDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  compactDetailIcon: {
+    fontSize: 14,
+    marginRight: 4,
+  },
+  compactDetailText: {
     fontSize: 12,
-    color: '#666',
-    marginTop: 2,
+    color: '#333',
+    fontWeight: '500',
   },
 });
 

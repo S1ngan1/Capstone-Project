@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, ScrollView, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import WeatherWidget from '../components/WeatherWidget';
-import AccountImage from '../assets/images/account/background_account.png';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -203,29 +202,22 @@ const Home = () => {
         const statusText = getStatusText(value, type);
 
         return (
-            <View style={styles.sensorPanel} key={type}>
-                <LinearGradient
-                    colors={['#ffffff', '#f8f9fa']}
-                    style={styles.panelGradient}
-                >
-                    <View style={styles.panelHeader}>
-                        <Text style={styles.panelIcon}>{icon}</Text>
-                        <Text style={styles.panelTitle}>{title}</Text>
-                    </View>
+            <View style={[styles.sensorPanel, { backgroundColor: statusColor }]} key={type}>
+                <View style={styles.panelHeader}>
+                    <Text style={styles.panelIcon}>{icon}</Text>
+                    <Text style={styles.panelTitle}>{title}</Text>
+                </View>
 
-                    <View style={styles.currentValue}>
-                        <Text style={styles.valueText}>
-                            {formatValue(value, type)}
-                        </Text>
-                        <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                            <Text style={styles.statusBadgeText}>{statusText}</Text>
-                        </View>
-                    </View>
-
-                    <Text style={styles.lastUpdate}>
-                        24h Average Reading
+                <View style={styles.currentValue}>
+                    <Text style={styles.valueText}>
+                        {formatValue(value, type)}
                     </Text>
-                </LinearGradient>
+                    <Text style={styles.statusText}>{statusText}</Text>
+                </View>
+
+                <Text style={styles.lastUpdate}>
+                    24h Average
+                </Text>
             </View>
         );
     };
@@ -236,33 +228,42 @@ const Home = () => {
             onPress={() => navigation.navigate('FarmDetails', { farmId: item.id })}
             activeOpacity={0.8}
         >
-            <View style={styles.farmHeader}>
-                <Text style={styles.farmName}>{item.name}</Text>
-                <Text style={styles.farmLocation}>📍 {item.location}</Text>
-            </View>
+            <LinearGradient
+                colors={['#ffffff', '#f8f9fa']}
+                style={styles.farmCardGradient}
+            >
+                {/* Farm Header - Name and Location */}
+                <View style={styles.farmHeader}>
+                    <Text style={styles.farmName}>{item.name}</Text>
+                    <Text style={styles.farmLocation}>📍 {item.location}</Text>
+                </View>
 
-            {/* Weather widget for each farm */}
-            <WeatherWidget
-                location={item.location}
-                compact={true}
-                onPress={() => navigation.navigate('FarmDetails', { farmId: item.id })}
-            />
-
-            <View style={styles.averagesContainer}>
-                <Text style={styles.averagesTitle}>Average Points (24h)</Text>
-                <Text style={styles.averagesSubtitle}>Sensor readings averaged over the last 24 hours</Text>
-
-                <View style={styles.sensorGridContainer}>
-                    <View style={styles.sensorGridRow}>
-                        {renderSensorPanel(item.averages.ec, 'ec', 'EC', '⚡')}
-                        {renderSensorPanel(item.averages.soilMoisture, 'soilMoisture', 'Soil Moisture', '💧')}
+                {/* Main Content Section - Weather and Sensors Side by Side */}
+                <View style={styles.farmMainContent}>
+                    {/* Weather Section - Left Side */}
+                    <View style={styles.weatherContainer}>
+                        <WeatherWidget
+                            location={item.location}
+                            compact={true}
+                            onPress={() => navigation.navigate('FarmDetails', { farmId: item.id })}
+                        />
                     </View>
-                    <View style={styles.sensorGridRow}>
-                        {renderSensorPanel(item.averages.temperature, 'temperature', 'Temperature', '🌡️')}
-                        {renderSensorPanel(item.averages.ph, 'ph', 'pH Level', '⚗️')}
+
+                    {/* Sensor Grid - Right Side */}
+                    <View style={styles.sensorContainer}>
+                        <View style={styles.sensorGrid2x2}>
+                            <View style={styles.sensorRow}>
+                                {renderSensorPanel(item.averages.ec, 'ec', 'EC', '⚡')}
+                                {renderSensorPanel(item.averages.soilMoisture, 'soilMoisture', 'Moisture', '💧')}
+                            </View>
+                            <View style={styles.sensorRow}>
+                                {renderSensorPanel(item.averages.temperature, 'temperature', 'Temp', '🌡️')}
+                                {renderSensorPanel(item.averages.ph, 'ph', 'pH', '⚗️')}
+                            </View>
+                        </View>
                     </View>
                 </View>
-            </View>
+            </LinearGradient>
         </TouchableOpacity>
     );
 
@@ -273,25 +274,38 @@ const Home = () => {
             end={{ x: 0.5, y: 1 }}
             style={styles.container}
         >
-            <ScrollView contentContainerStyle={styles.scrollViewContent}>
-                <ImageBackground
-                    source={AccountImage}
-                    style={styles.headerBackground}
-                    imageStyle={styles.headerImageStyle}
-                >
-                    <View style={styles.headerTop}>
-                        <Text style={styles.usernameText}>
-                            {loading ? "Loading..." : `Hello ${username},`}
-                        </Text>
-                        <TouchableOpacity
-                            style={styles.profileIconContainer}
-                            onPress={() => navigation.navigate("Notification")}
-                        >
-                            <Ionicons name="notifications" size={28} color="white" style={styles.icon} />
-                        </TouchableOpacity>
-                    </View>
-                </ImageBackground>
+            {/* Top Header with Notification Bell */}
+            <View style={styles.topHeader}>
+                <View style={styles.headerLeft}>
+                    <Text style={styles.welcomeText}>
+                        {loading ? "Loading..." : `Hello ${username}!`}
+                    </Text>
+                    <Text style={styles.subtitleText}>Welcome to Smart Farming</Text>
+                </View>
 
+                <View style={styles.headerRight}>
+                    <TouchableOpacity
+                        style={styles.notificationButton}
+                        onPress={() => navigation.navigate("Notification")}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="notifications" size={24} color="#2e7d32" />
+                        <View style={styles.notificationBadge}>
+                            <Text style={styles.notificationBadgeText}>3</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.profileButton}
+                        onPress={() => navigation.navigate("Settings")}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="person-circle" size={32} color="#2e7d32" />
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.scrollViewContent}>
                 {/* Enhanced Farms List Section */}
                 <View style={styles.farmsSection}>
                     <View style={styles.sectionHeader}>
@@ -324,14 +338,14 @@ const Home = () => {
                             </View>
                             <Text style={styles.noFarmsTitle}>Start Your Smart Farming Journey</Text>
                             <Text style={styles.noFarmsText}>
-                                You don't have access to any farms yet. Browse available farms or create your first farm to start monitoring.
+                                You don't have access to any farms yet. Create your first farm to start monitoring.
                             </Text>
                             <TouchableOpacity
                                 style={styles.primaryButton}
                                 onPress={() => navigation.navigate("Farm", { showAddForm: true })}
                             >
                                 <Ionicons name="add-circle" size={20} color="white" style={styles.buttonIcon} />
-                                <Text style={styles.primaryButtonText}>Browse & Add Farms</Text>
+                                <Text style={styles.primaryButtonText}>Create Your First Farm</Text>
                             </TouchableOpacity>
                         </View>
                     ) : (
@@ -349,8 +363,8 @@ const Home = () => {
                                 <View style={styles.endOfListDivider} />
                                 <Text style={styles.endOfListText}>
                                     {farms.length === 1
-                                        ? "That's your only farm"
-                                        : `That's all ${farms.length} of your farms`}
+                                        ? "You have 1 farm"
+                                        : `All ${farms.length} farms displayed`}
                                 </Text>
                                 <View style={styles.endOfListDivider} />
                             </View>
@@ -362,53 +376,73 @@ const Home = () => {
             <BottomNavigation />
         </LinearGradient>
     );
-}
+};
 
 export default Home;
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#cdffcfff',
-        paddingBottom: 70,
     },
-    scrollViewContent: {
-        paddingBottom: 20,
-    },
-    headerTop: {
+    topHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        width: '100%',
         paddingHorizontal: 20,
         paddingTop: 50,
+        paddingBottom: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(46, 125, 50, 0.1)',
     },
-    headerBackground: {
-        width: '100%',
-        paddingBottom: 30,
-        backgroundColor: 'rgba(14, 89, 14, 1)',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        borderBottomEndRadius: 20,
+    headerLeft: {
+        flex: 1,
     },
-    headerImageStyle: {
-        resizeMode: 'cover',
-    },
-    usernameText: {
-        fontSize: 28,
+    welcomeText: {
+        fontSize: 24,
         fontWeight: 'bold',
-        color: '#fff',
-        marginBottom: 10,
+        color: '#2e7d32',
+        marginBottom: 4,
     },
-    icon: {
-        marginHorizontal: 10,
+    subtitleText: {
+        fontSize: 14,
+        color: '#666',
     },
-    profileIconContainer: {
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    notificationButton: {
+        position: 'relative',
+        padding: 8,
+        marginRight: 12,
+        backgroundColor: 'rgba(46, 125, 50, 0.1)',
+        borderRadius: 20,
+    },
+    notificationBadge: {
+        position: 'absolute',
+        top: 2,
+        right: 2,
+        backgroundColor: '#f44336',
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    notificationBadgeText: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    profileButton: {
+        padding: 4,
+    },
+    scrollViewContent: {
+        paddingBottom: 100,
     },
     farmsSection: {
-        flexDirection: 'column',
-        alignItems: 'center',
-        width: '100%',
+        flex: 1,
         paddingHorizontal: 20,
         paddingTop: 20,
     },
@@ -416,8 +450,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        width: '100%',
-        marginBottom: 15,
+        marginBottom: 20,
     },
     titleWithCount: {
         flexDirection: 'row',
@@ -426,52 +459,46 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#333',
-        marginRight: 8,
+        color: '#2e7d32',
+        marginRight: 10,
     },
     farmCountBadge: {
         backgroundColor: '#4CAF50',
-        borderRadius: 15,
+        borderRadius: 12,
         paddingVertical: 4,
         paddingHorizontal: 10,
-        minWidth: 30,
+        minWidth: 24,
         alignItems: 'center',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
     },
     farmCountText: {
-        fontSize: 14,
         color: 'white',
+        fontSize: 12,
         fontWeight: 'bold',
     },
     quickAddButton: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#4CAF50',
-        borderRadius: 20,
+        paddingHorizontal: 16,
         paddingVertical: 8,
-        paddingHorizontal: 12,
-        elevation: 3,
+        borderRadius: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
     quickAddText: {
         color: 'white',
         fontSize: 14,
         fontWeight: '600',
-        marginLeft: 5,
+        marginLeft: 4,
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        width: '100%',
-        paddingVertical: 40,
+        paddingVertical: 60,
     },
     loadingText: {
         fontSize: 16,
@@ -481,46 +508,41 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        width: '100%',
-        paddingVertical: 40,
-        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-        borderRadius: 12,
-        marginTop: 10,
+        paddingVertical: 60,
+        paddingHorizontal: 20,
     },
     emptyStateIcon: {
-        marginBottom: 15,
         backgroundColor: 'rgba(76, 175, 80, 0.1)',
-        borderRadius: 40,
+        borderRadius: 50,
         padding: 20,
+        marginBottom: 20,
     },
     noFarmsTitle: {
         fontSize: 20,
         fontWeight: 'bold',
         color: '#333',
-        marginTop: 10,
+        marginBottom: 10,
         textAlign: 'center',
     },
     noFarmsText: {
-        fontSize: 14,
+        fontSize: 16,
         color: '#666',
         textAlign: 'center',
-        marginTop: 8,
-        paddingHorizontal: 20,
-        lineHeight: 20,
+        lineHeight: 24,
+        marginBottom: 30,
     },
     primaryButton: {
-        marginTop: 20,
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        backgroundColor: '#4CAF50',
-        borderRadius: 25,
         flexDirection: 'row',
         alignItems: 'center',
-        elevation: 5,
+        backgroundColor: '#4CAF50',
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 25,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
     buttonIcon: {
         marginRight: 8,
@@ -528,140 +550,160 @@ const styles = StyleSheet.create({
     primaryButtonText: {
         color: 'white',
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '600',
     },
     farmCard: {
-        width: '100%',
-        backgroundColor: 'white',
-        borderRadius: 15,
-        elevation: 5,
-        marginBottom: 15,
-        overflow: 'hidden',
+        marginBottom: 20,
+        borderRadius: 16,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.27,
-        shadowRadius: 4.65,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 5,
+        overflow: 'hidden',
+    },
+    farmCardGradient: {
+        padding: 20,
     },
     farmHeader: {
-        backgroundColor: 'rgba(14, 89, 14, 1)',
-        padding: 20,
+        marginBottom: 12,
         alignItems: 'center',
-        justifyContent: 'center',
     },
     farmName: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: 'white',
+        color: '#2e7d32',
+        marginBottom: 4,
         textAlign: 'center',
     },
     farmLocation: {
         fontSize: 14,
-        color: '#e0e0e0',
-        marginTop: 5,
+        color: '#666',
         textAlign: 'center',
     },
+    farmMainContent: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 12,
+    },
+    weatherContainer: {
+        flex: 1,
+        height: 138, // Exact height match with sensor grid
+    },
+    sensorContainer: {
+        flex: 1,
+        height: 138, // Exact height match with weather widget
+    },
+    weatherTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: 8,
+        textAlign: 'left',
+    },
+    sensorTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: 8,
+        textAlign: 'left',
+    },
+    sensorGrid2x2: {
+        flexDirection: 'column',
+        gap: 8,
+        height: 138, // Total height: 65px + 8px + 65px = 138px
+        justifyContent: 'space-between',
+    },
+    sensorRow: {
+        flexDirection: 'row',
+        gap: 8,
+        height: 65, // Fixed height for each row
+    },
     averagesContainer: {
-        padding: 15,
+        marginTop: 15,
     },
     averagesTitle: {
         fontSize: 16,
         fontWeight: '600',
         color: '#333',
-        marginBottom: 5,
-    },
-    averagesSubtitle: {
-        fontSize: 12,
-        color: '#666',
         marginBottom: 15,
+        textAlign: 'center',
     },
     sensorGridContainer: {
-        width: '100%',
-        flexDirection: 'column',
-        justifyContent: 'center',
+        gap: 12,
     },
     sensorGridRow: {
-        width: '100%',
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 10,
+        gap: 12,
     },
     sensorPanel: {
-        width: '48%',
-        borderRadius: 12,
-        overflow: 'hidden',
-        elevation: 3,
+        flex: 1,
+         padding: 8,
+        borderRadius: 10,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-    },
-    panelGradient: {
-        flex: 1,
-        padding: 10,
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
+        elevation: 3,
+        height: 65,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden', // Ensure content doesn't spill out
     },
     panelHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: 4,
+        justifyContent: 'center',
     },
     panelIcon: {
-        fontSize: 18,
-        marginRight: 8,
-        color: '#4CAF50',
+        fontSize: 14,
+        marginRight: 3,
     },
     panelTitle: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#333',
-    },
-    currentValue: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    valueText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    statusBadge: {
-        borderRadius: 12,
-        paddingVertical: 4,
-        paddingHorizontal: 8,
-    },
-    statusBadgeText: {
-        color: 'white',
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: '600',
+        color: 'white',
         textAlign: 'center',
     },
-    lastUpdate: {
+    currentValue: {
+        alignItems: 'center',
+        marginBottom: 3,
+    },
+    valueText: {
         fontSize: 12,
+        fontWeight: 'bold',
+        color: 'white',
+        marginBottom: 1,
+        textAlign: 'center',
+        lineHeight: 14,
+    },
+    statusText: {
+        fontSize: 8,
+        color: 'rgba(255, 255, 255, 0.9)',
+        fontWeight: '500',
+        textAlign: 'center',
+        lineHeight: 10,
+    },
+    lastUpdate: {
+        fontSize: 7,
+        color: 'rgba(255, 255, 255, 0.8)',
+        textAlign: 'center',
+        lineHeight: 8,
     },
     endOfListContainer: {
-        width: '100%',
         alignItems: 'center',
-        paddingVertical: 15,
-        paddingHorizontal: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        borderRadius: 10,
-        marginTop: 10,
+        paddingVertical: 30,
     },
     endOfListDivider: {
+        width: 60,
         height: 1,
-        width: '100%',
         backgroundColor: 'rgba(0, 0, 0, 0.1)',
         marginVertical: 10,
     },
     endOfListText: {
         fontSize: 14,
         color: '#666',
-        textAlign: 'center',
         fontStyle: 'italic',
-    },
-    headerWeatherContainer: {
-        paddingHorizontal: 20,
-        paddingTop: 20,
-        width: '100%',
     },
 });

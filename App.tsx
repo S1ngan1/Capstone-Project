@@ -16,29 +16,24 @@ import Onboarding from './screens/Onboarding';
 import Notification from './screens/Notification';
 import Farm from './screens/Farm';
 import FarmDetails from './screens/FarmDetails';
-import UserDetail from './screens/UserDetail'; // Add this import
-import SensorDetail from './screens/SensorDetail'; // Add this import
-import UserManagement from './screens/UserManagement'; // Add this import
-
-const SuggestionScreen = () => (
-  <View style={appStyles.placeholderScreen}>
-    <Text style={appStyles.placeholderText}>Suggestion Screen</Text>
-  </View>
-);
+import UserDetail from './screens/UserDetail';
+import SensorDetail from './screens/SensorDetail';
+import UserManagement from './screens/UserManagement';
+import Suggestion from './screens/Suggestion';
 
 export type RootStackParamList = {
     Auth: undefined;
     Onboarding: undefined;
     Home: undefined;
-    Farm: { showAddForm?: boolean } | undefined; // Add optional parameter for direct navigation to Add Farm
-    FarmDetails: { farmId: string }; // Add this route with parameters
+    Farm: { showAddForm?: boolean } | undefined;
+    FarmDetails: { farmId: string };
     Suggestion: undefined;
     Profile: undefined;
     Settings: undefined;
     Notification: undefined;
-    UserManagement: undefined; // Add this route
-    UserDetail: { userId: string }; // Add userId parameter
-    SensorDetail: { sensorId: string }; // Add sensorId parameter
+    UserManagement: undefined;
+    UserDetail: { userId: string };
+    SensorDetail: { sensorId: string };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -65,7 +60,7 @@ export default function App() {
                                 <Stack.Screen name="Home" component={Home} />
                                 <Stack.Screen name="Farm" component={Farm} />
                                 <Stack.Screen name="FarmDetails" component={FarmDetails} />
-                                <Stack.Screen name="Suggestion" component={SuggestionScreen} />
+                                <Stack.Screen name="Suggestion" component={Suggestion} />
                                 <Stack.Screen name="Profile" component={Account} />
                                 <Stack.Screen name="Settings" component={Settings} />
                                 <Stack.Screen name="Notification" component={Notification} />

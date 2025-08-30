@@ -1,16 +1,31 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
+// Added support for notification levels
 interface NotiPieceProps {
   content: string;
   time: string;
+  level: 'urgent' | 'warning' | 'normal';
   onPress?: () => void;
   onMorePress?: () => void; 
 }
 
-const NotiPiece: React.FC<NotiPieceProps> = ({ content, time, onPress, onMorePress }) => {
+const NotiPiece: React.FC<NotiPieceProps> = ({ content, time, level, onPress, onMorePress }) => {
+  const getIconForLevel = () => {
+    switch (level) {
+      case 'urgent':
+        return '⚠️';
+      case 'warning':
+        return '⚡';
+      case 'normal':
+      default:
+        return 'ℹ️';
+    }
+  };
+
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
+      <Text style={styles.levelIcon}>{getIconForLevel()}</Text>
       <View style={styles.contentContainer}>
         <Text style={styles.contentText}>{content}</Text>
         <Text style={styles.timeText}>{time}</Text>
@@ -31,6 +46,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 0.5,
     borderBottomColor: '#f0f0f0',
+  },
+  levelIcon: {
+    fontSize: 18,
+    marginRight: 8,
   },
   contentContainer: {
     flex: 1,

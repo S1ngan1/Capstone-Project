@@ -229,16 +229,29 @@ const Farm = () => {
             </Text>
           </View>
 
-          <TouchableOpacity
-            style={[styles.headerAddButton, showAddForm && styles.headerAddButtonActive]}
-            onPress={() => setShowAddForm(!showAddForm)}
-          >
-            <Ionicons
-              name={showAddForm ? "close" : "add"}
-              size={24}
-              color={showAddForm ? "#FF6B6B" : "white"}
-            />
-          </TouchableOpacity>
+          <View style={styles.headerRightActions}>
+            <TouchableOpacity
+              style={styles.notificationButton}
+              onPress={() => navigation.navigate("Notification")}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="notifications" size={24} color="#2e7d32" />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>3</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.headerAddButton, showAddForm && styles.headerAddButtonActive]}
+              onPress={() => setShowAddForm(!showAddForm)}
+            >
+              <Ionicons
+                name={showAddForm ? "close" : "add"}
+                size={24}
+                color={showAddForm ? "#FF6B6B" : "white"}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -539,6 +552,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 2,
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  notificationButton: {
+    position: 'relative',
+    marginRight: 15,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    right: -6,
+    top: -6,
+    backgroundColor: '#FF6B6B',
+    borderRadius: 10,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    elevation: 2,
+  },
+  notificationBadgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   headerAddButton: {
     width: 44,
