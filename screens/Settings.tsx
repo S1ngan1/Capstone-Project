@@ -2,18 +2,45 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons'; 
-import { useNavigation, useRoute, NavigationProp  } from '@react-navigation/native'; // Add this import
+import { useNavigation, useRoute, NavigationProp  } from '@react-navigation/native';
 import BottomNavigation from '../components/BottomNavigation';
-import AddFarm from '../components/AddFarm';
 import { RootStackParamList } from '../App';
+import ConfirmLogoutDialog from '../components/Users/ConfirmLogoutDialog';
+import { supabase } from '../lib/supabase';
+import { useAppRole } from '../hooks/useAppRole';
 
 const Settings = () => {
-  const [visible, setVisible] = useState(false);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const { userRole, loading, isAdmin } = useAppRole();
 
   const handleProfilePress = () => {
     navigation.navigate('Profile');
   };
+
+  // Add navigation handler for CreateFarm screen
+  const handleAddFarmPress = () => {
+    navigation.navigate('CreateFarm');
+  };
+
+  // Add navigation handler for View Requests screen (Admin only)
+  const handleViewRequestsPress = () => {
+    navigation.navigate('ViewRequests'); // You'll need to add this route
+  };
+
+  const handleLogout = async () => {
+    setShowLogoutConfirm(false);
+    await supabase.auth.signOut();
+  };
+
+  // Show loading state if still fetching user role
+  if (loading) {
+    return (
+      <View style={[styles.outerContainer, { justifyContent: 'center' }]}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.outerContainer}>
@@ -24,22 +51,11 @@ const Settings = () => {
         end={{ x: 0.5, y: 1 }}
         style={styles.gradientBox}
       >
-        {/* Profile - Now with navigation */}
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={handleProfilePress}
-        >
-          <View style={styles.itemContent}>
-            <Ionicons name="person-outline" size={24} color="#333" style={styles.itemIcon} />
-            <Text style={styles.itemText}>Profile</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color="#333" />
-        </TouchableOpacity>
 
-        {/* Add farm */}
+        {/* Add farm - Updated to use navigation */}
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={() => setVisible(true)}
+          onPress={handleAddFarmPress}
         >
           <View style={styles.itemContent}>
             <Ionicons name="add-circle-outline" size={24} color="#333" style={styles.itemIcon} />
@@ -47,6 +63,20 @@ const Settings = () => {
           </View>
           <Ionicons name="chevron-forward" size={24} color="#333" />
         </TouchableOpacity>
+
+        {/* View Requests - Admin Only */}
+        {isAdmin && (
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={handleViewRequestsPress}
+          >
+            <View style={styles.itemContent}>
+              <Ionicons name="clipboard-outline" size={24} color="#333" style={styles.itemIcon} />
+              <Text style={styles.itemText}>View Requests</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#333" />
+          </TouchableOpacity>
+        )}
 
         {/* Notification Settings */}
         <TouchableOpacity style={styles.settingItem}>
@@ -67,23 +97,41 @@ const Settings = () => {
         </TouchableOpacity>
 
         {/* Privacy Policy */}
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={styles.settingItem} >
           <View style={styles.itemContent}>
             <Ionicons name="lock-closed-outline" size={24} color="#333" style={styles.itemIcon} />
             <Text style={styles.itemText}>Privacy Policy</Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color="#333" />
         </TouchableOpacity>
+
+        {/* Profile */}
+        <TouchableOpacity style={styles.settingItem} onPress={handleProfilePress}>
+          <View style={styles.itemContent}>
+            <Ionicons name="person-outline" size={24} color="#333" style={styles.itemIcon} />
+            <Text style={styles.itemText}>Profile</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#333" />
+        </TouchableOpacity>
+
+        {/* Log Out */}
+        <TouchableOpacity style={styles.settingItem} onPress={() => setShowLogoutConfirm(true)}>
+          <View style={styles.itemContent}>
+            <Ionicons name="log-out-outline" size={24} color="#333" style={styles.itemIcon} />
+            <Text style={styles.itemText}>Log Out</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#333" />
+        </TouchableOpacity>
+
+        <ConfirmLogoutDialog
+          visible={showLogoutConfirm}
+          onCancel={() => setShowLogoutConfirm(false)}
+          onConfirm={handleLogout}
+        />
+        
       </LinearGradient>
 
       <BottomNavigation />
-
-      {/* Dialog AddFarm */}
-      <AddFarm
-        visible={visible}
-        onClose={() => setVisible(false)}
-        onSelect={(farm) => console.log("Chọn farm:", farm)}
-      />
     </View>
   );
 };

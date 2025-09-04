@@ -25,9 +25,9 @@ const fetchUsers = async () => {
     }
 
     // Then filter in JavaScript
-    const owners = data?.filter(u => u.role?.trim().toLowerCase() === "owner") ?? []
+    const users = data?.filter(u => u.role?.trim().toLowerCase() === "user") ?? []
     
-    setUsers(owners)
+    setUsers(users)
   } catch (err) {
   } finally {
     setLoading(false)
@@ -108,7 +108,7 @@ const fetchUsers = async () => {
         style={styles.gradientContainer}
       >
         <View style={styles.header}>
-          <Text style={styles.subtitle}>Owner Accounts ({users.length})</Text>
+          <Text style={styles.subtitle}>All Accounts ({users.length})</Text>
           <TouchableOpacity onPress={fetchUsers} style={styles.refreshButton}>
             <Ionicons name="refresh-outline" size={20} color="#00A388" />
           </TouchableOpacity>

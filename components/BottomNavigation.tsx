@@ -1,22 +1,76 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { RootStackParamList } from '../App';
+import { useAuthContext } from '../context/AuthContext';
+import { supabase } from '../lib/supabase'; // Adjust import path as needed
 
 const BottomNavigation = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute();
+  const { session } = useAuthContext();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fixed tabs - no role-based logic needed
-  const tabs = [
+  // Fetch role từ bảng farm_users
+  useEffect(() => {
+  const fetchUserRole = async () => {
+    if (session?.user?.id) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          setUserRole(data[0].role);
+          console.log("User role set to:", data[0].role);
+        } else {
+          setUserRole('owner'); 
+          console.log("User role fallback: owner");
+        }
+      } catch (err) {
+        console.error('Error fetching user role:', err);
+        setUserRole('owner'); // fallback khi có lỗi
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  fetchUserRole();
+}, [session]);
+
+
+
+  if (loading) {
+    return null; // Hoặc render spinner/loading UI
+  }
+
+  // Base tabs
+  const baseTabs = [
     { name: 'Home', label: 'Home', icon: 'home' },
     { name: 'Farm', label: 'Farm', icon: 'leaf' },
     { name: 'Suggestion', label: 'Suggestion', icon: 'bulb' },
     { name: 'Settings', label: 'Settings', icon: 'settings' },
-  ];
+    
+    ];
+
+
+  // Nếu role = manager thì thêm UserManagement
+  const tabs =
+    userRole?.trim() === 'manager'
+      ? [
+          ...baseTabs.slice(0, 3), // Home, Farm, Suggestion
+          { name: 'UserManagement', label: 'Users', icon: 'people' },
+          baseTabs[3], // Settings
+        ]
+      : baseTabs;
 
   return (
     <View style={[styles.tabBarContainer, { paddingBottom: 5 + insets.bottom }]}>
@@ -52,7 +106,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    height: 100,
+    height: 125,
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -73,7 +127,7 @@ const styles = StyleSheet.create({
   },
   tabBarLabel: {
     fontSize: 12,
-    marginTop: 5,
-    fontWeight: '500',
+    fontWeight: '600',
+    marginTop: 4,
   },
 });
