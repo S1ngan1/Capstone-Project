@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Alert,
   Image,
   ScrollView,
   ActivityIndicator,
@@ -17,6 +16,7 @@ import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { useAuthContext } from '../context/AuthContext';
+import { useDialog } from '../context/DialogContext';
 
 
 const VIETNAM_LOCATIONS = [
@@ -88,10 +88,11 @@ const VIETNAM_LOCATIONS = [
 const CreateFarm = () => {
   const navigation = useNavigation();
   const { session } = useAuthContext();
-  
+  const { showDialog } = useDialog();
+
   const [farmName, setFarmName] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
-  // Fix 1: Properly type the selectedImage state
+  // Fix 1: Properly type the selectedImage state;
   const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [loading, setLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
@@ -103,7 +104,7 @@ const CreateFarm = () => {
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Please grant permission to access your photos');
+      showDialog('Permission needed', 'Please grant permission to access your photos');
     }
   };
 
@@ -121,24 +122,24 @@ const CreateFarm = () => {
       }
     } catch (error) {
       console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to pick image');
+      showDialog('Error', 'Failed to pick image');
     }
   };
 
-  // Fix 2: Properly type the imageUri parameter
-  const uploadImageToSupabase = async (imageUri: string): Promise<string> => {
+  // Fix 2: Properly type the imageUri parameter;
+  const uploadImageToSupabase = async (imageUri: string): Promise<string> => {;
     try {
       setImageUploading(true);
-      
+
       // Create form data for image upload
       const formData = new FormData();
       const fileName = `farm-${Date.now()}.jpg`;
-      
+
       formData.append('file', {
         uri: imageUri,
         type: 'image/jpeg',
         name: fileName,
-      } as any); // Note: FormData typing can be tricky with React Native
+      } as any); // Note: FormData typing can be tricky with React Native;
 
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
@@ -167,7 +168,7 @@ const CreateFarm = () => {
     }
   };
 
-  const createNotification = async (farmName: string): Promise<void> => {
+  const createNotification = async (farmName: string): Promise<void> => {;
     try {
       const { error } = await supabase
         .from('notifications')
@@ -189,24 +190,24 @@ const CreateFarm = () => {
   const handleCreateFarm = async () => {
     // Validation
     if (!farmName.trim()) {
-      Alert.alert('Error', 'Please enter a farm name');
+      showDialog('Error', 'Please enter a farm name');
       return;
     }
 
     if (!selectedLocation) {
-      Alert.alert('Error', 'Please select a location');
+      showDialog('Error', 'Please select a location');
       return;
     }
 
     if (!selectedImage) {
-      Alert.alert('Error', 'Please select an image for your farm');
+      showDialog('Error', 'Please select an image for your farm');
       return;
     }
 
     try {
       setLoading(true);
 
-      // Fix 3: Use type assertion or null check for selectedImage.uri
+      // Fix 3: Use type assertion or null check for selectedImage.uri;
       const imageUrl = await uploadImageToSupabase(selectedImage.uri);
 
       // Create farm request (pending approval)
@@ -223,7 +224,7 @@ const CreateFarm = () => {
 
       if (error) {
         console.error('Error creating farm request:', error);
-        Alert.alert('Error', 'Failed to submit farm request');
+        showDialog('Error', 'Failed to submit farm request');
         return;
       }
 
@@ -231,13 +232,13 @@ const CreateFarm = () => {
       await createNotification(farmName.trim());
 
       // Success alert
-      Alert.alert(
-        'Success!', 
+      showDialog(
+        'Success!',
         'Your farm request has been submitted successfully. You will be notified once it\'s approved.',
         [
           {
             text: 'OK',
-            onPress: () => {
+            onPress: () => {;
               // Reset form
               setFarmName('');
               setSelectedLocation('');
@@ -251,7 +252,7 @@ const CreateFarm = () => {
 
     } catch (error) {
       console.error('Error in handleCreateFarm:', error);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      showDialog('Error', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -261,8 +262,8 @@ const CreateFarm = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()} 
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="#333" />
@@ -301,10 +302,10 @@ const CreateFarm = () => {
               >
                 <Picker.Item label="Select a location" value="" />
                 {VIETNAM_LOCATIONS.map((location) => (
-                  <Picker.Item 
-                    key={location} 
-                    label={location} 
-                    value={location} 
+                  <Picker.Item
+                    key={location}
+                    label={location}
+                    value={location}
                   />
                 ))}
               </Picker>
@@ -314,8 +315,8 @@ const CreateFarm = () => {
           {/* Image Upload */}
           <View style={styles.inputSection}>
             <Text style={styles.label}>Farm Image *</Text>
-            <TouchableOpacity 
-              style={styles.imageUploadButton} 
+            <TouchableOpacity
+              style={styles.imageUploadButton}
               onPress={pickImage}
               disabled={imageUploading}
             >
@@ -361,11 +362,11 @@ const CreateFarm = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     flex: 1,
     backgroundColor: '#e7fbe8ff',
   },
-  header: {
+  header: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -373,21 +374,21 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 20,
   },
-  backButton: {
+  backButton: {;
     padding: 8,
   },
-  headerTitle: {
+  headerTitle: {;
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
-  placeholder: {
+  placeholder: {;
     width: 40,
   },
-  scrollView: {
+  scrollView: {;
     flex: 1,
   },
-  gradientContainer: {
+  gradientContainer: {;
     margin: 20,
     borderRadius: 15,
     padding: 20,
@@ -397,16 +398,16 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 5,
   },
-  inputSection: {
+  inputSection: {;
     marginBottom: 20,
   },
-  label: {
+  label: {;
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
     marginBottom: 8,
   },
-  textInput: {
+  textInput: {;
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 15,
@@ -414,17 +415,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
   },
-  pickerContainer: {
+  pickerContainer: {;
     backgroundColor: 'white',
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#e0e0e0',
     overflow: 'hidden',
   },
-  picker: {
+  picker: {;
     height: 50,
   },
-  imageUploadButton: {
+  imageUploadButton: {;
     backgroundColor: 'white',
     borderRadius: 10,
     borderWidth: 1,
@@ -432,24 +433,24 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
-  selectedImage: {
+  selectedImage: {;
     width: '100%',
     height: 200,
     resizeMode: 'cover',
   },
-  imagePlaceholder: {
+  imagePlaceholder: {;
     height: 200,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f8f8f8',
   },
-  imagePlaceholderText: {
+  imagePlaceholderText: {;
     fontSize: 16,
     color: '#00A388',
     marginTop: 10,
     fontWeight: '500',
   },
-  uploadingOverlay: {
+  uploadingOverlay: {;
     position: 'absolute',
     top: 0,
     left: 0,
@@ -459,7 +460,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  createButton: {
+  createButton: {;
     backgroundColor: '#00A388',
     borderRadius: 12,
     padding: 16,
@@ -473,16 +474,16 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  createButtonDisabled: {
+  createButtonDisabled: {;
     backgroundColor: '#ccc',
   },
-  createButtonText: {
+  createButtonText: {;
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
   },
-  disclaimerText: {
+  disclaimerText: {;
     fontSize: 12,
     color: '#666',
     textAlign: 'center',

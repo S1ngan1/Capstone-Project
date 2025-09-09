@@ -64,7 +64,7 @@ export default function CoverPhotoUploader({ userId }: Props) {
   };
 
   // Upload ảnh lên Supabase
-  const uploadImage = async (uri: string) => {
+  const uploadImage = async (uri: string) => {;
     try {
       setUploading(true);
 
@@ -122,12 +122,12 @@ export default function CoverPhotoUploader({ userId }: Props) {
           <Image
             source={{
               uri:
-                coverUrl ??
+                coverUrl ??;
                 "https://placehold.co/600x200?text=No+Cover+Photo",
             }}
             style={styles.coverPhoto}
           />
-          
+
           <TouchableOpacity
             style={styles.uploadBtn}
             onPress={pickImage}
@@ -148,25 +148,25 @@ export default function CoverPhotoUploader({ userId }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
-  loadingContainer: {
+  loadingContainer: {;
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(14, 89, 14, 1)",
   },
-  coverPhoto: {
+  coverPhoto: {;
     width: "100%",
     height: "100%",
     resizeMode: "cover",
   },
-  uploadBtn: {
+  uploadBtn: {;
     flexDirection: "row",
     alignItems: "center",
     position: "absolute",
@@ -175,9 +175,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 20,
-    zIndex: 1000, 
+    zIndex: 1000,
   },
-  btnText: {
+  btnText: {;
     color: "#fff",
     marginLeft: 6,
     fontSize: 14,

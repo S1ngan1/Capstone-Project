@@ -1,4 +1,3 @@
-import { Alert } from 'react-native';
 import { supabase } from '../lib/supabase';
 
 export interface ImageUploadResult {
@@ -7,8 +6,14 @@ export interface ImageUploadResult {
   error?: string;
 }
 
+// Interface for dialog callback functions
+export interface DialogCallbacks {
+  showSuccess: (title: string, message: string, autoClose?: number) => void;
+  showError: (title: string, message: string) => void;
+}
+
 export class ImageUploadService {
-  static async deleteOldCoverPhoto(userId: string): Promise<void> {
+  static async deleteOldCoverPhoto(userId: string): Promise<void> {;
     try {
       const { data: profile } = await supabase
         .from('profiles')
@@ -36,8 +41,8 @@ export class ImageUploadService {
   }
 
   static async uploadCoverPhoto(
-    userId: string, 
-    imageUri: string
+    userId: string,
+    imageUri: string;
   ): Promise<ImageUploadResult> {
     try {
       // Delete old cover photo first
@@ -56,13 +61,13 @@ export class ImageUploadService {
         .from('cover-photos')
         .upload(filename, blob, {
           contentType: 'image/jpeg',
-          upsert: true
+          upsert: true;
         });
 
       if (uploadError) {
         return {
           success: false,
-          error: 'Failed to upload image to storage'
+          error: 'Failed to upload image to storage';
         };
       }
 
@@ -74,7 +79,7 @@ export class ImageUploadService {
       if (!publicUrlData.publicUrl) {
         return {
           success: false,
-          error: 'Failed to get public URL'
+          error: 'Failed to get public URL';
         };
       }
 
@@ -87,36 +92,36 @@ export class ImageUploadService {
       if (updateError) {
         return {
           success: false,
-          error: 'Failed to update profile'
+          error: 'Failed to update profile';
         };
       }
 
       return {
         success: true,
-        url: publicUrlData.publicUrl
+        url: publicUrlData.publicUrl;
       };
 
     } catch (error) {
       console.error('Error in uploadCoverPhoto:', error);
       return {
         success: false,
-        error: 'Unexpected error occurred'
+        error: 'Unexpected error occurred';
       };
     }
   }
 
-  static showUploadResult(result: ImageUploadResult): void {
+  static showUploadResult(result: ImageUploadResult, callbacks: DialogCallbacks): void {;
     if (result.success) {
-      Alert.alert('Success', 'Cover photo updated successfully!');
+      callbacks.showSuccess('Success', 'Cover photo updated successfully!');
     } else {
-      Alert.alert('Error', result.error || 'Failed to upload image');
+      callbacks.showError('Error', result.error || 'Failed to upload image');
     }
   }
 }
 
 // Validation utilities
 export const ImageValidator = {
-  isValidImageUri(uri: string): boolean {
+  isValidImageUri(uri: string): boolean {;
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
     const lowerUri = uri.toLowerCase();
     return imageExtensions.some(ext => lowerUri.includes(ext));

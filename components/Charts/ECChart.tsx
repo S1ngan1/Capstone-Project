@@ -50,7 +50,7 @@ const ECChart: React.FC<ECChartProps> = ({ farmId }) => {
         if (!readingsError && readings && readings.length > 0) {
           const processedData = readings.map(reading => ({
             value: reading.value,
-            timestamp: reading.created_at
+            timestamp: reading.created_at;
           }));
 
           setEcData(processedData);
@@ -76,20 +76,20 @@ const ECChart: React.FC<ECChartProps> = ({ farmId }) => {
   const generateMockData = () => {
     const mockData = Array.from({ length: 24 }, (_, i) => ({
       value: 1.2 + Math.random() * 0.8, // 1.2-2.0 mS/cm
-      timestamp: new Date(Date.now() - (23 - i) * 3600000).toISOString()
+      timestamp: new Date(Date.now() - (23 - i) * 3600000).toISOString();
     }));
     setEcData(mockData);
     setCurrentValue(mockData[mockData.length - 1].value);
   };
 
-  const getStatusColor = (value: number) => {
+  const getStatusColor = (value: number) => {;
     if (value < 0.8) return '#dc3545'; // Too low - red
     if (value > 2.0) return '#dc3545'; // Too high - red
     if (value < 1.0 || value > 1.8) return '#ffc107'; // Suboptimal - yellow
     return '#28a745'; // Optimal - green
   };
 
-  const getStatusText = (value: number) => {
+  const getStatusText = (value: number) => {;
     if (value < 0.8) return 'Too Low';
     if (value > 2.0) return 'Too High';
     if (value < 1.0 || value > 1.8) return 'Suboptimal';
@@ -117,7 +117,7 @@ const ECChart: React.FC<ECChartProps> = ({ farmId }) => {
       return {
         x: Math.max(0, Math.min(200, timePosition)),
         y: height,
-        value: point.value
+        value: point.value;
       };
     });
 
@@ -143,7 +143,7 @@ const ECChart: React.FC<ECChartProps> = ({ farmId }) => {
           bottom: y1,
           width: length,
           angle: angle,
-          key: i
+          key: i;
         });
       }
       return lines;
@@ -197,7 +197,7 @@ const ECChart: React.FC<ECChartProps> = ({ farmId }) => {
                 {
                   left: point.x - 2, // Center the point
                   bottom: point.y - 2,
-                  backgroundColor: getStatusColor(point.value)
+                  backgroundColor: getStatusColor(point.value);
                 }
               ]}
             />
@@ -256,7 +256,7 @@ const ECChart: React.FC<ECChartProps> = ({ farmId }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     borderRadius: 15,
     margin: 8,
     padding: 15,
@@ -268,87 +268,87 @@ const styles = StyleSheet.create({
     width: 280,
     height: 300,
   },
-  title: {
+  title: {;
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
     textAlign: 'center',
   },
-  currentValueContainer: {
+  currentValueContainer: {;
     alignItems: 'center',
     marginBottom: 15,
   },
-  currentValue: {
+  currentValue: {;
     fontSize: 24,
     fontWeight: 'bold',
   },
-  statusText: {
+  statusText: {;
     fontSize: 14,
     fontWeight: '600',
     marginTop: 4,
   },
-  chartArea: {
+  chartArea: {;
     flexDirection: 'row',
     height: 140,
     marginBottom: 10,
   },
-  yAxis: {
+  yAxis: {;
     width: 30,
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     paddingRight: 5,
   },
-  axisLabel: {
+  axisLabel: {;
     fontSize: 10,
     color: '#666',
   },
-  plotArea: {
+  plotArea: {;
     flex: 1,
     position: 'relative',
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 8,
   },
-  dataPointSmall: {
+  dataPointSmall: {;
     position: 'absolute',
     width: 4,
     height: 4,
     borderRadius: 2,
   },
-  gridContainer: {
+  gridContainer: {;
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
-  gridLine: {
+  gridLine: {;
     position: 'absolute',
     height: 1,
     backgroundColor: '#ddd',
     width: '100%',
   },
-  continuousLine: {
+  continuousLine: {;
     position: 'absolute',
     height: 2,
     backgroundColor: '#4CAF50',
     opacity: 0.7,
   },
-  timeLabels: {
+  timeLabels: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingLeft: 35,
   },
-  timeLabel: {
+  timeLabel: {;
     fontSize: 10,
     color: '#666',
   },
-  loadingContainer: {
+  loadingContainer: {;
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
+  loadingText: {;
     fontSize: 14,
     color: '#666',
   },

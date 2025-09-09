@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons'; 
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, NavigationProp  } from '@react-navigation/native';
 import BottomNavigation from '../components/BottomNavigation';
 import { RootStackParamList } from '../App';
@@ -53,7 +53,7 @@ const Settings = () => {
       >
 
         {/* Add farm - Updated to use navigation */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.settingItem}
           onPress={handleAddFarmPress}
         >
@@ -64,9 +64,21 @@ const Settings = () => {
           <Ionicons name="chevron-forward" size={24} color="#333" />
         </TouchableOpacity>
 
+        {/* My Sensor Requests - For all users */}
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => navigation.navigate('UserSensorRequests')}
+        >
+          <View style={styles.itemContent}>
+            <Ionicons name="hardware-chip-outline" size={24} color="#333" style={styles.itemIcon} />
+            <Text style={styles.itemText}>My Sensor Requests</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#333" />
+        </TouchableOpacity>
+
         {/* View Requests - Admin Only */}
         {isAdmin && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.settingItem}
             onPress={handleViewRequestsPress}
           >
@@ -128,7 +140,7 @@ const Settings = () => {
           onCancel={() => setShowLogoutConfirm(false)}
           onConfirm={handleLogout}
         />
-        
+
       </LinearGradient>
 
       <BottomNavigation />
@@ -137,14 +149,14 @@ const Settings = () => {
 };
 
 const styles = StyleSheet.create({
-  outerContainer: {
+  outerContainer: {;
     flex: 1,
     backgroundColor: '#e7fbe8ff',
     justifyContent: 'flex-start',
-    alignItems: 'center', 
+    alignItems: 'center',
   },
-  gradientBox: {
-    width: '90%', 
+  gradientBox: {;
+    width: '90%',
     padding: 20,
     borderRadius: 15,
     shadowColor: '#000',
@@ -153,7 +165,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 5,
   },
-  settingsTitle: {
+  settingsTitle: {;
     fontSize: 28,
     fontWeight: 'bold',
     color: '#333',
@@ -162,7 +174,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     width: '100%',
   },
-  settingItem: {
+  settingItem: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -170,14 +182,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  itemContent: {
+  itemContent: {;
     flexDirection: 'row',
     alignItems: 'center',
   },
-  itemIcon: {
+  itemIcon: {;
     marginRight: 15,
   },
-  itemText: {
+  itemText: {;
     fontSize: 18,
     color: '#333',
   },

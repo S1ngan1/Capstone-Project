@@ -88,7 +88,7 @@ export function Temperature({ farmLocation }: TemperatureProps) {
                     const sensorTemp = Math.round(latestReadings[0].value);
                     // Create mock weather data using sensor temperature
                     setWeatherData({
-                        current: {
+                        current: {;
                             temperature: sensorTemp,
                             weatherCode: 1, // Mainly clear
                             windSpeed: 5,
@@ -96,7 +96,7 @@ export function Temperature({ farmLocation }: TemperatureProps) {
                         },
                         daily: Array.from({ length: 3 }, (_, i) => ({
                             date: new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                            temperature: {
+                            temperature: {;
                                 max: sensorTemp + Math.round(Math.random() * 4),
                                 min: sensorTemp - Math.round(Math.random() * 4),
                             },
@@ -110,7 +110,7 @@ export function Temperature({ farmLocation }: TemperatureProps) {
         }
     };
 
-    const getDayName = (index: number): string => {
+    const getDayName = (index: number): string => {;
         const days = ['Today', 'Tomorrow'];
         if (index < 2) return days[index];
 
@@ -119,7 +119,7 @@ export function Temperature({ farmLocation }: TemperatureProps) {
         return date.toLocaleDateString('en-US', { weekday: 'short' });
     };
 
-    const getTemperatureForDay = (index: number): number => {
+    const getTemperatureForDay = (index: number): number => {;
         if (!weatherData) return 20;
 
         if (index === 0) {
@@ -129,7 +129,7 @@ export function Temperature({ farmLocation }: TemperatureProps) {
         }
     };
 
-    const getWeatherIconForDay = (index: number): string => {
+    const getWeatherIconForDay = (index: number): string => {;
         if (!weatherData) return 'partly-sunny-outline';
 
         const weatherCode = index === 0
@@ -193,7 +193,7 @@ export function Temperature({ farmLocation }: TemperatureProps) {
 }
 
 const styles = StyleSheet.create({
-    container: {
+    container: {;
         backgroundColor: 'rgba(0, 0, 0, 0.3)',
         borderRadius: 15,
         paddingVertical: 20,
@@ -203,56 +203,56 @@ const styles = StyleSheet.create({
         width: '90%',
         minHeight: 120,
     },
-    locationContainer: {
+    locationContainer: {;
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 15,
         justifyContent: 'center',
     },
-    locationText: {
+    locationText: {;
         color: 'rgba(255,255,255,0.9)',
         fontSize: 13,
         marginLeft: 4,
         fontWeight: '500',
     },
-    weatherContainer: {
+    weatherContainer: {;
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'flex-start',
     },
-    dayContainer: {
+    dayContainer: {;
         alignItems: 'center',
         flex: 1,
     },
-    weatherIcon: {
+    weatherIcon: {;
         marginBottom: 5,
     },
-    dayText: {
+    dayText: {;
         fontSize: 14,
         color: '#fff',
         fontWeight: 'bold',
         marginBottom: 2,
     },
-    tempText: {
+    tempText: {;
         fontSize: 18,
         color: '#fff',
         fontWeight: '600',
         marginBottom: 5,
     },
-    detailsContainer: {
+    detailsContainer: {;
         alignItems: 'center',
     },
-    detailText: {
+    detailText: {;
         color: 'rgba(255,255,255,0.7)',
         fontSize: 10,
         marginVertical: 1,
     },
-    loadingText: {
+    loadingText: {;
         color: '#fff',
         fontSize: 16,
         marginLeft: 10,
     },
-    errorText: {
+    errorText: {;
         color: 'rgba(255,100,100,0.9)',
         fontSize: 14,
         marginLeft: 10,

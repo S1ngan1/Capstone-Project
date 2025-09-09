@@ -24,39 +24,39 @@ export default function ConfirmLogoutDialog({ visible, onConfirm, onCancel }: Co
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  overlay: {;
     flex: 1,
     backgroundColor: '#00000099',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  dialog: {
+  dialog: {;
     backgroundColor: '#0e3d2a',
     padding: 20,
     borderRadius: 12,
     width: 280,
     alignItems: 'center',
   },
-  title: {
+  title: {;
     fontSize: 18,
     color: 'white',
     marginBottom: 16,
   },
-  buttons: {
+  buttons: {;
     flexDirection: 'row',
     gap: 16,
   },
-  btn: {
+  btn: {;
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
     backgroundColor: '#185a42',
   },
   cancel: {},
-  confirm: {
+  confirm: {;
     backgroundColor: '#133d2f',
   },
-  text: {
+  text: {;
     color: 'white',
     fontWeight: '600',
   },

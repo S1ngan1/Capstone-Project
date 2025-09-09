@@ -40,7 +40,7 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
             onViewableItemsChanged={viewableItemsChanged}
             viewabilityConfig={viewConfig}
           ref={slidesRef} />
-        
+
         <View style={styles.footer}>
           <TouchableOpacity style={styles.button} onPress={scrollToNext}>
             <Text style={styles.buttonText}>
@@ -55,15 +55,15 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     flex: 1,
     backgroundColor: '#fff',
   },
-  footer: {
+  footer: {;
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  button: {
+  button: {;
     backgroundColor: '#7DDA58',
     paddingVertical: 12,
     paddingHorizontal: 40,
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 40,
   },
-  buttonText: {
+  buttonText: {;
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',

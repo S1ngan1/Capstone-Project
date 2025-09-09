@@ -14,7 +14,7 @@ export const useAppRole = () => {
         try {
           setLoading(true);
           setError(null);
-          
+
           const { data, error } = await supabase
             .from('profiles')
             .select('role')
@@ -47,7 +47,7 @@ export const useAppRole = () => {
 
   // Helper function to check if user is admin
   const isAdmin = userRole?.trim() === 'admin';
-  
+
   // Helper function to check if user has specific role
   const hasRole = (role: string) => userRole?.trim() === role;
 

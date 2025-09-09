@@ -64,29 +64,29 @@ const AddFarm: React.FC<AddFarmProps> = ({ visible, onClose, onSelect }) => {
 export default AddFarm;
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  modalContainer: {;
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.3)",
   },
-  modalContent: {
+  modalContent: {;
     width: "80%",
     backgroundColor: "#fff",
     padding: 20,
     borderRadius: 10,
   },
-  modalTitle: {
+  modalTitle: {;
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
   },
-  farmItem: {
+  farmItem: {;
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
   },
-  closeButton: {
+  closeButton: {;
     marginTop: 15,
     backgroundColor: "#333",
     padding: 10,

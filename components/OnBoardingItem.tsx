@@ -9,7 +9,7 @@ const OnboardingItem = ({ item }: OnboardingItemProps) => {
   return (
     <View style={[styles.container, { width, height }]}>
       <ImageBackground source={item.image} style={[styles.image, { width, height}]} resizeMode="cover">
-        
+
       <View style={styles.overlay} />
 
       <View style={styles.textContainer}>
@@ -24,32 +24,32 @@ const OnboardingItem = ({ item }: OnboardingItemProps) => {
 export default OnboardingItem;
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     flex: 1,
     justifyContent: 'center',
   },
-  image: {
+  image: {;
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
-  overlay: {
+  overlay: {;
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)', // màu đen 40% mờ
   },
-  textContainer: {
+  textContainer: {;
     marginBottom: 80,
     paddingHorizontal: 30,
     zIndex: 1, // đảm bảo nằm trên overlay
   },
-  title: {
+  title: {;
     fontWeight: '800',
     fontSize: 30,
     marginBottom: 10,
     color: 'white',
     textAlign: 'center',
   },
-  description: {
+  description: {;
     fontWeight: '300',
     color: 'white',
     textAlign: 'center',

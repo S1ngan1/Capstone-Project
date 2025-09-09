@@ -7,7 +7,7 @@ interface NotiPieceProps {
   time: string;
   level: 'urgent' | 'warning' | 'normal';
   onPress?: () => void;
-  onMorePress?: () => void; 
+  onMorePress?: () => void;
 }
 
 const NotiPiece: React.FC<NotiPieceProps> = ({ content, time, level, onPress, onMorePress }) => {
@@ -38,7 +38,7 @@ const NotiPiece: React.FC<NotiPieceProps> = ({ content, time, level, onPress, on
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
@@ -47,32 +47,32 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: '#f0f0f0',
   },
-  levelIcon: {
+  levelIcon: {;
     fontSize: 18,
     marginRight: 8,
   },
-  contentContainer: {
+  contentContainer: {;
     flex: 1,
     marginLeft: 0,
-    marginRight: 10, 
+    marginRight: 10,
   },
-  contentText: {
+  contentText: {;
     color: '#333',
     fontSize: 14,
     lineHeight: 18,
   },
-  timeText: {
+  timeText: {;
     color: '#1a73e8',
     fontSize: 11,
     marginTop: 4,
   },
-  moreIconContainer: {
-    padding: 5, 
+  moreIconContainer: {;
+    padding: 5,
   },
-  moreIcon: {
-    fontSize: 18, 
+  moreIcon: {;
+    fontSize: 18,
     color: '#888',
-    fontWeight: 'bold', 
+    fontWeight: 'bold',
   },
 });
 

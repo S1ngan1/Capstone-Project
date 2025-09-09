@@ -1,5 +1,5 @@
 export interface OnboardingItemProps {
-  item: {
+  item: {;
     id: string;
     title: string;
     description: string;

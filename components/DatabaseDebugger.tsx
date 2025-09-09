@@ -26,7 +26,7 @@ const DatabaseDebugger = ({ farmId }: { farmId: string }) => {
       info.farm = {
         exists: !farmError && farmData && farmData.length > 0,
         data: farmData,
-        error: farmError?.message
+        error: farmError?.message;
       };
       console.log('Farm data:', info.farm);
 
@@ -38,7 +38,7 @@ const DatabaseDebugger = ({ farmId }: { farmId: string }) => {
       info.allSensors = {
         count: allSensors?.length || 0,
         data: allSensors,
-        error: allSensorsError?.message
+        error: allSensorsError?.message;
       };
       console.log('All sensors in database:', info.allSensors);
 
@@ -51,7 +51,7 @@ const DatabaseDebugger = ({ farmId }: { farmId: string }) => {
       info.farmSensors = {
         count: farmSensors?.length || 0,
         data: farmSensors,
-        error: farmSensorsError?.message
+        error: farmSensorsError?.message;
       };
       console.log('Sensors for this farm:', info.farmSensors);
 
@@ -64,7 +64,7 @@ const DatabaseDebugger = ({ farmId }: { farmId: string }) => {
       info.allSensorData = {
         count: allSensorData?.length || 0,
         data: allSensorData,
-        error: allSensorDataError?.message
+        error: allSensorDataError?.message;
       };
       console.log('All sensor data in database:', info.allSensorData);
 
@@ -80,7 +80,7 @@ const DatabaseDebugger = ({ farmId }: { farmId: string }) => {
         info.farmSensorData = {
           count: farmSensorData?.length || 0,
           data: farmSensorData,
-          error: farmSensorDataError?.message
+          error: farmSensorDataError?.message;
         };
         console.log('Sensor data for this farm:', info.farmSensorData);
       }
@@ -93,7 +93,7 @@ const DatabaseDebugger = ({ farmId }: { farmId: string }) => {
       info.allFarms = {
         count: allFarms?.length || 0,
         data: allFarms,
-        error: allFarmsError?.message
+        error: allFarmsError?.message;
       };
       console.log('All farms in database:', info.allFarms);
 
@@ -123,7 +123,7 @@ const DatabaseDebugger = ({ farmId }: { farmId: string }) => {
       <Text style={styles.farmId}>Farm ID: {farmId}</Text>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Farm Exists:</Text>
+        <Text style={styles.sectionTitle}>Farm Exists:</Text>;
         <Text style={styles.text}>{debugInfo.farm?.exists ? '✅ Yes' : '❌ No'}</Text>
         {debugInfo.farm?.error && (
           <Text style={styles.error}>Error: {debugInfo.farm.error}</Text>
@@ -131,7 +131,7 @@ const DatabaseDebugger = ({ farmId }: { farmId: string }) => {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>All Sensors Count:</Text>
+        <Text style={styles.sectionTitle}>All Sensors Count:</Text>;
         <Text style={styles.text}>{debugInfo.allSensors?.count || 0}</Text>
         {debugInfo.allSensors?.error && (
           <Text style={styles.error}>Error: {debugInfo.allSensors.error}</Text>
@@ -139,7 +139,7 @@ const DatabaseDebugger = ({ farmId }: { farmId: string }) => {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Sensors for This Farm:</Text>
+        <Text style={styles.sectionTitle}>Sensors for This Farm:</Text>;
         <Text style={styles.text}>{debugInfo.farmSensors?.count || 0}</Text>
         {debugInfo.farmSensors?.error && (
           <Text style={styles.error}>Error: {debugInfo.farmSensors.error}</Text>
@@ -147,7 +147,7 @@ const DatabaseDebugger = ({ farmId }: { farmId: string }) => {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>All Sensor Data Count:</Text>
+        <Text style={styles.sectionTitle}>All Sensor Data Count:</Text>;
         <Text style={styles.text}>{debugInfo.allSensorData?.count || 0}</Text>
         {debugInfo.allSensorData?.error && (
           <Text style={styles.error}>Error: {debugInfo.allSensorData.error}</Text>
@@ -155,7 +155,7 @@ const DatabaseDebugger = ({ farmId }: { farmId: string }) => {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>All Farms Count:</Text>
+        <Text style={styles.sectionTitle}>All Farms Count:</Text>;
         <Text style={styles.text}>{debugInfo.allFarms?.count || 0}</Text>
         {debugInfo.allFarms?.error && (
           <Text style={styles.error}>Error: {debugInfo.allFarms.error}</Text>
@@ -164,7 +164,7 @@ const DatabaseDebugger = ({ farmId }: { farmId: string }) => {
 
       {debugInfo.debugError && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Debug Error:</Text>
+          <Text style={styles.sectionTitle}>Debug Error:</Text>;
           <Text style={styles.error}>{debugInfo.debugError}</Text>
         </View>
       )}
@@ -173,37 +173,37 @@ const DatabaseDebugger = ({ farmId }: { farmId: string }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     padding: 15,
     backgroundColor: 'white',
     margin: 10,
     borderRadius: 8,
     maxHeight: 300,
   },
-  title: {
+  title: {;
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 10,
   },
-  farmId: {
+  farmId: {;
     fontSize: 12,
     color: '#666',
     marginBottom: 15,
     fontFamily: 'monospace',
   },
-  section: {
+  section: {;
     marginBottom: 10,
   },
-  sectionTitle: {
+  sectionTitle: {;
     fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
   },
-  text: {
+  text: {;
     fontSize: 14,
     color: '#666',
   },
-  error: {
+  error: {;
     fontSize: 12,
     color: '#ff0000',
   },

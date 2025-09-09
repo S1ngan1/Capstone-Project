@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useAuthContext } from '../context/AuthContext';
+import { useDialog } from '../context/DialogContext';
 import { supabase } from '../lib/supabase';
 import BottomNavigation from '../components/BottomNavigation';
 import UVSimple from '../components/Charts/UVSimple';
@@ -90,7 +91,7 @@ const SensorDetail = () => {
           .limit(1)
           .single();
 
-        const sensorData: SensorData = {
+        const sensorData: SensorData = {;
           id: sensorInfo.sensor_id,
           name: sensorInfo.sensor_name || 'Unknown Sensor',
           type: sensorInfo.sensor_type || 'unknown',
@@ -102,7 +103,7 @@ const SensorDetail = () => {
           battery_level: Math.floor(Math.random() * 40) + 60, // Mock for now
           signal_strength: Math.floor(Math.random() * 30) + 70, // Mock for now
           calibration_date: sensorInfo.calibration_date || new Date().toISOString(),
-          farm_id: sensorInfo.farm_id
+          farm_id: sensorInfo.farm_id;
         };
 
         setSensorData(sensorData);
@@ -116,10 +117,10 @@ const SensorDetail = () => {
           .limit(10);
 
         if (!readingsError && recentReadingsData) {
-          const formattedReadings: SensorReading[] = recentReadingsData.map((reading) => ({
+          const formattedReadings: SensorReading[] = recentReadingsData.map((reading) => ({;
             id: reading.id,
             value: reading.value,
-            timestamp: reading.created_at
+            timestamp: reading.created_at;
           }));
           setRecentReadings(formattedReadings);
         } else {
@@ -140,7 +141,7 @@ const SensorDetail = () => {
           battery_level: 0,
           signal_strength: 0,
           calibration_date: new Date().toISOString(),
-          farm_id: 'unknown'
+          farm_id: 'unknown';
         });
         setRecentReadings([]);
       }
@@ -154,7 +155,7 @@ const SensorDetail = () => {
   };
 
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string) => {;
     switch (status) {
       case 'active':
         return '#28a745';
@@ -167,25 +168,25 @@ const SensorDetail = () => {
     }
   };
 
-  const getBatteryColor = (level: number) => {
+  const getBatteryColor = (level: number) => {;
     if (level > 50) return '#28a745';
     if (level > 20) return '#ffc107';
     return '#dc3545';
   };
 
-  const getSignalColor = (strength: number) => {
+  const getSignalColor = (strength: number) => {;
     if (strength > 80) return '#28a745';
     if (strength > 50) return '#ffc107';
     return '#dc3545';
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string) => {;
     return new Date(dateString).toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit';
     });
   };
 
@@ -350,14 +351,14 @@ const SensorDetail = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     flex: 1,
   },
-  background: {
+  background: {;
     flex: 1,
     paddingBottom: 70,
   },
-  header: {
+  header: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -367,31 +368,31 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
-  backButton: {
+  backButton: {;
     padding: 5,
   },
-  headerTitle: {
+  headerTitle: {;
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
-  settingsButton: {
+  settingsButton: {;
     padding: 5,
   },
-  content: {
+  content: {;
     flex: 1,
     paddingHorizontal: 20,
   },
-  section: {
+  section: {;
     marginVertical: 15,
   },
-  sectionTitle: {
+  sectionTitle: {;
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
   },
-  sensorHeader: {
+  sensorHeader: {;
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
@@ -403,7 +404,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  sensorIcon: {
+  sensorIcon: {;
     width: 60,
     height: 60,
     borderRadius: 30,
@@ -412,56 +413,56 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 15,
   },
-  sensorInfo: {
+  sensorInfo: {;
     flex: 1,
   },
-  sensorName: {
+  sensorName: {;
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
   },
-  sensorType: {
+  sensorType: {;
     fontSize: 14,
     color: '#666',
     marginBottom: 8,
   },
-  statusBadge: {
+  statusBadge: {;
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     alignSelf: 'flex-start',
   },
-  statusText: {
+  statusText: {;
     fontSize: 10,
     fontWeight: 'bold',
     color: 'white',
   },
-  currentReading: {
+  currentReading: {;
     alignItems: 'flex-end',
   },
-  readingValue: {
+  readingValue: {;
     fontSize: 24,
     fontWeight: 'bold',
     color: '#4CAF50',
     marginBottom: 4,
   },
-  lastUpdated: {
+  lastUpdated: {;
     fontSize: 12,
     color: '#666',
   },
-  chartContainer: {
+  chartContainer: {;
     alignItems: 'center',
     backgroundColor: 'white',
     borderRadius: 15,
     padding: 10,
   },
-  statusGrid: {
+  statusGrid: {;
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  statusCard: {
+  statusCard: {;
     width: '48%',
     backgroundColor: 'white',
     borderRadius: 12,
@@ -474,19 +475,19 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  statusLabel: {
+  statusLabel: {;
     fontSize: 12,
     color: '#666',
     marginTop: 8,
     marginBottom: 4,
   },
-  statusValue: {
+  statusValue: {;
     fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
     textAlign: 'center',
   },
-  readingsContainer: {
+  readingsContainer: {;
     backgroundColor: 'white',
     borderRadius: 15,
     padding: 15,
@@ -496,7 +497,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  readingCard: {
+  readingCard: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -504,25 +505,25 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  readingValueText: {
+  readingValueText: {;
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
   },
-  readingTime: {
+  readingTime: {;
     fontSize: 14,
     color: '#666',
   },
-  loadingContainer: {
+  loadingContainer: {;
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
+  loadingText: {;
     fontSize: 16,
     color: '#666',
   },
-  bottomSpacer: {
+  bottomSpacer: {;
     height: 70,
   },
 });

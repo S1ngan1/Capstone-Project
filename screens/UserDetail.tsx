@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useAuthContext } from '../context/AuthContext';
+import { useDialog } from '../context/DialogContext';
 import { supabase } from '../lib/supabase';
 import BottomNavigation from '../components/BottomNavigation';
 
@@ -21,7 +22,7 @@ interface UserFarmRole {
   id: string;
   farm_id: string;
   farm_role: string;
-  farms: {
+  farms: {;
     name: string;
     location: string;
   };
@@ -92,7 +93,7 @@ const UserDetail = () => {
     }
   };
 
-  const getApplicationRoleStyle = (role: string) => {
+  const getApplicationRoleStyle = (role: string) => {;
     switch (role) {
       case 'admin':
         return { backgroundColor: '#dc3545', color: 'white' };
@@ -103,7 +104,7 @@ const UserDetail = () => {
     }
   };
 
-  const getFarmRoleStyle = (farmRole: string) => {
+  const getFarmRoleStyle = (farmRole: string) => {;
     switch (farmRole) {
       case 'owner':
         return { backgroundColor: '#ffd700', color: '#333' };
@@ -114,11 +115,11 @@ const UserDetail = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string) => {;
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric';
     });
   };
 
@@ -258,14 +259,14 @@ const UserDetail = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     flex: 1,
   },
-  background: {
+  background: {;
     flex: 1,
     paddingBottom: 70,
   },
-  header: {
+  header: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -275,31 +276,31 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
-  backButton: {
+  backButton: {;
     padding: 5,
   },
-  headerTitle: {
+  headerTitle: {;
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
-  placeholder: {
+  placeholder: {;
     width: 34,
   },
-  content: {
+  content: {;
     flex: 1,
     paddingHorizontal: 20,
   },
-  section: {
+  section: {;
     marginVertical: 15,
   },
-  sectionTitle: {
+  sectionTitle: {;
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
   },
-  profileHeader: {
+  profileHeader: {;
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
@@ -311,7 +312,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  userAvatar: {
+  userAvatar: {;
     width: 80,
     height: 80,
     borderRadius: 40,
@@ -320,31 +321,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 20,
   },
-  userInfo: {
+  userInfo: {;
     flex: 1,
   },
-  userName: {
+  userName: {;
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
   },
-  userEmail: {
+  userEmail: {;
     fontSize: 16,
     color: '#666',
     marginBottom: 8,
   },
-  roleContainer: {
+  roleContainer: {;
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 15,
     alignSelf: 'flex-start',
   },
-  roleText: {
+  roleText: {;
     fontSize: 12,
     fontWeight: 'bold',
   },
-  infoCard: {
+  infoCard: {;
     backgroundColor: 'white',
     borderRadius: 15,
     padding: 20,
@@ -354,28 +355,28 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  infoRow: {
+  infoRow: {;
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  infoContent: {
+  infoContent: {;
     marginLeft: 15,
     flex: 1,
   },
-  infoLabel: {
+  infoLabel: {;
     fontSize: 14,
     color: '#666',
     marginBottom: 2,
   },
-  infoValue: {
+  infoValue: {;
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
   },
-  farmCard: {
+  farmCard: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -389,49 +390,49 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  farmInfo: {
+  farmInfo: {;
     flex: 1,
   },
-  farmName: {
+  farmName: {;
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
   },
-  farmLocation: {
+  farmLocation: {;
     fontSize: 14,
     color: '#666',
   },
-  farmRoleContainer: {
+  farmRoleContainer: {;
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 15,
   },
-  farmRoleText: {
+  farmRoleText: {;
     fontSize: 12,
     fontWeight: 'bold',
   },
-  emptyContainer: {
+  emptyContainer: {;
     alignItems: 'center',
     padding: 40,
     backgroundColor: 'white',
     borderRadius: 12,
   },
-  emptyText: {
+  emptyText: {;
     fontSize: 16,
     color: '#666',
     marginTop: 10,
   },
-  loadingContainer: {
+  loadingContainer: {;
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
+  loadingText: {;
     fontSize: 16,
     color: '#666',
   },
-  bottomSpacer: {
+  bottomSpacer: {;
     height: 70,
   },
 });

@@ -29,7 +29,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
       results.sensorsExplicit = {
         count: sensorsExplicit?.length || 0,
         data: sensorsExplicit,
-        error: sensorsExplicitError?.message
+        error: sensorsExplicitError?.message;
       };
 
       // Try without farm_id filter to see all sensors
@@ -40,7 +40,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
       results.allSensorsRaw = {
         count: allSensorsRaw?.length || 0,
         data: allSensorsRaw,
-        error: allSensorsRawError?.message
+        error: allSensorsRawError?.message;
       };
 
       // Try with string comparison
@@ -52,7 +52,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
       results.sensorsString = {
         count: sensorsString?.length || 0,
         data: sensorsString,
-        error: sensorsStringError?.message
+        error: sensorsStringError?.message;
       };
 
       // 2. Check current user and session
@@ -60,7 +60,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
       results.currentUser = {
         id: user?.id,
         email: user?.email,
-        error: userError?.message
+        error: userError?.message;
       };
 
       // 3. Test farm_id exact matching
@@ -75,13 +75,13 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
         results.farmIdMatches = {
           count: farmIdMatches.length,
           data: farmIdMatches,
-          comparisons: allSensorsRaw.map(sensor => ({
+          comparisons: allSensorsRaw.map(sensor => ({;
             sensor_id: sensor.sensor_id,
             stored_farm_id: sensor.farm_id,
             target_farm_id: farmId,
             types_match: typeof sensor.farm_id === typeof farmId,
             values_equal: sensor.farm_id === farmId,
-            string_equal: sensor.farm_id?.toString() === farmId?.toString()
+            string_equal: sensor.farm_id?.toString() === farmId?.toString();
           }))
         };
       }
@@ -95,7 +95,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
       results.sensorDataSample = {
         count: sensorDataSample?.length || 0,
         data: sensorDataSample,
-        error: sensorDataError?.message
+        error: sensorDataError?.message;
       };
 
     } catch (error) {
@@ -132,7 +132,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
       </TouchableOpacity>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🎯 Explicit Column Query:</Text>
+        <Text style={styles.sectionTitle}>🎯 Explicit Column Query:</Text>;
         <Text style={styles.text}>Count: {inspectionResults.sensorsExplicit?.count || 0}</Text>
         {inspectionResults.sensorsExplicit?.error && (
           <Text style={styles.error}>Error: {inspectionResults.sensorsExplicit.error}</Text>
@@ -153,7 +153,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🔗 Farm ID Matching Analysis:</Text>
+        <Text style={styles.sectionTitle}>🔗 Farm ID Matching Analysis:</Text>;
         <Text style={styles.text}>Matches Found: {inspectionResults.farmIdMatches?.count || 0}</Text>
         {inspectionResults.farmIdMatches?.comparisons && (
           <ScrollView horizontal style={styles.comparisonsContainer}>
@@ -165,7 +165,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>📈 Sensor Data Sample:</Text>
+        <Text style={styles.sectionTitle}>📈 Sensor Data Sample:</Text>;
         <Text style={styles.text}>Count: {inspectionResults.sensorDataSample?.count || 0}</Text>
         {inspectionResults.sensorDataSample?.data && inspectionResults.sensorDataSample.data.length > 0 && (
           <Text style={styles.code}>
@@ -178,7 +178,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>👤 Current User:</Text>
+        <Text style={styles.sectionTitle}>👤 Current User:</Text>;
         <Text style={styles.text}>
           ID: {inspectionResults.currentUser?.id || 'None'}
         </Text>
@@ -189,7 +189,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
 
       {inspectionResults.inspectionError && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🚨 Inspection Error:</Text>
+          <Text style={styles.sectionTitle}>🚨 Inspection Error:</Text>;
           <Text style={styles.error}>{inspectionResults.inspectionError}</Text>
         </View>
       )}
@@ -198,20 +198,20 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     padding: 15,
     backgroundColor: '#f8f9fa',
     margin: 10,
     borderRadius: 8,
     maxHeight: 500,
   },
-  title: {
+  title: {;
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#2c3e50',
   },
-  farmId: {
+  farmId: {;
     fontSize: 12,
     color: '#666',
     marginBottom: 15,
@@ -220,35 +220,35 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 4,
   },
-  refreshButton: {
+  refreshButton: {;
     backgroundColor: '#007bff',
     padding: 10,
     borderRadius: 5,
     marginBottom: 15,
     alignItems: 'center',
   },
-  refreshText: {
+  refreshText: {;
     color: 'white',
     fontWeight: 'bold',
   },
-  section: {
+  section: {;
     marginBottom: 15,
     padding: 10,
     backgroundColor: 'white',
     borderRadius: 6,
   },
-  sectionTitle: {
+  sectionTitle: {;
     fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 5,
   },
-  text: {
+  text: {;
     fontSize: 12,
     color: '#666',
     marginBottom: 3,
   },
-  code: {
+  code: {;
     fontSize: 10,
     fontFamily: 'monospace',
     backgroundColor: '#f1f3f4',
@@ -256,12 +256,12 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     color: '#333',
   },
-  error: {
+  error: {;
     fontSize: 12,
     color: '#dc3545',
     fontWeight: 'bold',
   },
-  comparisonsContainer: {
+  comparisonsContainer: {;
     maxHeight: 100,
   },
 });

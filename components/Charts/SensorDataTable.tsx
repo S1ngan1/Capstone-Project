@@ -7,7 +7,7 @@ interface SensorReading {
   id: string;
   value: number;
   timestamp: string;
-  sensor: {
+  sensor: {;
     name: string;
     type: string;
     unit: string;
@@ -28,7 +28,7 @@ const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
     ec: [],
     ph: [],
     soilMoisture: [],
-    temperature: []
+    temperature: [];
   });
   const [loading, setLoading] = useState(true);
 
@@ -49,11 +49,11 @@ const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
         'temperature': 'Digital Temperature'
       };
 
-      const allData: any = {
+      const allData: any = {;
         ec: [],
         ph: [],
         soilMoisture: [],
-        temperature: []
+        temperature: [];
       };
 
       // Fetch data for each sensor type
@@ -85,10 +85,10 @@ const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
                   id: reading.id,
                   value: reading.value,
                   timestamp: reading.created_at,
-                  sensor: {
+                  sensor: {;
                     name: sensor?.sensor_name || 'Unknown Sensor',
                     type: sensor?.sensor_type || 'Unknown Type',
-                    unit: sensor?.units || ''
+                    unit: sensor?.units || '';
                   }
                 };
               });
@@ -109,7 +109,7 @@ const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
     }
   };
 
-  const getStatusColor = (value: number, type: string): string => {
+  const getStatusColor = (value: number, type: string): string => {;
     switch (type) {
       case 'ec':
         if (value < 1.0) return '#2196F3';
@@ -132,18 +132,18 @@ const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
     }
   };
 
-  const formatValue = (value: number, unit: string): string => {
+  const formatValue = (value: number, unit: string): string => {;
     return `${value.toFixed(2)} ${unit}`;
   };
 
-  const getStatusText = (value: number, type: string): string => {
+  const getStatusText = (value: number, type: string): string => {;
     const color = getStatusColor(value, type);
     if (color === '#4CAF50') return 'Normal';
     if (color === '#FF9800') return 'High';
     return 'Low';
   };
 
-  const renderSensorPanel = (data: SensorReading[], title: string, type: string, icon: string) => {
+  const renderSensorPanel = (data: SensorReading[], title: string, type: string, icon: string) => {;
     const latestReading = data.length > 0 ? data[0] : null;
     const statusColor = latestReading ? getStatusColor(latestReading.value, type) : '#666';
     const statusText = latestReading ? getStatusText(latestReading.value, type) : 'No Data';
@@ -176,7 +176,7 @@ const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
 
               {data.length > 1 && (
                 <View style={styles.trendContainer}>
-                  <Text style={styles.trendTitle}>Recent Readings:</Text>
+                  <Text style={styles.trendTitle}>Recent Readings:</Text>;
                   {data.slice(1, 4).map((reading, index) => (
                     <View key={reading.id} style={styles.trendItem}>
                       <Text style={styles.trendTime}>
@@ -225,28 +225,28 @@ const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     flex: 1,
   },
-  loadingContainer: {
+  loadingContainer: {;
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loadingText: {
+  loadingText: {;
     fontSize: 16,
     color: '#666',
   },
-  gridContainer: {
+  gridContainer: {;
     flex: 1,
     padding: 10,
   },
-  gridRow: {
+  gridRow: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
   },
-  sensorPanel: {
+  sensorPanel: {;
     flex: 1,
     marginHorizontal: 5,
     borderRadius: 12,
@@ -257,81 +257,81 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  panelGradient: {
+  panelGradient: {;
     padding: 15,
   },
-  panelHeader: {
+  panelHeader: {;
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
   },
-  panelIcon: {
+  panelIcon: {;
     fontSize: 24,
     marginRight: 10,
   },
-  panelTitle: {
+  panelTitle: {;
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
   },
-  currentValue: {
+  currentValue: {;
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
   },
-  valueText: {
+  valueText: {;
     fontSize: 22,
     fontWeight: 'bold',
     color: '#333',
     marginRight: 10,
   },
-  statusBadge: {
+  statusBadge: {;
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 12,
     alignItems: 'center',
   },
-  statusBadgeText: {
+  statusBadgeText: {;
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
   },
-  lastUpdate: {
+  lastUpdate: {;
     fontSize: 12,
     color: '#666',
     marginBottom: 10,
   },
-  trendContainer: {
+  trendContainer: {;
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
     paddingTop: 10,
   },
-  trendTitle: {
+  trendTitle: {;
     fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 8,
   },
-  trendItem: {
+  trendItem: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 4,
   },
-  trendTime: {
+  trendTime: {;
     fontSize: 12,
     color: '#666',
   },
-  trendValue: {
+  trendValue: {;
     fontSize: 12,
     color: '#333',
   },
-  noDataContainer: {
+  noDataContainer: {;
     padding: 20,
     alignItems: 'center',
     backgroundColor: 'rgba(240, 240, 240, 0.5)',
     borderRadius: 8,
   },
-  noDataText: {
+  noDataText: {;
     fontSize: 14,
     color: '#666',
     fontStyle: 'italic',

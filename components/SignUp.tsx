@@ -89,7 +89,7 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
           [
             {
               text: 'OK',
-              onPress: () => onBackToLogin()
+              onPress: () => onBackToLogin();
             }
           ]
         )
@@ -100,7 +100,7 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
           [
             {
               text: 'OK',
-              onPress: () => onBackToLogin()
+              onPress: () => onBackToLogin();
             }
           ]
         )
@@ -193,49 +193,49 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
 export default SignUp;
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     flex: 1,
     justifyContent: 'center',
     maxWidth: 762,
   },
-  image: {
+  image: {;
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
   },
-  overlay: {
+  overlay: {;
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  header: {
+  header: {;
     alignItems: 'center',
     marginBottom: 30,
   },
-  title: {
+  title: {;
     color: 'white',
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 5,
   },
-  subtitle: {
+  subtitle: {;
     color: 'white',
     fontSize: 16,
     opacity: 0.8,
   },
-  verticallySpaced: {
+  verticallySpaced: {;
     marginVertical: 10,
   },
-  horizontalSpaced: {
+  horizontalSpaced: {;
       marginTop: 20,
       marginHorizontal: 100,
   },
-  button: {
+  button: {;
     backgroundColor: '#7DDA58',
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 25,
   },
-  backButton: {
+  backButton: {;
     backgroundColor: 'transparent',
     paddingVertical: 12,
     paddingHorizontal: 40,
@@ -243,33 +243,33 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#7DDA58',
   },
-  input: {
+  input: {;
     backgroundColor: 'white',
     marginHorizontal: 30,
     padding: 10,
     borderRadius: 8,
     fontSize: 16,
   },
-  label: {
+  label: {;
     color: 'white',
     marginBottom: 5,
     marginLeft: 30,
     fontSize: 14,
     fontWeight: '500',
   },
-  buttonText: {
+  buttonText: {;
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
   },
-  backButtonText: {
+  backButtonText: {;
     color: '#7DDA58',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
   },
-  mt20: {
+  mt20: {;
     marginTop: 20,
   }
 })

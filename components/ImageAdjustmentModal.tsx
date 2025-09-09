@@ -24,7 +24,7 @@ interface ImageAdjustmentModalProps {
   onCancel: () => void;
 }
 
-const ImageAdjustmentModal: React.FC<ImageAdjustmentModalProps> = ({
+const ImageAdjustmentModal: React.FC<ImageAdjustmentModalProps> = ({;
   visible,
   imageUri,
   onSave,
@@ -92,7 +92,7 @@ const ImageAdjustmentModal: React.FC<ImageAdjustmentModalProps> = ({
       // Calculate crop parameters based on position and scale
       const imageWidth = screenWidth;
       const imageHeight = imageWidth; // Assume square for simplicity, adjust as needed
-      
+
       const cropX = Math.max(0, -position.x / scale);
       const cropY = Math.max(0, -position.y / scale);
       const cropWidth = Math.min(imageWidth / scale, imageWidth - cropX);
@@ -102,7 +102,7 @@ const ImageAdjustmentModal: React.FC<ImageAdjustmentModalProps> = ({
         imageUri,
         [
           {
-            crop: {
+            crop: {;
               originX: cropX,
               originY: cropY,
               width: cropWidth,
@@ -110,7 +110,7 @@ const ImageAdjustmentModal: React.FC<ImageAdjustmentModalProps> = ({
             },
           },
           {
-            resize: {
+            resize: {;
               width: screenWidth,
               height: CONTAINER_HEIGHT,
             },
@@ -148,7 +148,7 @@ const ImageAdjustmentModal: React.FC<ImageAdjustmentModalProps> = ({
               style={[
                 styles.imageContainer,
                 {
-                  transform: [
+                  transform: [;
                     { translateX: pan.x },
                     { translateY: pan.y },
                     { scale: scaleValue },
@@ -196,11 +196,11 @@ const ImageAdjustmentModal: React.FC<ImageAdjustmentModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     flex: 1,
     backgroundColor: '#000',
   },
-  header: {
+  header: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -209,29 +209,29 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
-  title: {
+  title: {;
     fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
   },
-  cancelText: {
+  cancelText: {;
     fontSize: 16,
     color: '#FF3B30',
   },
-  saveText: {
+  saveText: {;
     fontSize: 16,
     color: '#007AFF',
     fontWeight: '600',
   },
-  disabledText: {
+  disabledText: {;
     opacity: 0.5,
   },
-  previewContainer: {
+  previewContainer: {;
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cropArea: {
+  cropArea: {;
     width: screenWidth,
     height: CONTAINER_HEIGHT,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -240,34 +240,34 @@ const styles = StyleSheet.create({
     borderColor: '#007AFF',
     borderStyle: 'dashed',
   },
-  imageContainer: {
+  imageContainer: {;
     width: screenWidth,
     height: screenWidth,
   },
-  image: {
+  image: {;
     width: '100%',
     height: '100%',
   },
-  controls: {
+  controls: {;
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 30,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
-  controlButton: {
+  controlButton: {;
     alignItems: 'center',
   },
-  controlText: {
+  controlText: {;
     color: 'white',
     marginTop: 5,
     fontSize: 12,
   },
-  instructions: {
+  instructions: {;
     paddingHorizontal: 20,
     paddingBottom: 30,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
-  instructionText: {
+  instructionText: {;
     color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 14,
     marginBottom: 5,

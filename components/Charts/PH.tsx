@@ -51,7 +51,7 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
         if (!readingsError && readings && readings.length > 0) {
           const processedData = readings.map(reading => ({
             value: reading.value,
-            timestamp: reading.created_at
+            timestamp: reading.created_at;
           }));
 
           setPhData(processedData);
@@ -76,18 +76,18 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
   const generateMockData = () => {
     const mockData = Array.from({ length: 24 }, (_, i) => ({
       value: 6.0 + Math.random() * 2, // 6.0-8.0 pH
-      timestamp: new Date(Date.now() - (23 - i) * 3600000).toISOString()
+      timestamp: new Date(Date.now() - (23 - i) * 3600000).toISOString();
     }));
     setPhData(mockData);
     setCurrentValue(mockData[mockData.length - 1].value);
   };
 
-  const getStatusColor = (value: number) => {
+  const getStatusColor = (value: number) => {;
     if (value < 6.0 || value > 7.5) return '#ffc107'; // Suboptimal - yellow
     return '#28a745'; // Optimal - green
   };
 
-  const getStatusText = (value: number) => {
+  const getStatusText = (value: number) => {;
     if (value < 6.0 || value > 7.5) return 'Suboptimal';
     return 'Optimal';
   };
@@ -113,7 +113,7 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
       return {
         x: Math.max(0, Math.min(200, timePosition)),
         y: height,
-        value: point.value
+        value: point.value;
       };
     });
 
@@ -139,7 +139,7 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
           bottom: y1,
           width: length,
           angle: angle,
-          key: i
+          key: i;
         });
       }
       return lines;
@@ -193,7 +193,7 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
                 {
                   left: point.x - 2, // Center the point
                   bottom: point.y - 2,
-                  backgroundColor: getStatusColor(point.value)
+                  backgroundColor: getStatusColor(point.value);
                 }
               ]}
             />
@@ -252,7 +252,7 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     borderRadius: 15,
     margin: 8,
     padding: 15,
@@ -264,100 +264,100 @@ const styles = StyleSheet.create({
     width: 280,
     height: 300,
   },
-  title: {
+  title: {;
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
     textAlign: 'center',
   },
-  currentValueContainer: {
+  currentValueContainer: {;
     alignItems: 'center',
     marginBottom: 15,
   },
-  currentValue: {
+  currentValue: {;
     fontSize: 24,
     fontWeight: 'bold',
   },
-  statusText: {
+  statusText: {;
     fontSize: 14,
     fontWeight: '600',
     marginTop: 4,
   },
-  chartArea: {
+  chartArea: {;
     flexDirection: 'row',
     height: 140,
     marginBottom: 10,
   },
-  yAxis: {
+  yAxis: {;
     width: 30,
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     paddingRight: 5,
   },
-  axisLabel: {
+  axisLabel: {;
     fontSize: 10,
     color: '#666',
   },
-  plotArea: {
+  plotArea: {;
     flex: 1,
     position: 'relative',
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 8,
   },
-  dataPoint: {
+  dataPoint: {;
     position: 'absolute',
     width: 6,
     height: 6,
     borderRadius: 3,
   },
-  dataPointSmall: {
+  dataPointSmall: {;
     position: 'absolute',
     width: 4,
     height: 4,
     borderRadius: 2,
   },
-  lineContainer: {
+  lineContainer: {;
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
-  connectionLine: {
+  connectionLine: {;
     position: 'absolute',
     height: 2,
     backgroundColor: '#FF9800',
     opacity: 0.7,
   },
-  gridContainer: {
+  gridContainer: {;
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
-  gridLine: {
+  gridLine: {;
     position: 'absolute',
     height: 1,
     backgroundColor: '#e0e0e0',
     width: '100%',
   },
-  timeLabels: {
+  timeLabels: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingLeft: 35,
   },
-  timeLabel: {
+  timeLabel: {;
     fontSize: 10,
     color: '#666',
   },
-  loadingContainer: {
+  loadingContainer: {;
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
+  loadingText: {;
     fontSize: 14,
     color: '#666',
   },

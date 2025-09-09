@@ -10,19 +10,22 @@ import SensorDataTable from '../components/Charts/SensorDataTable';
 import WeatherWidget from '../components/WeatherWidget';
 import BottomNavigation from '../components/BottomNavigation';
 import FarmSettingsModal from '../components/FarmSettingsModal';
+import CreateSensorRequest from '../components/CreateSensorRequest';
 
 // Types
 interface Farm {
   id: string;
   name: string;
   location: string;
+  address?: string; // Add address field for detailed location
+  notes?: string; // Add notes field for farm description
 }
 
 interface FarmUser {
   id: string;
   user_id: string;
   farm_role: string; // Changed from 'role' to 'farm_role'
-  profiles: {
+  profiles: {;
     username: string;
     email: string;
     role: string; // Add application-level role
@@ -46,7 +49,7 @@ interface SensorData {
   sensor_id: string;
   value: number;
   timestamp: string;
-  sensors: {
+  sensors: {;
     id: string;
     name: string;
     type: string;
@@ -76,6 +79,7 @@ const FarmDetails = () => {
   const [userRole, setUserRole] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showCreateSensorModal, setShowCreateSensorModal] = useState(false);
 
   useEffect(() => {
     fetchFarmDetails();
@@ -90,10 +94,10 @@ const FarmDetails = () => {
     try {
       setLoading(true);
 
-      // Fetch farm details
+      // Fetch farm details including notes and address
       const { data: farmData, error: farmError } = await supabase
         .from('farms')
-        .select('id, name, location')
+        .select('id, name, location, address, notes')
         .eq('id', farmId)
         .single();
 
@@ -245,7 +249,7 @@ const FarmDetails = () => {
     </TouchableOpacity>
   );
 
-  const getFarmRoleStyle = (farmRole: string) => {
+  const getFarmRoleStyle = (farmRole: string) => {;
     switch (farmRole) {
       case 'owner':
         return styles.ownerRole;
@@ -292,6 +296,9 @@ const FarmDetails = () => {
           <View style={styles.headerContent}>
             <Text style={styles.farmName}>{farm?.name || 'Loading...'}</Text>
             <Text style={styles.farmLocation}>📍 {farm?.location || ''}</Text>
+            {farm?.address && (
+              <Text style={styles.farmAddress}>🏠 {farm.address}</Text>
+            )}
             <Text style={styles.userRole}>Your role: {userRole}</Text>
           </View>
           <TouchableOpacity
@@ -303,6 +310,25 @@ const FarmDetails = () => {
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Farm Notes Section - New addition for farm description */}
+          {farm?.notes && (
+            <View style={styles.farmNotesSection}>
+              <View style={styles.farmNotesHeader}>
+                <Ionicons name="document-text" size={20} color="#4CAF50" />
+                <Text style={styles.farmNotesTitle}>🌱 About This Farm</Text>
+              </View>
+              <View style={styles.farmNotesCard}>
+                <Text style={styles.farmNotesText}>{farm.notes}</Text>
+                <View style={styles.aiIndicator}>
+                  <Ionicons name="bulb" size={16} color="#FF6B6B" />
+                  <Text style={styles.aiIndicatorText}>
+                    This information helps AI provide better suggestions for your farm
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
           {/* Weather Section */}
           {farm?.location && (
             <View style={styles.weatherSection}>
@@ -329,6 +355,13 @@ const FarmDetails = () => {
                   <Text style={styles.sensorCountText}>{sensors.length}</Text>
                 </View>
               </View>
+              <TouchableOpacity
+                style={styles.addSensorButton}
+                onPress={() => setShowCreateSensorModal(true)}
+              >
+                <Ionicons name="add" size={16} color="white" />
+                <Text style={styles.addSensorText}> Add Sensor</Text>
+              </TouchableOpacity>
             </View>
 
             {loading ? (
@@ -391,19 +424,27 @@ const FarmDetails = () => {
           navigation={navigation}
         />
       )}
+      {showCreateSensorModal && (
+        <CreateSensorRequest
+          visible={showCreateSensorModal}
+          onClose={() => setShowCreateSensorModal(false)}
+          farmId={farmId}
+          onRefresh={fetchFarmDetails}
+        />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     flex: 1,
   },
-  background: {
+  background: {;
     flex: 1,
     paddingBottom: 70,
   },
-  header: {
+  header: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -413,69 +454,74 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
-  backButton: {
+  backButton: {;
     padding: 5,
   },
-  headerContent: {
+  headerContent: {;
     flex: 1,
     alignItems: 'center',
   },
-  farmName: {
+  farmName: {;
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
-  farmLocation: {
+  farmLocation: {;
     fontSize: 14,
     color: '#666',
     marginTop: 2,
   },
-  userRole: {
+  farmAddress: {;
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  userRole: {;
     fontSize: 12,
     color: '#4CAF50',
     fontWeight: '600',
     marginTop: 2,
   },
-  settingsButton: {
+  settingsButton: {;
     padding: 5,
   },
-  content: {
+  content: {;
     flex: 1,
     paddingHorizontal: 20,
   },
-  sectionTitle: {
+  sectionTitle: {;
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
   },
-  weatherSection: {
+  weatherSection: {;
     marginBottom: 20,
     paddingHorizontal: 20,
   },
-  sensorSection: {
+  sensorSection: {;
     marginBottom: 20,
     paddingHorizontal: 20,
   },
-  sensorsSection: {
+  sensorsSection: {;
     marginBottom: 20,
     paddingHorizontal: 20,
   },
-  membersSection: {
+  membersSection: {;
     marginBottom: 100,
     paddingHorizontal: 20,
   },
-  sectionHeader: {
+  sectionHeader: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
   },
-  titleWithCount: {
+  titleWithCount: {;
     flexDirection: 'row',
     alignItems: 'center',
   },
-  sensorCount: {
+  sensorCount: {;
     backgroundColor: '#4CAF50',
     borderRadius: 12,
     paddingVertical: 4,
@@ -484,12 +530,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-  sensorCountText: {
+  sensorCountText: {;
     color: 'white',
     fontSize: 14,
     fontWeight: 'bold',
   },
-  memberCount: {
+  memberCount: {;
     backgroundColor: '#2196F3',
     borderRadius: 12,
     paddingVertical: 4,
@@ -498,12 +544,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-  memberCountText: {
+  memberCountText: {;
     color: 'white',
     fontSize: 14,
     fontWeight: 'bold',
   },
-  sensorCard: {
+  sensorCard: {;
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 15,
@@ -514,55 +560,55 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  sensorHeader: {
+  sensorHeader: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
   },
-  sensorInfo: {
+  sensorInfo: {;
     flex: 1,
   },
-  sensorName: {
+  sensorName: {;
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
   },
-  sensorType: {
+  sensorType: {;
     fontSize: 12,
     color: '#666',
     marginTop: 2,
   },
-  statusIndicator: {
+  statusIndicator: {;
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  activeStatus: {
+  activeStatus: {;
     backgroundColor: '#d4edda',
   },
-  inactiveStatus: {
+  inactiveStatus: {;
     backgroundColor: '#f8d7da',
   },
-  statusText: {
+  statusText: {;
     fontSize: 12,
     fontWeight: '600',
     color: '#333',
   },
-  sensorReading: {
+  sensorReading: {;
     alignItems: 'flex-start',
   },
-  readingValue: {
+  readingValue: {;
     fontSize: 24,
     fontWeight: 'bold',
     color: '#4CAF50',
   },
-  lastUpdated: {
+  lastUpdated: {;
     fontSize: 12,
     color: '#666',
     marginTop: 4,
   },
-  userCard: {
+  userCard: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -576,12 +622,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  userInfo: {
+  userInfo: {;
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  userAvatar: {
+  userAvatar: {;
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -590,61 +636,61 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  userDetails: {
+  userDetails: {;
     flex: 1,
   },
-  userName: {
+  userName: {;
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
   },
-  userEmail: {
+  userEmail: {;
     fontSize: 14,
     color: '#666',
     marginTop: 2,
   },
-  appRoleText: {
+  appRoleText: {;
     fontSize: 12,
     color: '#007bff',
     marginTop: 2,
   },
-  roleContainer: {
+  roleContainer: {;
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 15,
   },
-  roleText: {
+  roleText: {;
     fontSize: 12,
     fontWeight: 'bold',
   },
-  ownerRole: {
+  ownerRole: {;
     backgroundColor: '#ffd700',
     color: '#333',
   },
-  managerRole: {
+  managerRole: {;
     backgroundColor: '#4CAF50',
     color: 'white',
   },
-  viewerRole: {
+  viewerRole: {;
     backgroundColor: '#ddd',
     color: '#333',
   },
-  loadingContainer: {
+  loadingContainer: {;
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
+  loadingText: {;
     fontSize: 16,
     color: '#666',
   },
-  lastSection: {
+  lastSection: {;
     marginBottom: 80, // Add margin to ensure visibility above bottom navigation
   },
-  bottomSpacer: {
+  bottomSpacer: {;
     height: 70, // Height of the bottom navigation
   },
-  noDataCard: {
+  noDataCard: {;
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 20,
@@ -658,29 +704,68 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  noDataTitle: {
+  noDataTitle: {;
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginTop: 10,
   },
-  noDataText: {
+  noDataText: {;
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
     marginTop: 5,
     marginBottom: 15,
   },
-  addSensorButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+  // Farm Notes Section Styles - New addition
+  farmNotesSection: {;
+    marginBottom: 20,
   },
-  addSensorText: {
-    color: 'white',
+  farmNotesHeader: {;
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  farmNotesTitle: {;
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#333',
+    marginLeft: 8,
+  },
+  farmNotesCard: {;
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
+  },
+  farmNotesText: {;
+    fontSize: 15,
+    color: '#333',
+    lineHeight: 22,
+    marginBottom: 12,
+    fontStyle: 'italic',
+  },
+  aiIndicator: {;
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.2)',
+  },
+  aiIndicatorText: {;
+    fontSize: 12,
+    color: '#D32F2F',
+    marginLeft: 6,
+    flex: 1,
+    fontWeight: '500',
   },
 });
 

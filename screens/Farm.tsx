@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, FlatList, Modal } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, FlatList, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, NavigationProp, RouteProp, useRoute } from '@react-navigation/native';
-import { useAuthContext } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 import BottomNavigation from '../components/BottomNavigation';
-import { RootStackParamList } from '../App';
+import { useAuthContext } from '../context/AuthContext';
+import { useDialog } from '../context/DialogContext';
+import { supabase } from '../lib/supabase';
 import { vietnameseProvinces, Province, getProvincesByRegion } from '../lib/vietnameseProvinces';
+import { RootStackParamList } from '../App';
 
 interface Farm {
   id: string;
@@ -31,6 +31,7 @@ const Farm = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<FarmRouteProp>();
   const { session } = useAuthContext();
+  const { showDialog } = useDialog();
 
   const [farmsWithRoles, setFarmsWithRoles] = useState<FarmWithRole[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,12 +95,20 @@ const Farm = () => {
 
   const addFarm = async () => {
     if (!newFarmName.trim() || !selectedProvince) {
-      Alert.alert('Missing Information', 'Please enter farm name and select a province');
+      showDialog({
+        title: 'Missing Information',
+        message: 'Please enter farm name and select a province',
+        buttonText: 'OK',
+      });
       return;
     }
 
     if (!session?.user?.id) {
-      Alert.alert('Error', 'User not authenticated');
+      showDialog({
+        title: 'Error',
+        message: 'User not authenticated',
+        buttonText: 'OK',
+      });
       return;
     }
 
@@ -120,7 +129,11 @@ const Farm = () => {
 
       if (farmError) {
         console.error('Error adding farm:', farmError);
-        Alert.alert('Error', `Failed to add farm: ${farmError.message}`);
+        showDialog({
+          title: 'Error',
+          message: `Failed to add farm: ${farmError.message}`,
+          buttonText: 'OK',
+        });
         return;
       }
 
@@ -131,15 +144,23 @@ const Farm = () => {
           {
             farm_id: farmData.id,
             user_id: session.user.id,
-            farm_role: 'owner'
+            farm_role: 'owner';
           }
         ]);
 
       if (relationError) {
         console.error('Error creating farm relationship:', relationError);
-        Alert.alert('Error', 'Farm created but failed to assign ownership');
+        showDialog({
+          title: 'Error',
+          message: 'Farm created but failed to assign ownership',
+          buttonText: 'OK',
+        });
       } else {
-        Alert.alert('Success', 'Farm added successfully!');
+        showDialog({
+          title: 'Success',
+          message: 'Farm added successfully!',
+          buttonText: 'OK',
+        });
         setNewFarmName('');
         setSelectedProvince(null);
         setShowAddForm(false);
@@ -147,13 +168,17 @@ const Farm = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      Alert.alert('Error', 'An unexpected error occurred');
+      showDialog({
+        title: 'Error',
+        message: 'An unexpected error occurred',
+        buttonText: 'OK',
+      });
     } finally {
       setAddingFarm(false);
     }
   };
 
-  const handleProvinceSelect = (province: Province) => {
+  const handleProvinceSelect = (province: Province) => {;
     setSelectedProvince(province);
     setNewFarmLocation(province.name);
     setShowProvinceModal(false);
@@ -509,14 +534,14 @@ const Farm = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
-  background: {
+  background: {;
     flex: 1,
   },
-  header: {
+  header: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -526,7 +551,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(76, 175, 80, 0.1)',
   },
-  backButton: {
+  backButton: {;
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -539,29 +564,29 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  headerCenter: {
+  headerCenter: {;
     flex: 1,
     alignItems: 'center',
   },
-  headerTitle: {
+  headerTitle: {;
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
-  headerSubtitle: {
+  headerSubtitle: {;
     fontSize: 14,
     color: '#666',
     marginTop: 2,
   },
-  headerRightActions: {
+  headerRightActions: {;
     flexDirection: 'row',
     alignItems: 'center',
   },
-  notificationButton: {
+  notificationButton: {;
     position: 'relative',
     marginRight: 15,
   },
-  notificationBadge: {
+  notificationBadge: {;
     position: 'absolute',
     right: -6,
     top: -6,
@@ -571,12 +596,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     elevation: 2,
   },
-  notificationBadgeText: {
+  notificationBadgeText: {;
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
   },
-  headerAddButton: {
+  headerAddButton: {;
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -589,20 +614,20 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  headerAddButtonActive: {
+  headerAddButtonActive: {;
     backgroundColor: '#FF6B6B',
   },
-  content: {
+  content: {;
     flex: 1,
     paddingHorizontal: 20,
   },
-  addFormContainer: {
+  addFormContainer: {;
     marginTop: 20,
   },
-  addFormContainerExpanded: {
+  addFormContainerExpanded: {;
     marginBottom: 20,
   },
-  addFormToggle: {
+  addFormToggle: {;
     borderRadius: 15,
     overflow: 'hidden',
     elevation: 5,
@@ -611,40 +636,40 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 6,
   },
-  addFormToggleActive: {
+  addFormToggleActive: {;
     elevation: 8,
   },
-  addFormToggleGradient: {
+  addFormToggleGradient: {;
     borderRadius: 15,
   },
-  addFormToggleContent: {
+  addFormToggleContent: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 20,
   },
-  addFormToggleLeft: {
+  addFormToggleLeft: {;
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  addFormToggleIcon: {
+  addFormToggleIcon: {;
     marginRight: 16,
   },
-  addFormToggleTitle: {
+  addFormToggleTitle: {;
     fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
   },
-  addFormToggleSubtitle: {
+  addFormToggleSubtitle: {;
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
     marginTop: 4,
   },
-  addFormContent: {
+  addFormContent: {;
     marginTop: 15,
   },
-  addForm: {
+  addForm: {;
     borderRadius: 15,
     padding: 25,
     elevation: 3,
@@ -653,24 +678,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  addFormTitle: {
+  addFormTitle: {;
     fontSize: 22,
     fontWeight: 'bold',
     color: '#333',
     textAlign: 'center',
     marginBottom: 8,
   },
-  addFormDescription: {
+  addFormDescription: {;
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
     marginBottom: 25,
     lineHeight: 22,
   },
-  inputGroup: {
+  inputGroup: {;
     marginBottom: 20,
   },
-  inputLabel: {
+  inputLabel: {;
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
@@ -678,7 +703,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  textInput: {
+  textInput: {;
     borderWidth: 2,
     borderColor: '#e9ecef',
     borderRadius: 12,
@@ -688,7 +713,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     color: '#333',
   },
-  dropdownInput: {
+  dropdownInput: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -699,20 +724,20 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     backgroundColor: '#fff',
   },
-  dropdownText: {
+  dropdownText: {;
     fontSize: 16,
     color: '#333',
     flex: 1,
   },
-  placeholderText: {
+  placeholderText: {;
     color: '#999',
   },
-  formButtons: {
+  formButtons: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 10,
   },
-  cancelButton: {
+  cancelButton: {;
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
@@ -722,46 +747,46 @@ const styles = StyleSheet.create({
     marginRight: 10,
     alignItems: 'center',
   },
-  cancelButtonText: {
+  cancelButtonText: {;
     color: '#666',
     fontSize: 16,
     fontWeight: '600',
   },
-  submitButton: {
+  submitButton: {;
     flex: 1,
     borderRadius: 12,
     overflow: 'hidden',
     marginLeft: 10,
   },
-  submitButtonGradient: {
+  submitButtonGradient: {;
     paddingVertical: 14,
     alignItems: 'center',
     borderRadius: 12,
   },
-  submitButtonText: {
+  submitButtonText: {;
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  disabledButton: {
+  disabledButton: {;
     opacity: 0.7,
   },
-  farmsSection: {
+  farmsSection: {;
     flex: 1,
     marginBottom: 100,
   },
-  sectionHeaderInline: {
+  sectionHeaderInline: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 15,
   },
-  sectionTitle: {
+  sectionTitle: {;
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
   },
-  farmCountIndicator: {
+  farmCountIndicator: {;
     backgroundColor: '#4CAF50',
     borderRadius: 12,
     paddingVertical: 4,
@@ -769,26 +794,26 @@ const styles = StyleSheet.create({
     minWidth: 24,
     alignItems: 'center',
   },
-  farmCountText: {
+  farmCountText: {;
     color: 'white',
     fontSize: 14,
     fontWeight: 'bold',
   },
-  loadingContainer: {
+  loadingContainer: {;
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 60,
   },
-  loadingText: {
+  loadingText: {;
     fontSize: 16,
     color: '#666',
     marginTop: 15,
   },
-  farmsList: {
+  farmsList: {;
     paddingBottom: 20,
   },
-  farmCard: {
+  farmCard: {;
     marginBottom: 15,
     borderRadius: 15,
     overflow: 'hidden',
@@ -798,74 +823,74 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  farmCardGradient: {
+  farmCardGradient: {;
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
     borderRadius: 15,
   },
-  farmInfo: {
+  farmInfo: {;
     flex: 1,
   },
-  farmName: {
+  farmName: {;
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 6,
   },
-  farmLocation: {
+  farmLocation: {;
     fontSize: 14,
     color: '#666',
     marginBottom: 8,
   },
-  farmMeta: {
+  farmMeta: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  roleContainer: {
+  roleContainer: {;
     backgroundColor: '#e8f5e9',
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  farmRole: {
+  farmRole: {;
     fontSize: 12,
     color: '#4CAF50',
     fontWeight: '600',
   },
-  farmId: {
+  farmId: {;
     fontSize: 12,
     color: '#999',
   },
-  farmActionButton: {
+  farmActionButton: {;
     marginLeft: 15,
   },
-  emptyContainer: {
+  emptyContainer: {;
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 60,
     paddingHorizontal: 30,
   },
-  emptyIconContainer: {
+  emptyIconContainer: {;
     marginBottom: 20,
   },
-  emptyTitle: {
+  emptyTitle: {;
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
     textAlign: 'center',
     marginBottom: 12,
   },
-  emptySubtitle: {
+  emptySubtitle: {;
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 30,
   },
-  createFirstFarmButton: {
+  createFirstFarmButton: {;
     borderRadius: 12,
     overflow: 'hidden',
     elevation: 5,
@@ -874,26 +899,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 6,
   },
-  createFirstFarmButtonGradient: {
+  createFirstFarmButtonGradient: {;
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
   },
-  createFirstFarmButtonText: {
+  createFirstFarmButtonText: {;
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
     marginLeft: 8,
   },
-  modalContainer: {
+  modalContainer: {;
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
-  modalContent: {
+  modalContent: {;
     width: '90%',
     maxWidth: 400,
     maxHeight: '80%',
@@ -906,36 +931,36 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
-  modalHeader: {
+  modalHeader: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 15,
   },
-  modalTitle: {
+  modalTitle: {;
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
   },
-  modalCloseButton: {
+  modalCloseButton: {;
     padding: 8,
     borderRadius: 20,
     backgroundColor: 'rgba(76, 175, 80, 0.1)',
   },
-  provincesList: {
+  provincesList: {;
     paddingBottom: 10,
   },
-  regionSection: {
+  regionSection: {;
     marginBottom: 20,
   },
-  regionTitle: {
+  regionTitle: {;
     fontSize: 16,
     fontWeight: 'bold',
     color: '#4CAF50',
     marginBottom: 10,
     paddingLeft: 5,
   },
-  provinceItem: {
+  provinceItem: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -950,26 +975,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
-  provinceInfo: {
+  provinceInfo: {;
     flex: 1,
   },
-  provinceName: {
+  provinceName: {;
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
   },
-  provinceNameEn: {
+  provinceNameEn: {;
     fontSize: 14,
     color: '#666',
     marginTop: 4,
   },
-  regionBadge: {
+  regionBadge: {;
     backgroundColor: '#e8f5e9',
     borderRadius: 12,
     paddingVertical: 4,
     paddingHorizontal: 10,
   },
-  regionText: {
+  regionText: {;
     fontSize: 12,
     color: '#4CAF50',
     fontWeight: 'bold',

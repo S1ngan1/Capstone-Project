@@ -54,7 +54,7 @@ const UVSimple = () => {
         }
     };
 
-    const getTintColor = (fillValue: number) => {
+    const getTintColor = (fillValue: number) => {;
         if (fillValue >= 0 && fillValue <= 2) {
             return '#28a745';
         } else if (fillValue >= 3 && fillValue <= 5) {
@@ -106,7 +106,7 @@ const UVSimple = () => {
                 lineCap='butt'
             >
                 {
-                    (fill: number) => (
+                    (fill: number) => (;
                         <Text style={styles.progressText}>
                             {currentFill.toFixed(0)}
                         </Text>
@@ -120,7 +120,7 @@ const UVSimple = () => {
 export default UVSimple;
 
 const styles = StyleSheet.create({
-    container: {
+    container: {;
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 15,
@@ -133,29 +133,29 @@ const styles = StyleSheet.create({
         width: '90%',
         elevation: 8,
     },
-    UVText: {
+    UVText: {;
         fontSize: 22,
         fontWeight: 'bold',
         color: 'black',
         marginBottom: 20,
         textAlign: 'left',
-        width: '100%'
+        width: '100%';
     },
-    progressText: {
+    progressText: {;
         fontSize: 28,
         fontWeight: 'bold',
         color: 'black',
     },
-    buttonContainer: {
+    buttonContainer: {;
         marginTop: 30,
     },
-    loadingContainer: {
+    loadingContainer: {;
         justifyContent: 'center',
         alignItems: 'center',
         height: 200,
         width: 200,
     },
-    loadingText: {
+    loadingText: {;
         fontSize: 18,
         fontWeight: '500',
         color: 'black',

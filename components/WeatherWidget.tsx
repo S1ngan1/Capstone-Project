@@ -29,7 +29,8 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
         throw new Error('Invalid location provided');
       }
 
-      const data = await weatherService.getWeatherForFarm(location.trim());
+      // Use the correct method name
+      const data = await weatherService.getWeatherByLocation(location.trim());
       setWeatherData(data);
     } catch (err) {
       console.error('Weather fetch error:', err);
@@ -39,12 +40,12 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string) => {;
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   };
 
-  const getTemperatureColor = (temp: number) => {
+  const getTemperatureColor = (temp: number) => {;
     if (temp >= 35) return '#FF6B6B'; // Hot - Red
     if (temp >= 25) return '#FFA726'; // Warm - Orange
     if (temp >= 15) return '#4CAF50'; // Mild - Green
@@ -98,32 +99,19 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
           style={styles.compactGradient}
         >
           <View style={styles.compactContent}>
-            {/* Weather Icon and Temperature Section */}
-            <View style={styles.compactMainSection}>
-              <View style={styles.compactIconContainer}>
-                <Ionicons name={weatherIcon as any} size={48} color="#1976D2" />
-              </View>
-              <View style={styles.compactTempSection}>
+            {/* Single row layout for better space efficiency */}
+            <View style={styles.compactRow}>
+              <View style={styles.compactIconTemp}>
+                <Ionicons name={weatherIcon as any} size={28} color="#1976D2" />
                 <Text style={[styles.compactTemperature, { color: getTemperatureColor(current.temperature) }]}>
                   {current.temperature}°C
                 </Text>
-                <Text style={styles.compactFeelsLike}>
-                  Feels {current.feelsLike}°C
-                </Text>
               </View>
-            </View>
-
-            {/* Weather Description and Details */}
-            <View style={styles.compactInfoSection}>
-              <Text style={styles.compactDescription}>{weatherDescription}</Text>
-              <View style={styles.compactDetailsRow}>
-                <View style={styles.compactDetailItem}>
-                  <Text style={styles.compactDetailIcon}>💧</Text>
-                  <Text style={styles.compactDetailText}>{current.humidity}%</Text>
-                </View>
-                <View style={styles.compactDetailItem}>
-                  <Text style={styles.compactDetailIcon}>💨</Text>
-                  <Text style={styles.compactDetailText}>{current.windSpeed}km/h</Text>
+              <View style={styles.compactDetails}>
+                <Text style={styles.compactDescription} numberOfLines={1}>{weatherDescription}</Text>
+                <View style={styles.compactDetailsRow}>
+                  <Text style={styles.compactDetailText}>💧{current.humidity}%</Text>
+                  <Text style={styles.compactDetailText}>💨{current.windSpeed}km/h</Text>
                 </View>
               </View>
             </View>
@@ -180,7 +168,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.forecast}>
-          {daily.slice(0, 5).map((day, index) => (
+          {daily.slice(0, 6).map((day, index) => (
             <View key={index} style={styles.forecastDay}>
               <Text style={styles.forecastDate}>
                 {index === 0 ? 'Today' : formatDate(day.date)}
@@ -204,7 +192,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: {;
     borderRadius: 15,
     overflow: 'hidden',
     elevation: 4,
@@ -214,92 +202,93 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     marginVertical: 8,
   },
-  compactContainer: {
-    borderRadius: 16,
+  compactContainer: {;
+    borderRadius: 12,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
     marginVertical: 0,
-    height: 138, // Match exact height of 2x2 sensor grid (65+8+65)
-    width: '100%',
+    minHeight: 140, // Calculated to match 2x2 sensor grid + gaps
+    maxHeight: 140, // Fixed height for consistent alignment
+    flex: 1, // Takes same flex space as sensor side
   },
-  gradient: {
+  gradient: {;
     padding: 16,
   },
-  compactGradient: {
-    padding: 16,
+  compactGradient: {;
+    padding: 12,
     height: '100%',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
   },
-  loadingContainer: {
+  loadingContainer: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 20,
   },
-  loadingText: {
+  loadingText: {;
     marginLeft: 8,
     color: '#1976D2',
     fontSize: 14,
   },
-  errorContainer: {
+  errorContainer: {;
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 20,
   },
-  errorText: {
+  errorText: {;
     marginLeft: 8,
     color: '#D32F2F',
     fontSize: 14,
   },
-  header: {
+  header: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
   },
-  locationContainer: {
+  locationContainer: {;
     flexDirection: 'row',
     alignItems: 'center',
   },
-  location: {
+  location: {;
     marginLeft: 4,
     fontSize: 16,
     fontWeight: '600',
     color: '#1976D2',
   },
-  currentWeather: {
+  currentWeather: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
   },
-  currentLeft: {
+  currentLeft: {;
     alignItems: 'center',
   },
-  currentRight: {
+  currentRight: {;
     alignItems: 'flex-end',
   },
-  temperature: {
+  temperature: {;
     fontSize: 48,
     fontWeight: 'bold',
   },
-  feelsLike: {
+  feelsLike: {;
     fontSize: 14,
     color: '#666',
     marginTop: 4,
   },
-  description: {
+  description: {;
     fontSize: 14,
     color: '#1976D2',
     marginTop: 8,
     textAlign: 'center',
   },
-  details: {
+  details: {;
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: 16,
@@ -307,24 +296,24 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 12,
   },
-  detailItem: {
+  detailItem: {;
     alignItems: 'center',
   },
-  detailText: {
+  detailText: {;
     fontSize: 12,
     color: '#666',
     marginTop: 4,
   },
-  detailValue: {
+  detailValue: {;
     fontSize: 14,
     fontWeight: '600',
     color: '#1976D2',
     marginTop: 2,
   },
-  forecast: {
+  forecast: {;
     marginTop: 8,
   },
-  forecastDay: {
+  forecastDay: {;
     alignItems: 'center',
     marginRight: 16,
     paddingVertical: 8,
@@ -333,97 +322,74 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     minWidth: 70,
   },
-  forecastDate: {
+  forecastDate: {;
     fontSize: 12,
     color: '#666',
     marginBottom: 4,
     textAlign: 'center',
   },
-  forecastHigh: {
+  forecastHigh: {;
     fontSize: 14,
     fontWeight: 'bold',
     color: '#1976D2',
     marginTop: 4,
   },
-  forecastLow: {
+  forecastLow: {;
     fontSize: 12,
     color: '#666',
     marginTop: 2,
   },
-  precipitation: {
+  precipitation: {;
     fontSize: 10,
     color: '#2196F3',
     marginTop: 2,
   },
-  compactContent: {
+  compactContent: {;
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  compactRow: {;
     flexDirection: 'column',
     justifyContent: 'space-between',
     height: '100%',
-    padding: 8,
   },
-  compactMainSection: {
+  compactIconTemp: {;
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    justifyContent: 'center',
+    marginBottom: 8,
   },
-  compactIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  compactDetails: {;
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
   },
-  compactTempSection: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  compactTemperature: {
-    fontSize: 22,
+  compactTemperature: {;
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 2,
+    marginLeft: 8,
     color: '#1976D2',
   },
-  compactFeelsLike: {
+  compactFeelsLike: {;
     fontSize: 12,
     color: '#555',
     fontWeight: '500',
   },
-  compactInfoSection: {
-    paddingTop: 8,
-  },
-  compactDescription: {
-    fontSize: 14,
+  compactDescription: {;
+    fontSize: 13,
     color: '#1976D2',
-    fontWeight: '600',
+    fontWeight: '500',
     marginBottom: 6,
     textAlign: 'center',
   },
-  compactDetailsRow: {
+  compactDetailsRow: {;
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    marginTop: 8,
   },
-  compactDetailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  compactDetailIcon: {
-    fontSize: 14,
-    marginRight: 4,
-  },
-  compactDetailText: {
-    fontSize: 12,
-    color: '#333',
+  compactDetailText: {;
+    fontSize: 11,
+    color: '#555',
     fontWeight: '500',
   },
 });

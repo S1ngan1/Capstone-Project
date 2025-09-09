@@ -26,7 +26,7 @@ const fetchUsers = async () => {
 
     // Then filter in JavaScript
     const users = data?.filter(u => u.role?.trim().toLowerCase() === "user") ?? []
-    
+
     setUsers(users)
   } catch (err) {
   } finally {
@@ -36,7 +36,7 @@ const fetchUsers = async () => {
 }
 
 
-  const handleDeleteUser = async (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {;
     try {
       setLoading(true);
 
@@ -151,7 +151,7 @@ const fetchUsers = async () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#e7fbe8ff' },
-  title: {
+  title: {;
     fontSize: 28,
     fontWeight: 'bold',
     color: '#333',
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     padding: 20,
     textAlign: 'left',
   },
-  gradientContainer: {
+  gradientContainer: {;
     flex: 1,
     margin: 20,
     marginTop: 0,
@@ -171,20 +171,20 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 5,
   },
-  header: {
+  header: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
   },
   subtitle: { fontSize: 18, fontWeight: '600', color: '#333' },
-  refreshButton: {
+  refreshButton: {;
     padding: 8,
     borderRadius: 8,
     backgroundColor: 'rgba(0, 163, 136, 0.1)',
   },
   listContainer: { paddingBottom: 100 },
-  userItem: {
+  userItem: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -199,14 +199,14 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   userInfo: { flex: 1 },
-  userHeader: {
+  userHeader: {;
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 5,
   },
   username: { fontSize: 16, fontWeight: 'bold', color: '#333', flex: 1 },
-  role: {
+  role: {;
     fontSize: 12,
     fontWeight: '600',
     color: '#00A388',
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   userDetail: { fontSize: 14, color: '#666', marginBottom: 2 },
-  deleteButton: {
+  deleteButton: {;
     padding: 10,
     borderRadius: 8,
     backgroundColor: 'rgba(255, 68, 68, 0.1)',
