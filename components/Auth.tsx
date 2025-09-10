@@ -1,9 +1,7 @@
-import { Alert, StyleSheet, Text, TextInput, View, ImageBackground, useWindowDimensions, AppState, Button, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, View, ImageBackground, useWindowDimensions, AppState, Button, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import SignUp from './SignUp'
-
-
 AppState.addEventListener('change', (state) => {
     if (state === 'active') {
       supabase.auth.startAutoRefresh()
@@ -11,27 +9,22 @@ AppState.addEventListener('change', (state) => {
       supabase.auth.stopAutoRefresh()
     }
   })
-
-
 const Auth = () => {
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useWindowDimensions()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [showSignUp, setShowSignUp] = useState(false)
-
   // If signup screen should be shown, render SignUp component
   if (showSignUp) {
     return <SignUp onBackToLogin={() => setShowSignUp(false)} />
   }
-
   async function signInWithEmail() {
     // Validate that email and password are entered
     if (!email.trim() || !password.trim()) {
       Alert.alert('Missing Information', 'Please enter both email and password to sign in.')
       return
     }
-
     setLoading(true)
     const { error } = await supabase.auth.signInWithPassword({
       email: email,
@@ -40,17 +33,14 @@ const Auth = () => {
     if (error) Alert.alert('Sign In Error', error.message)
     setLoading(false)
   }
-
   return (
     <View style={[styles.container, { width, height }]}>
       <ImageBackground source={require('../assets/images/auth/background_login.png')} style={[styles.image, { width, height }]} resizeMode="cover">
         <View style={styles.overlay} />
-
         <View style={styles.header}>
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Sign in to your account</Text>
         </View>
-
         <View style={[styles.verticallySpaced, styles.mt20]}>
           <Text style={styles.label}>Email</Text>
           <TextInput
@@ -62,7 +52,6 @@ const Auth = () => {
             keyboardType="email-address"
           />
         </View>
-
         <View style={styles.verticallySpaced}>
           <Text style={styles.label}>Password</Text>
           <TextInput
@@ -74,7 +63,6 @@ const Auth = () => {
             autoCapitalize="none"
           />
         </View>
-
         <View style={[styles.verticallySpaced, styles.horizontalSpaced]}>
            <TouchableOpacity style={styles.button} onPress={signInWithEmail} disabled={loading}>
                       <Text style={styles.buttonText}>
@@ -82,7 +70,6 @@ const Auth = () => {
                       </Text>
             </TouchableOpacity>
         </View>
-
         <View style={styles.signupSection}>
           <Text style={styles.signupText}>Don't have an account?</Text>
           <TouchableOpacity onPress={() => setShowSignUp(true)}>
@@ -92,88 +79,86 @@ const Auth = () => {
       </ImageBackground>
     </View>
   )
-};
-
-export default Auth;
-
+}
+export default Auth
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     flex: 1,
     justifyContent: 'center',
     maxWidth: 762,
   },
-  image: {;
+  image: {
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
   },
-  overlay: {;
+  overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  header: {;
+  header: {
     alignItems: 'center',
     marginBottom: 30,
   },
-  title: {;
+  title: {
     color: 'white',
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 5,
   },
-  subtitle: {;
+  subtitle: {
     color: 'white',
     fontSize: 16,
     opacity: 0.8,
   },
-  verticallySpaced: {;
+  verticallySpaced: {
     marginVertical: 10,
   },
-  horizontalSpaced: {;
+  horizontalSpaced: {
       marginTop: 20,
       marginHorizontal: 100,
   },
-  button: {;
+  button: {
     backgroundColor: '#7DDA58',
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 25,
   },
-  input: {;
+  input: {
     backgroundColor: 'white',
     marginHorizontal: 30,
     padding: 10,
     borderRadius: 8,
     fontSize: 16,
   },
-  label: {;
+  label: {
     color: 'white',
     marginBottom: 5,
     marginLeft: 30,
     fontSize: 14,
     fontWeight: '500',
   },
-  buttonText: {;
+  buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
   },
-  mt20: {;
+  mt20: {
     marginTop: 20,
   },
-  signupSection: {;
+  signupSection: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 30,
     gap: 5,
   },
-  signupText: {;
+  signupText: {
     color: 'white',
     fontSize: 16,
   },
-  signupLink: {;
+  signupLink: {
     color: '#7DDA58',
     fontSize: 16,
     fontWeight: 'bold',

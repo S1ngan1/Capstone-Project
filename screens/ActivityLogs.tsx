@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   View,
   Text,
@@ -8,121 +8,105 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuthContext } from '../context/AuthContext';
-import { activityLogService, ActivityLog } from '../utils/activityLogService';
-import BottomNavigation from '../components/BottomNavigation';
-
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useAuthContext } from '../context/AuthContext'
+import { activityLogService, ActivityLog } from '../utils/activityLogService'
+import BottomNavigation from '../components/BottomNavigation'
 interface ActivityLogsScreenProps {
-  navigation: any;
+  navigation: any
 }
-
 const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) => {
-  const { user, userRole } = useAuthContext();
-  const [logs, setLogs] = useState<ActivityLog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
+  const { user, userRole } = useAuthContext()
+  const [logs, setLogs] = useState<ActivityLog[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [page, setPage] = useState(1)
   const [filters, setFilters] = useState({
     actionType: '',
     tableName: '',
     userId: '',
-  });
-  const [showFilters, setShowFilters] = useState(false);
-
-  const isAdmin = userRole === 'admin';
-
+  })
+  const [showFilters, setShowFilters] = useState(false)
+  const isAdmin = userRole === 'admin'
   const fetchLogs = useCallback(async (pageNum = 1, reset = false) => {
     try {
       if (reset) {
-        setLoading(true);
+        setLoading(true)
         // Mark activity logs as viewed when user opens the screen
-        await activityLogService.markActivityLogsAsViewed();
+        await activityLogService.markActivityLogsAsViewed()
       }
-
       const { data, count } = await activityLogService.getActivityLogs({
         page: pageNum,
         limit: 20,
         userId: filters.userId || (!isAdmin ? user?.id : undefined),
         actionType: filters.actionType || undefined,
         tableName: filters.tableName || undefined,
-      });
-
+      })
       if (reset) {
-        setLogs(data);
+        setLogs(data)
       } else {
-        setLogs(prev => [...prev, ...data]);
+        setLogs(prev => [...prev, ...data])
       }
-
-      setHasMore(data.length === 20);
-      setPage(pageNum);
+      setHasMore(data.length === 20)
+      setPage(pageNum)
     } catch (error) {
-      console.error('Error fetching activity logs:', error);
-      Alert.alert('Error', 'Failed to fetch activity logs');
+      console.error('Error fetching activity logs:', error)
+      Alert.alert('Error', 'Failed to fetch activity logs')
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setLoading(false)
+      setRefreshing(false)
     }
-  }, [filters, isAdmin, user?.id]);
-
+  }, [filters, isAdmin, user?.id])
   useEffect(() => {
-    fetchLogs(1, true);
-  }, [fetchLogs]);
-
+    fetchLogs(1, true)
+  }, [fetchLogs])
   const handleRefresh = () => {
-    setRefreshing(true);
-    fetchLogs(1, true);
-  };
-
+    setRefreshing(true)
+    fetchLogs(1, true)
+  }
   const handleLoadMore = () => {
     if (!loading && hasMore) {
-      fetchLogs(page + 1, false);
+      fetchLogs(page + 1, false)
     }
-  };
-
+  }
   const applyFilters = () => {
-    setShowFilters(false);
-    fetchLogs(1, true);
-  };
-
+    setShowFilters(false)
+    fetchLogs(1, true)
+  }
   const clearFilters = () => {
-    setFilters({ actionType: '', tableName: '', userId: '' });
-    setShowFilters(false);
-    fetchLogs(1, true);
-  };
-
-  const getActionIcon = (actionType: string) => {;
+    setFilters({ actionType: '', tableName: '', userId: '' })
+    setShowFilters(false)
+    fetchLogs(1, true)
+  }
+  const getActionIcon = (actionType: string) => {
     switch (actionType) {
-      case 'CREATE': return 'add-circle';
-      case 'UPDATE': return 'create';
-      case 'DELETE': return 'trash';
-      case 'REQUEST': return 'paper-plane';
-      case 'APPROVE': return 'checkmark-circle';
-      case 'REJECT': return 'close-circle';
-      default: return 'information-circle';
+      case 'CREATE': return 'add-circle'
+      case 'UPDATE': return 'create'
+      case 'DELETE': return 'trash'
+      case 'REQUEST': return 'paper-plane'
+      case 'APPROVE': return 'checkmark-circle'
+      case 'REJECT': return 'close-circle'
+      default: return 'information-circle'
     }
-  };
-
-  const getActionColor = (actionType: string) => {;
+  }
+  const getActionColor = (actionType: string) => {
     switch (actionType) {
-      case 'CREATE': return '#4CAF50';
-      case 'UPDATE': return '#2196F3';
-      case 'DELETE': return '#f44336';
-      case 'REQUEST': return '#FF9800';
-      case 'APPROVE': return '#4CAF50';
-      case 'REJECT': return '#f44336';
-      default: return '#666';
+      case 'CREATE': return '#4CAF50'
+      case 'UPDATE': return '#2196F3'
+      case 'DELETE': return '#f44336'
+      case 'REQUEST': return '#FF9800'
+      case 'APPROVE': return '#4CAF50'
+      case 'REJECT': return '#f44336'
+      default: return '#666'
     }
-  };
-
-  const formatDate = (dateString: string) => {;
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
+  }
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
   const renderLogItem = ({ item }: { item: ActivityLog }) => (
     <View style={styles.logItem}>
       <View style={styles.logHeader}>
@@ -139,9 +123,7 @@ const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) =
         </View>
         <Text style={styles.timestamp}>{formatDate(item.created_at)}</Text>
       </View>
-
       <Text style={styles.description}>{item.description}</Text>
-
       {isAdmin && (
         <View style={styles.userInfo}>
           <Ionicons name="person" size={16} color="#666" />
@@ -150,19 +132,16 @@ const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) =
           </Text>
         </View>
       )}
-
       {item.record_id && (
         <Text style={styles.recordId}>Record ID: {item.record_id}</Text>
       )}
     </View>
-  );
-
+  )
   const renderFilters = () => (
     <View style={styles.filtersContainer}>
       <Text style={styles.filtersTitle}>Filter Activity Logs</Text>
-
       <View style={styles.filterRow}>
-        <Text style={styles.filterLabel}>Action Type:</Text>;
+        <Text style={styles.filterLabel}>Action Type:</Text>
         <View style={styles.filterOptions}>
           {['', 'CREATE', 'UPDATE', 'DELETE', 'REQUEST', 'APPROVE', 'REJECT'].map(action => (
             <TouchableOpacity
@@ -183,9 +162,8 @@ const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) =
           ))}
         </View>
       </View>
-
       <View style={styles.filterRow}>
-        <Text style={styles.filterLabel}>Table:</Text>;
+        <Text style={styles.filterLabel}>Table:</Text>
         <View style={styles.filterOptions}>
           {['', 'farms', 'farm_requests', 'sensor_requests', 'profiles'].map(table => (
             <TouchableOpacity
@@ -206,7 +184,6 @@ const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) =
           ))}
         </View>
       </View>
-
       <View style={styles.filterButtons}>
         <TouchableOpacity style={styles.clearButton} onPress={clearFilters}>
           <Text style={styles.clearButtonText}>Clear</Text>
@@ -218,17 +195,15 @@ const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) =
         </TouchableOpacity>
       </View>
     </View>
-  );
-
+  )
   const renderFooter = () => {
-    if (!loading || logs.length === 0) return null;
+    if (!loading || logs.length === 0) return null
     return (
       <View style={styles.footer}>
         <ActivityIndicator size="small" color="#4CAF50" />
       </View>
-    );
-  };
-
+    )
+  }
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="document-text-outline" size={64} color="#ccc" />
@@ -240,8 +215,7 @@ const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) =
         }
       </Text>
     </View>
-  );
-
+  )
   return (
     <LinearGradient colors={['#E8F5E8', '#F0F8FF']} style={styles.container}>
       <View style={styles.header}>
@@ -260,9 +234,7 @@ const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) =
           </TouchableOpacity>
         </View>
       </View>
-
       {showFilters && renderFilters()}
-
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
           <Text style={styles.statNumber}>{logs.length}</Text>
@@ -275,7 +247,6 @@ const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) =
           </View>
         )}
       </View>
-
       {loading && logs.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4CAF50" />
@@ -298,17 +269,15 @@ const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) =
           showsVerticalScrollIndicator={false}
         />
       )}
-
       <BottomNavigation />
     </LinearGradient>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     flex: 1,
   },
-  header: {;
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -318,23 +287,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
-  backButton: {;
+  backButton: {
     padding: 8,
   },
-  title: {;
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
   },
-  filterButton: {;
+  filterButton: {
     padding: 8,
   },
-  headerActions: {;
+  headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  filtersContainer: {;
+  filtersContainer: {
     backgroundColor: 'white',
     margin: 20,
     padding: 16,
@@ -345,27 +314,27 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  filtersTitle: {;
+  filtersTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 16,
   },
-  filterRow: {;
+  filterRow: {
     marginBottom: 16,
   },
-  filterLabel: {;
+  filterLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: '#666',
     marginBottom: 8,
   },
-  filterOptions: {;
+  filterOptions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  filterOption: {;
+  filterOption: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -373,23 +342,23 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     backgroundColor: 'white',
   },
-  filterOptionSelected: {;
+  filterOptionSelected: {
     backgroundColor: '#4CAF50',
     borderColor: '#4CAF50',
   },
-  filterOptionText: {;
+  filterOptionText: {
     fontSize: 12,
     color: '#666',
   },
-  filterOptionTextSelected: {;
+  filterOptionTextSelected: {
     color: 'white',
   },
-  filterButtons: {;
+  filterButtons: {
     flexDirection: 'row',
     gap: 12,
     marginTop: 8,
   },
-  clearButton: {;
+  clearButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
@@ -397,24 +366,24 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     alignItems: 'center',
   },
-  clearButtonText: {;
+  clearButtonText: {
     color: '#666',
     fontWeight: '600',
   },
-  applyButton: {;
+  applyButton: {
     flex: 1,
     borderRadius: 8,
     overflow: 'hidden',
   },
-  applyButtonGradient: {;
+  applyButtonGradient: {
     paddingVertical: 12,
     alignItems: 'center',
   },
-  applyButtonText: {;
+  applyButtonText: {
     color: 'white',
     fontWeight: '600',
   },
-  statsContainer: {;
+  statsContainer: {
     flexDirection: 'row',
     backgroundColor: 'white',
     marginHorizontal: 20,
@@ -427,38 +396,38 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  statItem: {;
+  statItem: {
     flex: 1,
     alignItems: 'center',
   },
-  statNumber: {;
+  statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#4CAF50',
   },
-  statLabel: {;
+  statLabel: {
     fontSize: 14,
     color: '#666',
     marginTop: 4,
   },
-  loadingContainer: {;
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {;
+  loadingText: {
     marginTop: 16,
     fontSize: 16,
     color: '#666',
   },
-  list: {;
+  list: {
     flex: 1,
     paddingHorizontal: 20,
   },
-  emptyList: {;
+  emptyList: {
     flexGrow: 1,
   },
-  logItem: {;
+  logItem: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 16,
@@ -469,78 +438,77 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  logHeader: {;
+  logHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
   },
-  actionInfo: {;
+  actionInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  actionDetails: {;
+  actionDetails: {
     gap: 2,
   },
-  actionType: {;
+  actionType: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
   },
-  tableName: {;
+  tableName: {
     fontSize: 12,
     color: '#666',
     textTransform: 'capitalize',
   },
-  timestamp: {;
+  timestamp: {
     fontSize: 12,
     color: '#999',
   },
-  description: {;
+  description: {
     fontSize: 14,
     color: '#333',
     lineHeight: 20,
     marginBottom: 8,
   },
-  userInfo: {;
+  userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     marginBottom: 4,
   },
-  userText: {;
+  userText: {
     fontSize: 12,
     color: '#666',
   },
-  recordId: {;
+  recordId: {
     fontSize: 10,
     color: '#999',
     fontFamily: 'monospace',
   },
-  footer: {;
+  footer: {
     padding: 20,
     alignItems: 'center',
   },
-  emptyContainer: {;
+  emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
   },
-  emptyTitle: {;
+  emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#666',
     marginTop: 16,
   },
-  emptyMessage: {;
+  emptyMessage: {
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 20,
   },
-});
-
-export default ActivityLogsScreen;
+})
+export default ActivityLogsScreen

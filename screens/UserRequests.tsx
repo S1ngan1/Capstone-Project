@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -7,73 +7,62 @@ import {
   FlatList,
   RefreshControl,
   ActivityIndicator,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { useAuthContext } from '../context/AuthContext';
-import { SensorRequest } from '../interfaces/SensorRequest';
-import { FarmRequest } from '../interfaces/FarmRequest';
-import { supabase } from '../lib/supabase';
-import BottomNavigation from '../components/BottomNavigation';
-
-type TabType = 'sensor' | 'farm';
-type FilterStatus = 'all' | 'pending' | 'approved' | 'rejected';
-
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
+import { useAuthContext } from '../context/AuthContext'
+import { SensorRequest } from '../interfaces/SensorRequest'
+import { FarmRequest } from '../interfaces/FarmRequest'
+import { supabase } from '../lib/supabase'
+import BottomNavigation from '../components/BottomNavigation'
+type TabType = 'sensor' | 'farm'
+type FilterStatus = 'all' | 'pending' | 'approved' | 'rejected'
 const UserRequests = () => {
-  const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
-  const { user, session } = useAuthContext();
-
-  const [activeTab, setActiveTab] = useState<TabType>('sensor');
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
-  const [sensorRequests, setSensorRequests] = useState<SensorRequest[]>([]);
-  const [farmRequests, setFarmRequests] = useState<FarmRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
+  const insets = useSafeAreaInsets()
+  const navigation = useNavigation()
+  const { user, session } = useAuthContext()
+  const [activeTab, setActiveTab] = useState<TabType>('sensor')
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
+  const [sensorRequests, setSensorRequests] = useState<SensorRequest[]>([])
+  const [farmRequests, setFarmRequests] = useState<FarmRequest[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   useEffect(() => {
-    console.log('UserRequests: useEffect triggered with user:', user?.id || 'null');
-
+    console.log('UserRequests: useEffect triggered with user:', user?.id || 'null')
     if (user) {
-      fetchData();
+      fetchData()
     } else if (session === null) {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [user, session]);
-
+  }, [user, session])
   const fetchData = async () => {
     if (!user) {
-      setLoading(false);
-      return;
+      setLoading(false)
+      return
     }
-
     try {
-      setLoading(true);
+      setLoading(true)
       await Promise.allSettled([
         fetchSensorRequests(),
         fetchFarmRequests()
-      ]);
+      ])
     } catch (error) {
-      console.error('UserRequests: Error fetching requests:', error);
+      console.error('UserRequests: Error fetching requests:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
+  }
   const fetchSensorRequests = async () => {
-    if (!user?.id) return;
-
+    if (!user?.id) return
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      const userId = authUser?.id || user.id;
-
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const userId = authUser?.id || user.id
       if (!userId) {
-        setSensorRequests([]);
-        return;
+        setSensorRequests([])
+        return
       }
-
       const { data, error } = await supabase
         .from('sensor_requests')
         .select(`
@@ -81,90 +70,75 @@ const UserRequests = () => {
           farms(id, name, location)
         `)
         .eq('requested_by', userId)
-        .order('created_at', { ascending: false });
-
+        .order('created_at', { ascending: false })
       if (error) {
-        console.error('Error fetching sensor requests:', error);
-        setSensorRequests([]);
-        return;
+        console.error('Error fetching sensor requests:', error)
+        setSensorRequests([])
+        return
       }
-
-      setSensorRequests(data || []);
+      setSensorRequests(data || [])
     } catch (error) {
-      console.error('Error fetching sensor requests:', error);
-      setSensorRequests([]);
+      console.error('Error fetching sensor requests:', error)
+      setSensorRequests([])
     }
-  };
-
+  }
   const fetchFarmRequests = async () => {
-    if (!user?.id) return;
-
+    if (!user?.id) return
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      const userId = authUser?.id || user.id;
-
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const userId = authUser?.id || user.id
       if (!userId) {
-        setFarmRequests([]);
-        return;
+        setFarmRequests([])
+        return
       }
-
       const { data, error } = await supabase
         .from('farm_requests')
         .select('*')
         .eq('requested_by', userId)
-        .order('created_at', { ascending: false });
-
+        .order('created_at', { ascending: false })
       if (error) {
-        console.error('Error fetching farm requests:', error);
-        setFarmRequests([]);
-        return;
+        console.error('Error fetching farm requests:', error)
+        setFarmRequests([])
+        return
       }
-
-      setFarmRequests(data || []);
+      setFarmRequests(data || [])
     } catch (error) {
-      console.error('Error fetching farm requests:', error);
-      setFarmRequests([]);
+      console.error('Error fetching farm requests:', error)
+      setFarmRequests([])
     }
-  };
-
+  }
   const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchData();
-    setRefreshing(false);
-  };
-
-  const getStatusColor = (status: string) => {;
+    setRefreshing(true)
+    await fetchData()
+    setRefreshing(false)
+  }
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return '#FF9500';
-      case 'approved': return '#34C759';
-      case 'rejected': return '#FF3B30';
-      case 'installed': return '#007AFF';
-      default: return '#8E8E93';
+      case 'pending': return '#FF9500'
+      case 'approved': return '#34C759'
+      case 'rejected': return '#FF3B30'
+      case 'installed': return '#007AFF'
+      default: return '#8E8E93'
     }
-  };
-
+  }
   const getFilteredSensorRequests = () => {
-    if (filterStatus === 'all') return sensorRequests;
-    return sensorRequests.filter(request => request.status === filterStatus);
-  };
-
+    if (filterStatus === 'all') return sensorRequests
+    return sensorRequests.filter(request => request.status === filterStatus)
+  }
   const getFilteredFarmRequests = () => {
-    if (filterStatus === 'all') return farmRequests;
-    return farmRequests.filter(request => request.status === filterStatus);
-  };
-
+    if (filterStatus === 'all') return farmRequests
+    return farmRequests.filter(request => request.status === filterStatus)
+  }
   const getStatusCounts = () => {
-    const currentRequests = activeTab === 'sensor' ? sensorRequests : farmRequests;
+    const currentRequests = activeTab === 'sensor' ? sensorRequests : farmRequests
     return {
       all: currentRequests.length,
       pending: currentRequests.filter(req => req.status === 'pending').length,
       approved: currentRequests.filter(req => req.status === 'approved').length,
       rejected: currentRequests.filter(req => req.status === 'rejected').length,
-    };
-  };
-
-  const statusCounts = getStatusCounts();
-
+    }
+  }
+  const statusCounts = getStatusCounts()
   const renderTabSelector = () => (
     <View style={styles.tabContainer}>
       <TouchableOpacity
@@ -183,7 +157,6 @@ const UserRequests = () => {
           Sensor Requests
         </Text>
       </TouchableOpacity>
-
       <TouchableOpacity
         style={[styles.tab, activeTab === 'farm' && styles.activeTab]}
         onPress={() => setActiveTab('farm')}
@@ -201,14 +174,12 @@ const UserRequests = () => {
         </Text>
       </TouchableOpacity>
     </View>
-  );
-
+  )
   const renderStatusFilter = () => (
     <View style={styles.filterContainer}>
       {(['all', 'pending', 'approved', 'rejected'] as FilterStatus[]).map((status) => {
-        const count = statusCounts[status];
-        const isActive = filterStatus === status;
-
+        const count = statusCounts[status]
+        const isActive = filterStatus === status
         return (
           <TouchableOpacity
             key={status}
@@ -238,11 +209,10 @@ const UserRequests = () => {
               </View>
             </View>
           </TouchableOpacity>
-        );
+        )
       })}
     </View>
-  );
-
+  )
   const renderSensorRequestItem = ({ item }: { item: SensorRequest }) => (
     <View style={styles.requestCard}>
       <LinearGradient
@@ -264,7 +234,6 @@ const UserRequests = () => {
               <Text style={styles.quantityText}>{item.quantity || 1}x</Text>
             </View>
           </View>
-
           <View style={styles.statusContainer}>
             <View style={[
               styles.statusBadge,
@@ -274,25 +243,21 @@ const UserRequests = () => {
             </View>
           </View>
         </View>
-
         <View style={styles.requestDetails}>
-          <Text style={styles.detailLabel}>Installation Location:</Text>;
+          <Text style={styles.detailLabel}>Installation Location:</Text>
           <Text style={styles.detailText}>{item.installation_location || 'Not specified'}</Text>
-
-          <Text style={styles.detailLabel}>Justification:</Text>;
+          <Text style={styles.detailLabel}>Justification:</Text>
           <Text style={styles.detailText}>{item.justification || 'Not provided'}</Text>
-
-          <Text style={styles.detailLabel}>Requested:</Text>;
+          <Text style={styles.detailLabel}>Requested:</Text>
           <Text style={styles.detailText}>
             {item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Unknown date'}
           </Text>
         </View>
-
         {item.admin_feedback && (
           <View style={styles.feedbackContainer}>
             <Text style={styles.feedbackLabel}>
-              {item.status === 'approved' ? '✅ Admin Approval:' :;
-               item.status === 'rejected' ? '❌ Rejection Reason:' :;
+              {item.status === 'approved' ? '✅ Admin Approval:' :
+               item.status === 'rejected' ? '❌ Rejection Reason:' :
                '💬 Admin Feedback:'}
             </Text>
             <Text style={styles.feedbackText}>{item.admin_feedback}</Text>
@@ -300,8 +265,7 @@ const UserRequests = () => {
         )}
       </LinearGradient>
     </View>
-  );
-
+  )
   const renderFarmRequestItem = ({ item }: { item: FarmRequest }) => (
     <View style={styles.requestCard}>
       <LinearGradient
@@ -316,7 +280,6 @@ const UserRequests = () => {
               <Text style={styles.farmName}>📍 {item.location || 'Unknown Location'}</Text>
             </View>
           </View>
-
           <View style={styles.statusContainer}>
             <View style={[
               styles.statusBadge,
@@ -326,32 +289,27 @@ const UserRequests = () => {
             </View>
           </View>
         </View>
-
         <View style={styles.requestDetails}>
-          <Text style={styles.detailLabel}>Farm Size:</Text>;
+          <Text style={styles.detailLabel}>Farm Size:</Text>
           <Text style={styles.detailText}>{item.farm_size || 'Not specified'} hectares</Text>
-
-          <Text style={styles.detailLabel}>Crop Type:</Text>;
+          <Text style={styles.detailLabel}>Crop Type:</Text>
           <Text style={styles.detailText}>{item.crop_type || 'Not specified'}</Text>
-
           {item.note && (
             <>
-              <Text style={styles.detailLabel}>Note:</Text>;
+              <Text style={styles.detailLabel}>Note:</Text>
               <Text style={styles.detailText}>{item.note}</Text>
             </>
           )}
-
-          <Text style={styles.detailLabel}>Requested:</Text>;
+          <Text style={styles.detailLabel}>Requested:</Text>
           <Text style={styles.detailText}>
             {item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Unknown date'}
           </Text>
         </View>
-
         {item.admin_feedback && (
           <View style={styles.feedbackContainer}>
             <Text style={styles.feedbackLabel}>
-              {item.status === 'approved' ? '✅ Admin Approval:' :;
-               item.status === 'rejected' ? '❌ Rejection Reason:' :;
+              {item.status === 'approved' ? '✅ Admin Approval:' :
+               item.status === 'rejected' ? '❌ Rejection Reason:' :
                '💬 Admin Feedback:'}
             </Text>
             <Text style={styles.feedbackText}>{item.admin_feedback}</Text>
@@ -359,13 +317,11 @@ const UserRequests = () => {
         )}
       </LinearGradient>
     </View>
-  );
-
+  )
   const renderContent = () => {
     const filteredRequests = activeTab === 'sensor'
       ? getFilteredSensorRequests()
-      : getFilteredFarmRequests();
-
+      : getFilteredFarmRequests()
     if (filteredRequests.length === 0) {
       return (
         <View style={styles.emptyContainer}>
@@ -391,9 +347,8 @@ const UserRequests = () => {
             <Text style={styles.goToHomeText}>Go to Home</Text>
           </TouchableOpacity>
         </View>
-      );
+      )
     }
-
     return (
       <FlatList
         data={filteredRequests}
@@ -405,9 +360,8 @@ const UserRequests = () => {
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
       />
-    );
-  };
-
+    )
+  }
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -421,9 +375,8 @@ const UserRequests = () => {
           </View>
         </LinearGradient>
       </View>
-    );
+    )
   }
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
@@ -438,9 +391,7 @@ const UserRequests = () => {
           >
             <Ionicons name="arrow-back" size={24} color="#2E8B57" />
           </TouchableOpacity>
-
           <Text style={styles.headerTitle}>My Requests</Text>
-
           <TouchableOpacity
             style={styles.refreshButton}
             onPress={onRefresh}
@@ -453,7 +404,6 @@ const UserRequests = () => {
             />
           </TouchableOpacity>
         </View>
-
         {/* Content */}
         <View style={styles.content}>
           {renderTabSelector()}
@@ -462,21 +412,19 @@ const UserRequests = () => {
             {renderContent()}
           </View>
         </View>
-
         <BottomNavigation />
       </LinearGradient>
     </View>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     flex: 1,
   },
-  background: {;
+  background: {
     flex: 1,
   },
-  topNavigation: {;
+  topNavigation: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -486,25 +434,25 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(46, 139, 87, 0.2)',
   },
-  backButton: {;
+  backButton: {
     padding: 8,
     borderRadius: 20,
     backgroundColor: 'rgba(46, 139, 87, 0.1)',
   },
-  headerTitle: {;
+  headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#2E8B57',
   },
-  refreshButton: {;
+  refreshButton: {
     padding: 8,
     borderRadius: 20,
     backgroundColor: 'rgba(46, 139, 87, 0.1)',
   },
-  content: {;
+  content: {
     flex: 1,
   },
-  tabContainer: {;
+  tabContainer: {
     flexDirection: 'row',
     marginHorizontal: 20,
     marginTop: 15,
@@ -513,7 +461,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     padding: 5,
   },
-  tab: {;
+  tab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -522,19 +470,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 20,
   },
-  activeTab: {;
+  activeTab: {
     backgroundColor: '#4A90E2',
   },
-  tabText: {;
+  tabText: {
     marginLeft: 8,
     fontSize: 16,
     fontWeight: '600',
     color: '#4A90E2',
   },
-  activeTabText: {;
+  activeTabText: {
     color: 'white',
   },
-  filterContainer: {;
+  filterContainer: {
     flexDirection: 'row',
     marginHorizontal: 20,
     marginBottom: 15,
@@ -542,7 +490,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 5,
   },
-  filterButton: {;
+  filterButton: {
     flex: 1,
     paddingVertical: 8,
     paddingHorizontal: 12,
@@ -550,23 +498,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  activeFilterButton: {;
+  activeFilterButton: {
     backgroundColor: '#4A90E2',
   },
-  filterButtonText: {;
+  filterButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#4A90E2',
   },
-  activeFilterButtonText: {;
+  activeFilterButtonText: {
     color: 'white',
   },
-  filterContent: {;
+  filterContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  countBadge: {;
+  countBadge: {
     minWidth: 24,
     height: 24,
     borderRadius: 12,
@@ -574,73 +522,73 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: 8,
   },
-  activeCountBadge: {;
+  activeCountBadge: {
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#4A90E2',
   },
-  inactiveCountBadge: {;
+  inactiveCountBadge: {
     backgroundColor: '#e0e0e0',
   },
-  countText: {;
+  countText: {
     fontSize: 12,
     fontWeight: '500',
   },
-  activeCountText: {;
+  activeCountText: {
     color: '#4A90E2',
   },
-  inactiveCountText: {;
+  inactiveCountText: {
     color: '#333',
   },
-  listContent: {;
+  listContent: {
     flex: 1,
     paddingHorizontal: 20,
   },
-  listContainer: {;
+  listContainer: {
     paddingBottom: 150,
   },
-  emptyContainer: {;
+  emptyContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 40,
   },
-  emptyText: {;
+  emptyText: {
     fontSize: 18,
     color: '#666',
     textAlign: 'center',
     marginTop: 16,
     marginBottom: 8,
   },
-  emptySubtext: {;
+  emptySubtext: {
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
     marginBottom: 16,
   },
-  goToHomeButton: {;
+  goToHomeButton: {
     marginTop: 16,
     paddingVertical: 12,
     paddingHorizontal: 24,
     backgroundColor: '#4A90E2',
     borderRadius: 25,
   },
-  goToHomeText: {;
+  goToHomeText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
-  loadingContainer: {;
+  loadingContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loadingText: {;
+  loadingText: {
     marginTop: 16,
     fontSize: 16,
     color: '#4A90E2',
   },
-  requestCard: {;
+  requestCard: {
     marginBottom: 15,
     borderRadius: 10,
     overflow: 'hidden',
@@ -650,76 +598,76 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  requestCardGradient: {;
+  requestCardGradient: {
     padding: 15,
     borderRadius: 10,
   },
-  requestHeader: {;
+  requestHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 10,
   },
-  typeHeader: {;
+  typeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  typeInfo: {;
+  typeInfo: {
     marginLeft: 10,
     flex: 1,
   },
-  typeName: {;
+  typeName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
   },
-  farmName: {;
+  farmName: {
     fontSize: 14,
     color: '#666',
     marginTop: 2,
   },
-  quantityBadge: {;
+  quantityBadge: {
     backgroundColor: '#e1f5fe',
     borderRadius: 12,
     paddingVertical: 4,
     paddingHorizontal: 8,
   },
-  quantityText: {;
+  quantityText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#01579b',
   },
-  statusContainer: {;
+  statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  statusBadge: {;
+  statusBadge: {
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 12,
   },
-  statusText: {;
+  statusText: {
     fontSize: 14,
     fontWeight: '500',
     color: 'white',
   },
-  requestDetails: {;
+  requestDetails: {
     marginBottom: 10,
   },
-  detailLabel: {;
+  detailLabel: {
     fontSize: 14,
     fontWeight: '500',
     color: '#333',
     marginBottom: 4,
     marginTop: 8,
   },
-  detailText: {;
+  detailText: {
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
   },
-  feedbackContainer: {;
+  feedbackContainer: {
     marginTop: 10,
     padding: 10,
     borderRadius: 8,
@@ -727,17 +675,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
   },
-  feedbackLabel: {;
+  feedbackLabel: {
     fontSize: 14,
     fontWeight: '500',
     color: '#333',
     marginBottom: 4,
   },
-  feedbackText: {;
+  feedbackText: {
     fontSize: 14,
     color: '#666',
     lineHeight: 18,
   },
-});
-
-export default UserRequests;
+})
+export default UserRequests

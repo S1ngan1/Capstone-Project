@@ -1,13 +1,12 @@
 // Vietnamese provinces data for dropdown selection
 export interface Province {
-  id: string;
-  name: string;
-  nameEn: string;
-  region: string;
-  coordinates?: { lat: number; lon: number };
+  id: string
+  name: string
+  nameEn: string
+  region: string
+  coordinates?: { lat: number; lon: number }
 }
-
-export const vietnameseProvinces: Province[] = [;
+export const vietnameseProvinces: Province[] = [
   // Northern Region
   { id: 'HN', name: 'Hà Nội', nameEn: 'Hanoi', region: 'Northern', coordinates: { lat: 21.0285, lon: 105.8542 } },
   { id: 'HP', name: 'Hải Phòng', nameEn: 'Hai Phong', region: 'Northern', coordinates: { lat: 20.8449, lon: 106.6881 } },
@@ -30,7 +29,6 @@ export const vietnameseProvinces: Province[] = [;
   { id: 'LCH', name: 'Lai Châu', nameEn: 'Lai Chau', region: 'Northern', coordinates: { lat: 22.3964, lon: 103.4591 } },
   { id: 'SL', name: 'Sơn La', nameEn: 'Son La', region: 'Northern', coordinates: { lat: 21.3273, lon: 103.9188 } },
   { id: 'HB', name: 'Hòa Bình', nameEn: 'Hoa Binh', region: 'Northern', coordinates: { lat: 20.8137, lon: 105.3382 } },
-
   // Central Region
   { id: 'TB', name: 'Thái Bình', nameEn: 'Thai Binh', region: 'Central', coordinates: { lat: 20.4463, lon: 106.3365 } },
   { id: 'HNa', name: 'Hà Nam', nameEn: 'Ha Nam', region: 'Central', coordinates: { lat: 20.5835, lon: 105.9230 } },
@@ -55,7 +53,6 @@ export const vietnameseProvinces: Province[] = [;
   { id: 'DL_C', name: 'Đắk Lắk', nameEn: 'Dak Lak', region: 'Central', coordinates: { lat: 12.7100, lon: 108.2378 } },
   { id: 'DNong', name: 'Đắk Nông', nameEn: 'Dak Nong', region: 'Central', coordinates: { lat: 12.2646, lon: 107.6098 } },
   { id: 'LD_C', name: 'Lâm Đồng', nameEn: 'Lam Dong', region: 'Central', coordinates: { lat: 11.5753, lon: 108.1429 } },
-
   // Southern Region
   { id: 'HCM', name: 'Thành phố Hồ Chí Minh', nameEn: 'Ho Chi Minh City', region: 'Southern', coordinates: { lat: 10.8231, lon: 106.6297 } },
   { id: 'BD_S', name: 'Bình Dương', nameEn: 'Binh Duong', region: 'Southern', coordinates: { lat: 11.3254, lon: 106.4772 } },
@@ -76,26 +73,22 @@ export const vietnameseProvinces: Province[] = [;
   { id: 'ST', name: 'Sóc Trăng', nameEn: 'Soc Trang', region: 'Southern', coordinates: { lat: 9.6003, lon: 105.9805 } },
   { id: 'BL', name: 'Bạc Liêu', nameEn: 'Bac Lieu', region: 'Southern', coordinates: { lat: 9.2947, lon: 105.7215 } },
   { id: 'CM', name: 'Cà Mau', nameEn: 'Ca Mau', region: 'Southern', coordinates: { lat: 9.1768, lon: 105.1524 } },
-];
-
+]
 // Helper function to get province by name
-export const getProvinceByName = (name: string): Province | undefined => {;
+export const getProvinceByName = (name: string): Province | undefined => {
   return vietnameseProvinces.find(province =>
     province.name === name || province.nameEn === name
-  );
-};
-
+  )
+}
 // Helper function to get province coordinates
 export const getProvinceCoordinates = (provinceName: string): { lat: number; lon: number } | null => {
-  const province = getProvinceByName(provinceName);
-  return province?.coordinates || null;
-};
-
+  const province = getProvinceByName(provinceName)
+  return province?.coordinates || null
+}
 // Helper function to get provinces by region
-export const getProvincesByRegion = (region: string): Province[] => {;
-  return vietnameseProvinces.filter(province => province.region === region);
-};
-
+export const getProvincesByRegion = (region: string): Province[] => {
+  return vietnameseProvinces.filter(province => province.region === region)
+}
 // Export regions list
-export const vietnameseRegions = ['Northern', 'Central', 'Southern'] as const;
-export type VietnameseRegion = typeof vietnameseRegions[number];
+export const vietnameseRegions = ['Northern', 'Central', 'Southern'] as const
+export type VietnameseRegion = typeof vietnameseRegions[number]

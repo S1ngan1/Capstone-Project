@@ -4,10 +4,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, StyleSheet, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-
 import { AuthProvider, useAuthContext } from './context/AuthContext';
 import { DialogProvider } from './context/DialogContext';
-
 import Home from './screens/Home';
 import Settings from './screens/Settings';
 import Auth from './components/Auth';
@@ -23,7 +21,6 @@ import AdminSensorRequests from './screens/AdminSensorRequests';
 import UserSensorRequests from './screens/UserSensorRequests';
 import UserRequests from './screens/UserRequests';
 import ActivityLogs from './screens/ActivityLogs';
-
 export type RootStackParamList = {
     Auth: undefined;
     Onboarding: undefined;
@@ -41,18 +38,14 @@ export type RootStackParamList = {
     UserRequests: undefined;
     ActivityLogs: undefined;
 };
-
 const Stack = createStackNavigator<RootStackParamList>();
-
 // Main app component that uses the AuthContext
 const AppContent = () => {
     const { session } = useAuthContext();
     const [showOnboarding, setShowOnboarding] = useState(true);
-
     if (showOnboarding && !session) {
         return <Onboarding onFinish={() => setShowOnboarding(false)} />;
     }
-
     return (
         <SafeAreaProvider>
             <NavigationContainer>
@@ -81,7 +74,6 @@ const AppContent = () => {
         </SafeAreaProvider>
     );
 };
-
 // Root app component that provides the AuthContext
 export default function App() {
     return (

@@ -1,28 +1,25 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-
+import React from 'react'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 // Added support for notification levels
 interface NotiPieceProps {
-  content: string;
-  time: string;
-  level: 'urgent' | 'warning' | 'normal';
-  onPress?: () => void;
-  onMorePress?: () => void;
+  content: string
+  time: string
+  level: 'urgent' | 'warning' | 'normal'
+  onPress?: () => void
+  onMorePress?: () => void
 }
-
 const NotiPiece: React.FC<NotiPieceProps> = ({ content, time, level, onPress, onMorePress }) => {
   const getIconForLevel = () => {
     switch (level) {
       case 'urgent':
-        return '⚠️';
+        return '⚠️'
       case 'warning':
-        return '⚡';
+        return '⚡'
       case 'normal':
       default:
-        return 'ℹ️';
+        return 'ℹ️'
     }
-  };
-
+  }
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
       <Text style={styles.levelIcon}>{getIconForLevel()}</Text>
@@ -34,11 +31,10 @@ const NotiPiece: React.FC<NotiPieceProps> = ({ content, time, level, onPress, on
         <Text style={styles.moreIcon}>•••</Text>
       </TouchableOpacity>
     </TouchableOpacity>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
@@ -47,33 +43,32 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: '#f0f0f0',
   },
-  levelIcon: {;
+  levelIcon: {
     fontSize: 18,
     marginRight: 8,
   },
-  contentContainer: {;
+  contentContainer: {
     flex: 1,
     marginLeft: 0,
     marginRight: 10,
   },
-  contentText: {;
+  contentText: {
     color: '#333',
     fontSize: 14,
     lineHeight: 18,
   },
-  timeText: {;
+  timeText: {
     color: '#1a73e8',
     fontSize: 11,
     marginTop: 4,
   },
-  moreIconContainer: {;
+  moreIconContainer: {
     padding: 5,
   },
-  moreIcon: {;
+  moreIcon: {
     fontSize: 18,
     color: '#888',
     fontWeight: 'bold',
   },
-});
-
-export default NotiPiece;
+})
+export default NotiPiece

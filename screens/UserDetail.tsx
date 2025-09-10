@@ -1,74 +1,62 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { useAuthContext } from '../context/AuthContext';
-import { useDialog } from '../context/DialogContext';
-import { supabase } from '../lib/supabase';
-import BottomNavigation from '../components/BottomNavigation';
-
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'
+import { useAuthContext } from '../context/AuthContext'
+import { useDialog } from '../context/DialogContext'
+import { supabase } from '../lib/supabase'
+import BottomNavigation from '../components/BottomNavigation'
 // Types
 interface UserProfile {
-  id: string;
-  username: string;
-  email: string;
-  role: 'admin' | 'normal_user' | 'data_manager';
-  created_at: string;
+  id: string
+  username: string
+  email: string
+  role: 'admin' | 'normal_user' | 'data_manager'
+  created_at: string
 }
-
 interface UserFarmRole {
-  id: string;
-  farm_id: string;
-  farm_role: string;
-  farms: {;
-    name: string;
-    location: string;
-  };
+  id: string
+  farm_id: string
+  farm_role: string
+  farms: {
+    name: string
+    location: string
+  }
 }
-
 type RootStackParamList = {
-  UserDetail: { userId: string };
-};
-
-type UserDetailRouteProp = RouteProp<RootStackParamList, 'UserDetail'>;
-
+  UserDetail: { userId: string }
+}
+type UserDetailRouteProp = RouteProp<RootStackParamList, 'UserDetail'>
 const UserDetail = () => {
-  const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
-  const route = useRoute<UserDetailRouteProp>();
-  const { session } = useAuthContext();
-  const { userId } = route.params;
-
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [userFarms, setUserFarms] = useState<UserFarmRole[]>([]);
-  const [loading, setLoading] = useState(true);
-
+  const insets = useSafeAreaInsets()
+  const navigation = useNavigation()
+  const route = useRoute<UserDetailRouteProp>()
+  const { session } = useAuthContext()
+  const { userId } = route.params
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [userFarms, setUserFarms] = useState<UserFarmRole[]>([])
+  const [loading, setLoading] = useState(true)
   useEffect(() => {
-    fetchUserDetails();
-  }, [userId]);
-
+    fetchUserDetails()
+  }, [userId])
   const fetchUserDetails = async () => {
     if (!userId) {
-      setLoading(false);
-      return;
+      setLoading(false)
+      return
     }
-
     try {
-      setLoading(true);
-
+      setLoading(true)
       // Fetch user profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, username, email, role, created_at')
         .eq('id', userId)
-        .single();
-
+        .single()
       if (!profileError && profileData) {
-        setUserProfile(profileData);
+        setUserProfile(profileData)
       }
-
       // Fetch user's farm roles
       const { data: farmsData, error: farmsError } = await supabase
         .from('farm_users')
@@ -81,48 +69,43 @@ const UserDetail = () => {
             location
           )
         `)
-        .eq('user_id', userId);
-
+        .eq('user_id', userId)
       if (!farmsError && farmsData) {
-        setUserFarms(farmsData);
+        setUserFarms(farmsData)
       }
     } catch (error) {
-      console.error('Error fetching user details:', error);
+      console.error('Error fetching user details:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
-  const getApplicationRoleStyle = (role: string) => {;
+  }
+  const getApplicationRoleStyle = (role: string) => {
     switch (role) {
       case 'admin':
-        return { backgroundColor: '#dc3545', color: 'white' };
+        return { backgroundColor: '#dc3545', color: 'white' }
       case 'data_manager':
-        return { backgroundColor: '#007bff', color: 'white' };
+        return { backgroundColor: '#007bff', color: 'white' }
       default:
-        return { backgroundColor: '#28a745', color: 'white' };
+        return { backgroundColor: '#28a745', color: 'white' }
     }
-  };
-
-  const getFarmRoleStyle = (farmRole: string) => {;
+  }
+  const getFarmRoleStyle = (farmRole: string) => {
     switch (farmRole) {
       case 'owner':
-        return { backgroundColor: '#ffd700', color: '#333' };
+        return { backgroundColor: '#ffd700', color: '#333' }
       case 'manager':
-        return { backgroundColor: '#4CAF50', color: 'white' };
+        return { backgroundColor: '#4CAF50', color: 'white' }
       default:
-        return { backgroundColor: '#ddd', color: '#333' };
+        return { backgroundColor: '#ddd', color: '#333' }
     }
-  };
-
-  const formatDate = (dateString: string) => {;
+  }
+  const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric';
-    });
-  };
-
+      day: 'numeric',
+    })
+  }
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -137,9 +120,8 @@ const UserDetail = () => {
           </View>
         </LinearGradient>
       </View>
-    );
+    )
   }
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
@@ -159,7 +141,6 @@ const UserDetail = () => {
           <Text style={styles.headerTitle}>User Details</Text>
           <View style={styles.placeholder} />
         </View>
-
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* User Profile Section */}
           <View style={styles.section}>
@@ -178,7 +159,6 @@ const UserDetail = () => {
               </View>
             </View>
           </View>
-
           {/* User Information */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>User Information</Text>
@@ -190,7 +170,6 @@ const UserDetail = () => {
                   <Text style={styles.infoValue}>{userProfile?.username}</Text>
                 </View>
               </View>
-
               <View style={styles.infoRow}>
                 <Ionicons name="mail-outline" size={20} color="#666" />
                 <View style={styles.infoContent}>
@@ -198,7 +177,6 @@ const UserDetail = () => {
                   <Text style={styles.infoValue}>{userProfile?.email}</Text>
                 </View>
               </View>
-
               <View style={styles.infoRow}>
                 <Ionicons name="shield-outline" size={20} color="#666" />
                 <View style={styles.infoContent}>
@@ -208,7 +186,6 @@ const UserDetail = () => {
                   </Text>
                 </View>
               </View>
-
               <View style={styles.infoRow}>
                 <Ionicons name="calendar-outline" size={20} color="#666" />
                 <View style={styles.infoContent}>
@@ -220,7 +197,6 @@ const UserDetail = () => {
               </View>
             </View>
           </View>
-
           {/* Farm Roles Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
@@ -247,26 +223,23 @@ const UserDetail = () => {
               </View>
             )}
           </View>
-
           {/* Bottom spacer */}
           <View style={styles.bottomSpacer} />
         </ScrollView>
-
         <BottomNavigation />
       </LinearGradient>
     </View>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     flex: 1,
   },
-  background: {;
+  background: {
     flex: 1,
     paddingBottom: 70,
   },
-  header: {;
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -276,31 +249,31 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
-  backButton: {;
+  backButton: {
     padding: 5,
   },
-  headerTitle: {;
+  headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
-  placeholder: {;
+  placeholder: {
     width: 34,
   },
-  content: {;
+  content: {
     flex: 1,
     paddingHorizontal: 20,
   },
-  section: {;
+  section: {
     marginVertical: 15,
   },
-  sectionTitle: {;
+  sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
   },
-  profileHeader: {;
+  profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
@@ -312,7 +285,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  userAvatar: {;
+  userAvatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
@@ -321,31 +294,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 20,
   },
-  userInfo: {;
+  userInfo: {
     flex: 1,
   },
-  userName: {;
+  userName: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
   },
-  userEmail: {;
+  userEmail: {
     fontSize: 16,
     color: '#666',
     marginBottom: 8,
   },
-  roleContainer: {;
+  roleContainer: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 15,
     alignSelf: 'flex-start',
   },
-  roleText: {;
+  roleText: {
     fontSize: 12,
     fontWeight: 'bold',
   },
-  infoCard: {;
+  infoCard: {
     backgroundColor: 'white',
     borderRadius: 15,
     padding: 20,
@@ -355,28 +328,28 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  infoRow: {;
+  infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  infoContent: {;
+  infoContent: {
     marginLeft: 15,
     flex: 1,
   },
-  infoLabel: {;
+  infoLabel: {
     fontSize: 14,
     color: '#666',
     marginBottom: 2,
   },
-  infoValue: {;
+  infoValue: {
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
   },
-  farmCard: {;
+  farmCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -390,51 +363,50 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  farmInfo: {;
+  farmInfo: {
     flex: 1,
   },
-  farmName: {;
+  farmName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
   },
-  farmLocation: {;
+  farmLocation: {
     fontSize: 14,
     color: '#666',
   },
-  farmRoleContainer: {;
+  farmRoleContainer: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 15,
   },
-  farmRoleText: {;
+  farmRoleText: {
     fontSize: 12,
     fontWeight: 'bold',
   },
-  emptyContainer: {;
+  emptyContainer: {
     alignItems: 'center',
     padding: 40,
     backgroundColor: 'white',
     borderRadius: 12,
   },
-  emptyText: {;
+  emptyText: {
     fontSize: 16,
     color: '#666',
     marginTop: 10,
   },
-  loadingContainer: {;
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {;
+  loadingText: {
     fontSize: 16,
     color: '#666',
   },
-  bottomSpacer: {;
+  bottomSpacer: {
     height: 70,
   },
-});
-
-export default UserDetail;
+})
+export default UserDetail

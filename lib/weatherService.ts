@@ -1,60 +1,52 @@
 // Weather service using Open Meteo API
-import { getProvinceCoordinates } from './vietnameseProvinces';
-
+import { getProvinceCoordinates } from './vietnameseProvinces'
 export interface WeatherData {
-  current: {;
-    temperature: number;
-    weatherCode: number;
-    windSpeed: number;
-    humidity: number;
-    feelsLike?: number;
-  };
-  daily: {;
-    date: string;
-    temperature: {;
-      max: number;
-      min: number;
-    };
-    weatherCode: number;
-    precipitation?: number;
-  }[];
-  location?: string;
+  current: {
+    temperature: number
+    weatherCode: number
+    windSpeed: number
+    humidity: number
+    feelsLike?: number
+  }
+  daily: {
+    date: string
+    temperature: {
+      max: number
+      min: number
+    }
+    weatherCode: number
+    precipitation?: number
+  }[]
+  location?: string
 }
-
 export interface LocationCoordinates {
-  latitude: number;
-  longitude: number;
-  name?: string;
+  latitude: number
+  longitude: number
+  name?: string
 }
-
 class WeatherService {
-  private readonly baseUrl = 'https://api.open-meteo.com/v1';
-
-  async getCurrentWeather(coordinates: LocationCoordinates): Promise<WeatherData> {;
+  private readonly baseUrl = 'https://api.open-meteo.com/v1'
+  async getCurrentWeather(coordinates: LocationCoordinates): Promise<WeatherData> {
     try {
-      const { latitude, longitude } = coordinates;
-
+      const { latitude, longitude } = coordinates
       const response = await fetch(
         `${this.baseUrl}/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum&timezone=auto&forecast_days=7`
-      );
-
+      )
       if (!response.ok) {
-        throw new Error(`Weather API error: ${response.status}`);
+        throw new Error(`Weather API error: ${response.status}`)
       }
-
-      const data = await response.json();
-
+      const data = await response.json()
       return {
-        current: {;
+        current: {
           temperature: Math.round(data.current.temperature_2m || 0),
           weatherCode: data.current.weather_code || 0,
           windSpeed: Math.round(data.current.wind_speed_10m || 0),
           humidity: Math.round(data.current.relative_humidity_2m || 0),
           feelsLike: Math.round(data.current.apparent_temperature || data.current.temperature_2m || 0),
         },
-        daily: data.daily.time.map((date: string, index: number) => ({;
+        daily: data.daily.time.map((date: string, index: number) => ({
           date,
-          temperature: {;
+          temperature: {
             max: Math.round(data.daily.temperature_2m_max[index] || 0),
             min: Math.round(data.daily.temperature_2m_min[index] || 0),
           },
@@ -62,86 +54,76 @@ class WeatherService {
           precipitation: Math.round((data.daily.precipitation_sum[index] || 0) * 10) / 10,
         })),
         location: coordinates.name,
-      };
+      }
     } catch (error) {
-      console.error('Weather API error:', error);
-      throw error;
+      console.error('Weather API error:', error)
+      throw error
     }
   }
-
-  async getWeatherByLocation(locationName: string): Promise<WeatherData> {;
+  async getWeatherByLocation(locationName: string): Promise<WeatherData> {
     try {
-      const coordinates = await this.getLocationCoordinates(locationName);
+      const coordinates = await this.getLocationCoordinates(locationName)
       return await this.getCurrentWeather({
         ...coordinates,
         name: locationName,
-      });
+      })
     } catch (error) {
-      console.error(`Error getting weather for location "${locationName}":`, error);
-      throw error;
+      console.error(`Error getting weather for location "${locationName}":`, error)
+      throw error
     }
   }
-
-  async getLocationCoordinates(locationName: string): Promise<LocationCoordinates> {;
+  async getLocationCoordinates(locationName: string): Promise<LocationCoordinates> {
     try {
       // First, try to get coordinates from Vietnamese provinces data
-      const provinceCoords = getProvinceCoordinates(locationName);
+      const provinceCoords = getProvinceCoordinates(locationName)
       if (provinceCoords) {
         return {
           latitude: provinceCoords.lat,
           longitude: provinceCoords.lon,
           name: locationName,
-        };
+        }
       }
-
       // If not found in provinces, try geocoding API
       const geocodeResponse = await fetch(
         `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locationName)}&count=1&language=en&format=json`
-      );
-
+      )
       if (!geocodeResponse.ok) {
-        throw new Error(`Geocoding API error: ${geocodeResponse.status}`);
+        throw new Error(`Geocoding API error: ${geocodeResponse.status}`)
       }
-
-      const geocodeData = await geocodeResponse.json();
-
+      const geocodeData = await geocodeResponse.json()
       if (!geocodeData.results || geocodeData.results.length === 0) {
         // If geocoding fails, try with English name if it's a Vietnamese province
-        const englishName = this.getEnglishLocationName(locationName);
+        const englishName = this.getEnglishLocationName(locationName)
         if (englishName && englishName !== locationName) {
           const englishResponse = await fetch(
             `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(englishName)}&count=1&language=en&format=json`
-          );
-
+          )
           if (englishResponse.ok) {
-            const englishData = await englishResponse.json();
+            const englishData = await englishResponse.json()
             if (englishData.results && englishData.results.length > 0) {
-              const result = englishData.results[0];
+              const result = englishData.results[0]
               return {
                 latitude: result.latitude,
                 longitude: result.longitude,
                 name: locationName,
-              };
+              }
             }
           }
         }
-
-        throw new Error(`Location not found: ${locationName}`);
+        throw new Error(`Location not found: ${locationName}`)
       }
-
-      const result = geocodeData.results[0];
+      const result = geocodeData.results[0]
       return {
         latitude: result.latitude,
         longitude: result.longitude,
         name: locationName,
-      };
+      }
     } catch (error) {
-      console.error('Error fetching location coordinates:', error);
-      throw error;
+      console.error('Error fetching location coordinates:', error)
+      throw error
     }
   }
-
-  private getEnglishLocationName(vietnameseName: string): string | null {;
+  private getEnglishLocationName(vietnameseName: string): string | null {
     // Map common Vietnamese location names to English
     const nameMap: { [key: string]: string } = {
       'Thành phố Hồ Chí Minh': 'Ho Chi Minh City',
@@ -164,12 +146,10 @@ class WeatherService {
       'Rạch Giá': 'Rach Gia',
       'Cà Mau': 'Ca Mau',
       'Vinh': 'Vinh',
-    };
-
-    return nameMap[vietnameseName] || null;
+    }
+    return nameMap[vietnameseName] || null
   }
-
-  getWeatherDescription(weatherCode: number): string {;
+  getWeatherDescription(weatherCode: number): string {
     const weatherCodes: { [key: number]: string } = {
       0: 'Clear sky',
       1: 'Mainly clear',
@@ -199,12 +179,10 @@ class WeatherService {
       95: 'Thunderstorm',
       96: 'Thunderstorm with slight hail',
       99: 'Thunderstorm with heavy hail',
-    };
-
-    return weatherCodes[weatherCode] || 'Unknown';
+    }
+    return weatherCodes[weatherCode] || 'Unknown'
   }
-
-  getWeatherIcon(weatherCode: number, isDay: boolean = true): string {;
+  getWeatherIcon(weatherCode: number, isDay: boolean = true): string {
     // Map weather codes to valid Ionicons
     const iconMap: { [key: number]: { day: string; night: string } } = {
       0: { day: 'sunny-outline', night: 'moon-outline' },
@@ -235,27 +213,23 @@ class WeatherService {
       95: { day: 'thunderstorm-outline', night: 'thunderstorm-outline' },
       96: { day: 'thunderstorm-outline', night: 'thunderstorm-outline' },
       99: { day: 'thunderstorm-outline', night: 'thunderstorm-outline' },
-    };
-
-    const icons = iconMap[weatherCode] || { day: 'sunny-outline', night: 'moon-outline' };
-    return isDay ? icons.day : icons.night;
+    }
+    const icons = iconMap[weatherCode] || { day: 'sunny-outline', night: 'moon-outline' }
+    return isDay ? icons.day : icons.night
   }
-
   // Add the missing getWeatherForFarm function
-  async getWeatherForFarm(farmLocation: string): Promise<WeatherData | null> {;
+  async getWeatherForFarm(farmLocation: string): Promise<WeatherData | null> {
     try {
       if (!farmLocation) {
-        console.warn('No farm location provided');
-        return null;
+        console.warn('No farm location provided')
+        return null
       }
-
-      return await this.getWeatherByLocation(farmLocation);
+      return await this.getWeatherByLocation(farmLocation)
     } catch (error) {
-      console.error(`Error getting weather for farm location "${farmLocation}":`, error);
-      return null;
+      console.error(`Error getting weather for farm location "${farmLocation}":`, error)
+      return null
     }
   }
 }
-
-export const weatherService = new WeatherService();
-export default weatherService;
+export const weatherService = new WeatherService()
+export default weatherService

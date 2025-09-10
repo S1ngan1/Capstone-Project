@@ -1,78 +1,71 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, ActivityIndicator, TextInput, Alert, Modal } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, NavigationProp } from "@react-navigation/native";
-import BottomNavigation from '../components/BottomNavigation';
-import WeatherWidget from '../components/WeatherWidget';
-import CreateFarmRequest from '../components/CreateFarmRequest';
-import { useAuthContext } from '../context/AuthContext';
-import { useFarmRequests } from '../hooks/useFarmRequests';
-import { supabase } from '../lib/supabase';
-import { RootStackParamList } from '../App';
-import { activityLogService } from '../utils/activityLogService';
-
+import React, { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, ActivityIndicator, TextInput, Alert, Modal } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useNavigation, NavigationProp } from "@react-navigation/native"
+import BottomNavigation from '../components/BottomNavigation'
+import WeatherWidget from '../components/WeatherWidget'
+import CreateFarmRequest from '../components/CreateFarmRequest'
+import { useAuthContext } from '../context/AuthContext'
+import { useFarmRequests } from '../hooks/useFarmRequests'
+import { supabase } from '../lib/supabase'
+import { RootStackParamList } from '../App'
+import { activityLogService } from '../utils/activityLogService'
 interface Farm {
-    id: string;
-    name: string;
-    location?: string;
-    address?: string; // Add address field
+    id: string
+    name: string
+    location?: string
+    address?: string // Add address field
 }
-
 interface FarmWithRole {
-    id: string;
-    farm_id: string;
-    user_id: string;
-    farm_role: string;
-    farms: Farm;
+    id: string
+    farm_id: string
+    user_id: string
+    farm_role: string
+    farms: Farm
 }
-
 interface SensorData {
-    type: string;
-    value: number;
-    unit: string;
-    status: 'normal' | 'warning' | 'critical';
-    icon: string;
-    name: string;
-    hasSensor: boolean; // New field to track if sensor exists
-    hasData: boolean;   // New field to track if data exists
+    type: string
+    value: number
+    unit: string
+    status: 'normal' | 'warning' | 'critical'
+    icon: string
+    name: string
+    hasSensor: boolean // New field to track if sensor exists
+    hasData: boolean   // New field to track if data exists
 }
-
 // Separate component for farm cards to properly handle hooks
-const FarmCard: React.FC<{;
-    item: FarmWithRole;
-    navigation: any;
-    onFetchSensorData: (farmId: string) => Promise<SensorData[]>;
+const FarmCard: React.FC<{
+    item: FarmWithRole
+    navigation: any
+    onFetchSensorData: (farmId: string) => Promise<SensorData[]>
 }> = ({ item, navigation, onFetchSensorData }) => {
-    const [farmSensorData, setFarmSensorData] = useState<SensorData[]>([]);
-    const [sensorLoading, setSensorLoading] = useState(true);
-
+    const [farmSensorData, setFarmSensorData] = useState<SensorData[]>([])
+    const [sensorLoading, setSensorLoading] = useState(true)
     useEffect(() => {
         const loadSensorData = async () => {
-            setSensorLoading(true);
+            setSensorLoading(true)
             try {
-                const data = await onFetchSensorData(item.farm_id);
-                setFarmSensorData(data);
+                const data = await onFetchSensorData(item.farm_id)
+                setFarmSensorData(data)
             } catch (error) {
-                console.error('Error loading sensor data:', error);
-                setFarmSensorData([]);
+                console.error('Error loading sensor data:', error)
+                setFarmSensorData([])
             } finally {
-                setSensorLoading(false);
+                setSensorLoading(false)
             }
-        };
-        loadSensorData();
-    }, [item.farm_id, onFetchSensorData]);
-
-    const getStatusColor = (status: string): string => {;
-        switch (status) {
-            case 'normal': return '#4CAF50';
-            case 'warning': return '#FF9800';
-            case 'critical': return '#F44336';
-            default: return '#666';
         }
-    };
-
-    const renderSensorPanel = (sensor: SensorData) => (;
+        loadSensorData()
+    }, [item.farm_id, onFetchSensorData])
+    const getStatusColor = (status: string): string => {
+        switch (status) {
+            case 'normal': return '#4CAF50'
+            case 'warning': return '#FF9800'
+            case 'critical': return '#F44336'
+            default: return '#666'
+        }
+    }
+    const renderSensorPanel = (sensor: SensorData) => (
         <View key={sensor.type} style={styles.sensorPanel}>
             <View style={styles.sensorContent}>
                 <View style={styles.sensorIconValue}>
@@ -88,8 +81,7 @@ const FarmCard: React.FC<{;
                 <View style={[styles.statusDot, { backgroundColor: getStatusColor(sensor.status) }]} />
             )}
         </View>
-    );
-
+    )
     return (
         <TouchableOpacity
             style={styles.farmCard}
@@ -112,7 +104,6 @@ const FarmCard: React.FC<{;
                     </View>
                     <Ionicons name="chevron-forward" size={24} color="#666" />
                 </View>
-
                 {/* Weather Widget and Sensor Data - Side by Side Layout */}
                 <View style={styles.dataContainer}>
                     {/* Weather Widget - Left Side */}
@@ -125,7 +116,6 @@ const FarmCard: React.FC<{;
                             />
                         </View>
                     )}
-
                     {/* Sensor Data Grid - Right Side */}
                     <View style={styles.sensorSide}>
                         <Text style={styles.sensorSectionTitle}>📊 Sensors</Text>
@@ -143,21 +133,18 @@ const FarmCard: React.FC<{;
                 </View>
             </LinearGradient>
         </TouchableOpacity>
-    );
-};
-
+    )
+}
 const Home = () => {
-    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-    const { user, userRole } = useAuthContext();
-    const { session } = useAuthContext();
-    const { userRole: farmUserRole, fetchUserRole } = useFarmRequests();
-    const [username, setUsername] = useState<string>("");
-    const [farmsWithRoles, setFarmsWithRoles] = useState<FarmWithRole[]>([]);
-    const [loading, setLoading] = useState(true);
-
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>()
+    const { user, userRole } = useAuthContext()
+    const { session } = useAuthContext()
+    const { userRole: farmUserRole, fetchUserRole } = useFarmRequests()
+    const [username, setUsername] = useState<string>("")
+    const [farmsWithRoles, setFarmsWithRoles] = useState<FarmWithRole[]>([])
+    const [loading, setLoading] = useState(true)
     // Only keep Farm Request Modal (remove redundant user requests modal)
-    const [showFarmRequestModal, setShowFarmRequestModal] = useState(false);
-
+    const [showFarmRequestModal, setShowFarmRequestModal] = useState(false)
     useEffect(() => {
         const fetchUserData = async () => {
             if (session?.user?.id) {
@@ -166,32 +153,25 @@ const Home = () => {
                     .from("profiles")
                     .select("username, role")
                     .eq("id", session.user.id)
-                    .single();
-
+                    .single()
                 if (!profileError && profileData) {
-                    setUsername(profileData.username);
+                    setUsername(profileData.username)
                 }
-
                 // Fetch user role using the hook
-                await fetchUserRole();
-
+                await fetchUserRole()
                 // Fetch farms
-                await fetchFarms();
+                await fetchFarms()
             }
-        };
-
-        fetchUserData();
-    }, [session]);
-
+        }
+        fetchUserData()
+    }, [session])
     const fetchFarms = async () => {
         if (!session?.user?.id) {
-            setLoading(false);
-            return;
+            setLoading(false)
+            return
         }
-
         try {
-            setLoading(true);
-
+            setLoading(true)
             const { data, error } = await supabase
                 .from('farm_users')
                 .select(`
@@ -207,29 +187,25 @@ const Home = () => {
                     )
                 `)
                 .eq('user_id', session.user.id)
-                .order('id', { ascending: false });
-
+                .order('id', { ascending: false })
             if (!error && data) {
-                setFarmsWithRoles(data);
+                setFarmsWithRoles(data)
             }
         } catch (error) {
-            console.error('Error fetching farms:', error);
+            console.error('Error fetching farms:', error)
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
-    };
-
-    const fetchSensorDataForFarm = async (farmId: string): Promise<SensorData[]> => {;
+    }
+    const fetchSensorDataForFarm = async (farmId: string): Promise<SensorData[]> => {
         try {
             const sensorTypeMap: { [key: string]: { name: string, icon: string, unit: string } } = {
                 'Electrical Conductivity': { name: 'EC Level', icon: 'flash', unit: 'mS/cm' },
                 'Analog pH Sensor': { name: 'pH Level', icon: 'water', unit: 'pH' },
                 'Capacitive Soil Moisture': { name: 'Soil Moisture', icon: 'leaf', unit: '%' },
                 'Digital Temperature': { name: 'Temperature', icon: 'thermometer', unit: '°C' }
-            };
-
-            const sensorData: SensorData[] = [];
-
+            }
+            const sensorData: SensorData[] = []
             for (const [dbType, config] of Object.entries(sensorTypeMap)) {
                 try {
                     // Get sensors of this type for this farm
@@ -237,34 +213,29 @@ const Home = () => {
                         .from('sensor')
                         .select('sensor_id')
                         .eq('sensor_type', dbType)
-                        .eq('farm_id', farmId);
-
+                        .eq('farm_id', farmId)
                     if (!sensorError && sensors && sensors.length > 0) {
-                        const sensorIds = sensors.map(s => s.sensor_id);
-
+                        const sensorIds = sensors.map(s => s.sensor_id)
                         // Get latest reading
                         const { data: readings, error: readingError } = await supabase
                             .from('sensor_data')
                             .select('value')
                             .in('sensor_id', sensorIds)
                             .order('created_at', { ascending: false })
-                            .limit(1);
-
+                            .limit(1)
                         if (!readingError && readings && readings.length > 0) {
-                            const value = readings[0].value;
-                            let status: 'normal' | 'warning' | 'critical' = 'normal';
-
+                            const value = readings[0].value
+                            let status: 'normal' | 'warning' | 'critical' = 'normal'
                             // Determine status based on sensor type and value
                             if (dbType === 'Electrical Conductivity') {
-                                if (value < 1.0 || value > 1.8) status = value < 0.5 ? 'critical' : 'warning';
+                                if (value < 1.0 || value > 1.8) status = value < 0.5 ? 'critical' : 'warning'
                             } else if (dbType === 'Analog pH Sensor') {
-                                if (value < 6.0 || value > 8.0) status = value < 5.5 || value > 8.5 ? 'critical' : 'warning';
+                                if (value < 6.0 || value > 8.0) status = value < 5.5 || value > 8.5 ? 'critical' : 'warning'
                             } else if (dbType === 'Capacitive Soil Moisture') {
-                                if (value < 30 || value > 80) status = value < 20 ? 'critical' : 'warning';
+                                if (value < 30 || value > 80) status = value < 20 ? 'critical' : 'warning'
                             } else if (dbType === 'Digital Temperature') {
-                                if (value < 15 || value > 35) status = value < 10 || value > 40 ? 'critical' : 'warning';
+                                if (value < 15 || value > 35) status = value < 10 || value > 40 ? 'critical' : 'warning'
                             }
-
                             sensorData.push({
                                 type: dbType,
                                 value: value,
@@ -274,7 +245,7 @@ const Home = () => {
                                 name: config.name,
                                 hasSensor: true,
                                 hasData: true,
-                            });
+                            })
                         } else {
                             // Sensor exists but no data
                             sensorData.push({
@@ -286,7 +257,7 @@ const Home = () => {
                                 name: config.name,
                                 hasSensor: true,
                                 hasData: false,
-                            });
+                            })
                         }
                     } else {
                         // No sensor of this type found
@@ -299,32 +270,28 @@ const Home = () => {
                             name: config.name,
                             hasSensor: false,
                             hasData: false,
-                        });
+                        })
                     }
                 } catch (error) {
-                    console.error(`Error fetching ${dbType} data:`, error);
+                    console.error(`Error fetching ${dbType} data:`, error)
                 }
             }
-
-            return sensorData;
+            return sensorData
         } catch (error) {
-            console.error('Error fetching sensor data:', error);
-            return [];
+            console.error('Error fetching sensor data:', error)
+            return []
         }
-    };
-
+    }
     const renderFarmCard = ({ item }: { item: FarmWithRole }) => (
         <FarmCard
             item={item}
             navigation={navigation}
             onFetchSensorData={fetchSensorDataForFarm}
         />
-    );
-
+    )
     // Render end of list indicator
     const renderListFooter = () => {
-        if (farmsWithRoles.length === 0) return null;
-
+        if (farmsWithRoles.length === 0) return null
         return (
             <View style={styles.listEndContainer}>
                 <View style={styles.listEndIndicator}>
@@ -334,29 +301,25 @@ const Home = () => {
                     </Text>
                 </View>
             </View>
-        );
-    };
-
+        )
+    }
     // Render list header with count
     const renderListHeader = () => {
-        if (farmsWithRoles.length === 0) return null;
-
+        if (farmsWithRoles.length === 0) return null
         return (
             <View style={styles.listHeaderContainer}>
                 <Text style={styles.listHeaderText}>
                     Your Farms ({farmsWithRoles.length})
                 </Text>
             </View>
-        );
-    };
-
+        )
+    }
     const handleFarmRequestSuccess = () => {
         // Refresh farms list in case a pending request was approved
-        fetchFarms();
-    };
-
+        fetchFarms()
+    }
     // Add activity logging for farm operations
-    const logFarmAction = async (action: string, farmData: any) => {;
+    const logFarmAction = async (action: string, farmData: any) => {
         try {
             switch (action) {
                 case 'view':
@@ -365,17 +328,16 @@ const Home = () => {
                         tableName: 'farms',
                         recordId: farmData.id,
                         description: `Viewed farm "${farmData.name}"`
-                    });
-                    break;
+                    })
+                    break
                 case 'request':
-                    await activityLogService.logFarmRequest(farmData);
-                    break;
+                    await activityLogService.logFarmRequest(farmData)
+                    break
             }
         } catch (error) {
-            console.error('Error logging farm action:', error);
+            console.error('Error logging farm action:', error)
         }
-    };
-
+    }
     // Update the header to include notification bell
     const renderHeader = () => (
         <View style={styles.header}>
@@ -386,8 +348,7 @@ const Home = () => {
                 <Text style={styles.subtitle}>Monitor your smart farms</Text>
             </View>
         </View>
-    );
-
+    )
     return (
         <LinearGradient
             colors={['#e7fbe8ff', '#cdffcfff']}
@@ -406,7 +367,6 @@ const Home = () => {
                     <Text style={styles.welcomeText}>Welcome back,</Text>
                     <Text style={styles.usernameText}>{username || "Loading..."}</Text>
                 </View>
-
                 <View style={styles.headerActions}>
                     {/* Request Farm button moved to header for better accessibility */}
                     <TouchableOpacity
@@ -415,11 +375,9 @@ const Home = () => {
                     >
                         <Ionicons name="add-circle" size={24} color="white" />
                     </TouchableOpacity>
-
                     {/* Notification button removed - using bottom navigation instead */}
                 </View>
             </LinearGradient>
-
             {/* Farm Cards List - Remove redundant action buttons */}
             <View style={styles.content}>
                 {farmsWithRoles.length === 0 ? (
@@ -441,7 +399,6 @@ const Home = () => {
                                 <Text style={styles.addFarmButtonText}>Request Farm</Text>
                             </LinearGradient>
                         </TouchableOpacity>
-
                         {/* Quick tip for navigation */}
                         <View style={styles.navigationTip}>
                             <Text style={styles.tipText}>
@@ -473,7 +430,6 @@ const Home = () => {
                     </>
                 )}
             </View>
-
             {/* Only keep Farm Request Modal - Remove redundant UserFarmRequests modal */}
             <Modal
                 visible={showFarmRequestModal}
@@ -486,17 +442,15 @@ const Home = () => {
                     onSuccess={handleFarmRequestSuccess}
                 />
             </Modal>
-
             <BottomNavigation />
         </LinearGradient>
-    );
-};
-
+    )
+}
 const styles = StyleSheet.create({
-    container: {;
+    container: {
         flex: 1,
     },
-    header: {;
+    header: {
         paddingTop: 60,
         paddingBottom: 20,
         paddingHorizontal: 20,
@@ -511,42 +465,42 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
     },
-    headerContent: {;
+    headerContent: {
         flex: 1,
     },
-    welcomeText: {;
+    welcomeText: {
         fontSize: 16,
         color: 'rgba(255, 255, 255, 0.8)',
         marginBottom: 5,
     },
-    usernameText: {;
+    usernameText: {
         fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
     },
-    headerActions: {;
+    headerActions: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
     },
-    headerActionButton: {;
+    headerActionButton: {
         padding: 10,
         borderRadius: 20,
         backgroundColor: 'rgba(255, 255, 255, 0.2)',
     },
-    content: {;
+    content: {
         flex: 1,
         paddingHorizontal: 20,
         paddingTop: 20,
     },
     // Empty state styles
-    emptyContainer: {;
+    emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 40,
     },
-    emptyTitle: {;
+    emptyTitle: {
         fontSize: 24,
         fontWeight: 'bold',
         color: '#333',
@@ -554,14 +508,14 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         textAlign: 'center',
     },
-    emptySubtitle: {;
+    emptySubtitle: {
         fontSize: 16,
         color: '#666',
         textAlign: 'center',
         marginBottom: 30,
         lineHeight: 24,
     },
-    addFarmButton: {;
+    addFarmButton: {
         borderRadius: 25,
         elevation: 3,
         shadowColor: '#000',
@@ -569,7 +523,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 4,
     },
-    addFarmButtonGradient: {;
+    addFarmButtonGradient: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -577,21 +531,21 @@ const styles = StyleSheet.create({
         paddingHorizontal: 30,
         borderRadius: 25,
     },
-    addFarmButtonText: {;
+    addFarmButtonText: {
         color: 'white',
         fontSize: 18,
         fontWeight: 'bold',
         marginLeft: 10,
     },
     // Action buttons styles
-    actionButtonsContainer: {;
+    actionButtonsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 20,
         flexWrap: 'wrap',
         gap: 10,
     },
-    actionButton: {;
+    actionButton: {
         flex: 1,
         minWidth: 100,
         borderRadius: 15,
@@ -601,7 +555,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 2,
     },
-    actionButtonGradient: {;
+    actionButtonGradient: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -609,40 +563,40 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         borderRadius: 15,
     },
-    actionButtonText: {;
+    actionButtonText: {
         color: 'white',
         fontSize: 14,
         fontWeight: '600',
         marginLeft: 6,
     },
     // Loading styles
-    loadingContainer: {;
+    loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    loadingText: {;
+    loadingText: {
         marginTop: 10,
         fontSize: 16,
         color: '#666',
     },
     // List styles
-    farmsList: {;
+    farmsList: {
         paddingBottom: 20,
     },
-    listHeaderContainer: {;
+    listHeaderContainer: {
         marginBottom: 15,
     },
-    listHeaderText: {;
+    listHeaderText: {
         fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
     },
-    listEndContainer: {;
+    listEndContainer: {
         paddingVertical: 20,
         alignItems: 'center',
     },
-    listEndIndicator: {;
+    listEndIndicator: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 8,
@@ -650,14 +604,14 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(76, 175, 80, 0.1)',
         borderRadius: 20,
     },
-    listEndText: {;
+    listEndText: {
         marginLeft: 8,
         fontSize: 14,
         color: '#4CAF50',
         fontWeight: '500',
     },
     // Farm card styles
-    farmCard: {;
+    farmCard: {
         marginBottom: 16,
         borderRadius: 16,
         elevation: 3,
@@ -666,73 +620,73 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
     },
-    farmCardGradient: {;
+    farmCardGradient: {
         borderRadius: 16,
         padding: 16,
     },
-    farmHeader: {;
+    farmHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 16,
     },
-    farmInfo: {;
+    farmInfo: {
         flex: 1,
     },
-    farmName: {;
+    farmName: {
         fontSize: 20,
         fontWeight: 'bold',
         color: '#333',
         marginBottom: 4,
     },
-    farmLocation: {;
+    farmLocation: {
         fontSize: 14,
         color: '#666',
         marginBottom: 4,
     },
-    farmAddress: {;
+    farmAddress: {
         fontSize: 14,
         color: '#666',
         marginBottom: 4,
     },
-    farmRole: {;
+    farmRole: {
         fontSize: 12,
         color: '#4CAF50',
         fontWeight: '600',
         textTransform: 'capitalize',
     },
     // Data container styles
-    dataContainer: {;
+    dataContainer: {
         flexDirection: 'row',
         gap: 12,
         alignItems: 'flex-start',
     },
-    weatherSide: {;
+    weatherSide: {
         flex: 1,
     },
-    sensorSide: {;
+    sensorSide: {
         flex: 1,
     },
-    weatherSectionTitle: {;
+    weatherSectionTitle: {
         fontSize: 14,
         fontWeight: '600',
         color: '#333',
         marginBottom: 8,
     },
-    sensorSectionTitle: {;
+    sensorSectionTitle: {
         fontSize: 14,
         fontWeight: '600',
         color: '#333',
         marginBottom: 8,
     },
     // Sensor grid styles
-    sensorGrid: {;
+    sensorGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 6,
         justifyContent: 'space-between',
     },
-    sensorPanel: {;
+    sensorPanel: {
         width: '48%',
         backgroundColor: '#f8f9fa',
         borderRadius: 8,
@@ -742,30 +696,30 @@ const styles = StyleSheet.create({
         borderColor: '#e9ecef',
         minHeight: 60,
     },
-    sensorContent: {;
+    sensorContent: {
         flex: 1,
     },
-    sensorIconValue: {;
+    sensorIconValue: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 2,
     },
-    sensorValue: {;
+    sensorValue: {
         fontSize: 12,
         fontWeight: 'bold',
         marginLeft: 4,
     },
-    sensorName: {;
+    sensorName: {
         fontSize: 10,
         fontWeight: '600',
         color: '#333',
         marginBottom: 1,
     },
-    sensorUnit: {;
+    sensorUnit: {
         fontSize: 9,
         color: '#666',
     },
-    statusDot: {;
+    statusDot: {
         position: 'absolute',
         top: 6,
         right: 6,
@@ -773,31 +727,31 @@ const styles = StyleSheet.create({
         height: 6,
         borderRadius: 3,
     },
-    sensorLoadingContainer: {;
+    sensorLoadingContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         padding: 20,
     },
-    sensorLoadingText: {;
+    sensorLoadingText: {
         marginLeft: 8,
         fontSize: 12,
         color: '#666',
     },
     // Modal styles
-    modalOverlay: {;
+    modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    modalContainer: {;
+    modalContainer: {
         width: '90%',
         maxHeight: '80%',
         borderRadius: 16,
         overflow: 'hidden',
     },
-    modalHeader: {;
+    modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -805,31 +759,31 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#e9ecef',
     },
-    modalTitle: {;
+    modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
         color: '#333',
     },
-    closeButton: {;
+    closeButton: {
         padding: 4,
     },
-    modalContent: {;
+    modalContent: {
         padding: 20,
     },
-    inputContainer: {;
+    inputContainer: {
         marginBottom: 20,
     },
-    inputLabel: {;
+    inputLabel: {
         fontSize: 16,
         fontWeight: '600',
         color: '#333',
         marginBottom: 8,
     },
-    required: {;
+    required: {
         color: '#FF0000',
         fontSize: 16,
     },
-    input: {;
+    input: {
         borderWidth: 1,
         borderColor: '#ddd',
         borderRadius: 8,
@@ -838,11 +792,11 @@ const styles = StyleSheet.create({
         fontSize: 16,
         backgroundColor: '#fff',
     },
-    notesInput: {;
+    notesInput: {
         height: 80,
         textAlignVertical: 'top',
     },
-    provinceSelector: {;
+    provinceSelector: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -853,35 +807,35 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         backgroundColor: '#fff',
     },
-    provinceSelectorText: {;
+    provinceSelectorText: {
         fontSize: 16,
         color: '#333',
     },
-    placeholderText: {;
+    placeholderText: {
         color: '#999',
     },
-    createFarmButton: {;
+    createFarmButton: {
         marginTop: 20,
         borderRadius: 12,
         overflow: 'hidden',
     },
-    createFarmButtonGradient: {;
+    createFarmButtonGradient: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 16,
         paddingHorizontal: 32,
     },
-    createFarmButtonText: {;
+    createFarmButtonText: {
         color: 'white',
         fontSize: 18,
         fontWeight: 'bold',
         marginLeft: 8,
     },
-    provinceList: {;
+    provinceList: {
         flex: 1,
     },
-    provinceItem: {;
+    provinceItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -890,31 +844,31 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
     },
-    provinceInfo: {;
+    provinceInfo: {
         flex: 1,
     },
-    provinceName: {;
+    provinceName: {
         fontSize: 16,
         fontWeight: '600',
         color: '#333',
     },
-    provinceNameEn: {;
+    provinceNameEn: {
         fontSize: 14,
         color: '#666',
         marginTop: 2,
     },
-    regionBadge: {;
+    regionBadge: {
         backgroundColor: '#e3f2fd',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
     },
-    regionText: {;
+    regionText: {
         fontSize: 12,
         color: '#1976d2',
         fontWeight: '500',
     },
-    navigationTip: {;
+    navigationTip: {
         marginTop: 30,
         padding: 15,
         backgroundColor: 'rgba(74, 144, 226, 0.1)',
@@ -922,14 +876,14 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(74, 144, 226, 0.2)',
     },
-    tipText: {;
+    tipText: {
         fontSize: 14,
         color: '#4A90E2',
         textAlign: 'center',
         lineHeight: 20,
     },
     // Header specific styles
-    header: {;
+    header: {
         paddingTop: 60,
         paddingBottom: 20,
         paddingHorizontal: 20,
@@ -939,18 +893,17 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#e9ecef',
     },
-    headerLeft: {;
+    headerLeft: {
         flex: 1,
     },
-    greeting: {;
+    greeting: {
         fontSize: 16,
         color: '#333',
         marginBottom: 4,
     },
-    subtitle: {;
+    subtitle: {
         fontSize: 14,
         color: '#666',
     },
-});
-
-export default Home;
+})
+export default Home

@@ -1,63 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { weatherService, WeatherData } from '../lib/weatherService';
-
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { weatherService, WeatherData } from '../lib/weatherService'
 interface WeatherWidgetProps {
-  location: string;
-  compact?: boolean;
-  onPress?: () => void;
+  location: string
+  compact?: boolean
+  onPress?: () => void
 }
-
 const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false, onPress }) => {
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   useEffect(() => {
-    fetchWeatherData();
-  }, [location]);
-
+    fetchWeatherData()
+  }, [location])
   const fetchWeatherData = async () => {
     try {
-      setLoading(true);
-      setError(null);
-
+      setLoading(true)
+      setError(null)
       // Validate location before making API call
       if (!location || typeof location !== 'string' || location.trim() === '') {
-        throw new Error('Invalid location provided');
+        throw new Error('Invalid location provided')
       }
-
       // Use the correct method name
-      const data = await weatherService.getWeatherByLocation(location.trim());
-      setWeatherData(data);
+      const data = await weatherService.getWeatherByLocation(location.trim())
+      setWeatherData(data)
     } catch (err) {
-      console.error('Weather fetch error:', err);
-      setError('Unable to load weather data');
+      console.error('Weather fetch error:', err)
+      setError('Unable to load weather data')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
-  const formatDate = (dateString: string) => {;
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  };
-
-  const getTemperatureColor = (temp: number) => {;
-    if (temp >= 35) return '#FF6B6B'; // Hot - Red
-    if (temp >= 25) return '#FFA726'; // Warm - Orange
-    if (temp >= 15) return '#4CAF50'; // Mild - Green
-    if (temp >= 5) return '#42A5F5'; // Cool - Blue
-    return '#9C27B0'; // Cold - Purple
-  };
-
+  }
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  }
+  const getTemperatureColor = (temp: number) => {
+    if (temp >= 35) return '#FF6B6B' // Hot - Red
+    if (temp >= 25) return '#FFA726' // Warm - Orange
+    if (temp >= 15) return '#4CAF50' // Mild - Green
+    if (temp >= 5) return '#42A5F5' // Cool - Blue
+    return '#9C27B0' // Cold - Purple
+  }
   const isDay = () => {
-    const hour = new Date().getHours();
-    return hour >= 6 && hour < 18;
-  };
-
+    const hour = new Date().getHours()
+    return hour >= 6 && hour < 18
+  }
   if (loading) {
     return (
       <View style={[styles.container, compact && styles.compactContainer]}>
@@ -68,9 +58,8 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
           </View>
         </LinearGradient>
       </View>
-    );
+    )
   }
-
   if (error || !weatherData) {
     return (
       <TouchableOpacity
@@ -84,13 +73,11 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
           </View>
         </LinearGradient>
       </TouchableOpacity>
-    );
+    )
   }
-
-  const { current, daily } = weatherData;
-  const weatherIcon = weatherService.getWeatherIcon(current.weatherCode, isDay());
-  const weatherDescription = weatherService.getWeatherDescription(current.weatherCode);
-
+  const { current, daily } = weatherData
+  const weatherIcon = weatherService.getWeatherIcon(current.weatherCode, isDay())
+  const weatherDescription = weatherService.getWeatherDescription(current.weatherCode)
   if (compact) {
     return (
       <TouchableOpacity style={styles.compactContainer} onPress={onPress}>
@@ -118,9 +105,8 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
           </View>
         </LinearGradient>
       </TouchableOpacity>
-    );
+    )
   }
-
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <LinearGradient
@@ -138,7 +124,6 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
             <Ionicons name="refresh" size={20} color="#1976D2" />
           </TouchableOpacity>
         </View>
-
         <View style={styles.currentWeather}>
           <View style={styles.currentLeft}>
             <Ionicons name={weatherIcon as any} size={60} color="#1976D2" />
@@ -153,7 +138,6 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
             </Text>
           </View>
         </View>
-
         <View style={styles.details}>
           <View style={styles.detailItem}>
             <Ionicons name="water" size={16} color="#1976D2" />
@@ -166,7 +150,6 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
             <Text style={styles.detailValue}>{current.windSpeed} km/h</Text>
           </View>
         </View>
-
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.forecast}>
           {daily.slice(0, 6).map((day, index) => (
             <View key={index} style={styles.forecastDay}>
@@ -188,11 +171,10 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
         </ScrollView>
       </LinearGradient>
     </TouchableOpacity>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     borderRadius: 15,
     overflow: 'hidden',
     elevation: 4,
@@ -202,7 +184,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     marginVertical: 8,
   },
-  compactContainer: {;
+  compactContainer: {
     borderRadius: 12,
     overflow: 'hidden',
     elevation: 3,
@@ -215,80 +197,80 @@ const styles = StyleSheet.create({
     maxHeight: 140, // Fixed height for consistent alignment
     flex: 1, // Takes same flex space as sensor side
   },
-  gradient: {;
+  gradient: {
     padding: 16,
   },
-  compactGradient: {;
+  compactGradient: {
     padding: 12,
     height: '100%',
     justifyContent: 'space-between',
   },
-  loadingContainer: {;
+  loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 20,
   },
-  loadingText: {;
+  loadingText: {
     marginLeft: 8,
     color: '#1976D2',
     fontSize: 14,
   },
-  errorContainer: {;
+  errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 20,
   },
-  errorText: {;
+  errorText: {
     marginLeft: 8,
     color: '#D32F2F',
     fontSize: 14,
   },
-  header: {;
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
   },
-  locationContainer: {;
+  locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  location: {;
+  location: {
     marginLeft: 4,
     fontSize: 16,
     fontWeight: '600',
     color: '#1976D2',
   },
-  currentWeather: {;
+  currentWeather: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
   },
-  currentLeft: {;
+  currentLeft: {
     alignItems: 'center',
   },
-  currentRight: {;
+  currentRight: {
     alignItems: 'flex-end',
   },
-  temperature: {;
+  temperature: {
     fontSize: 48,
     fontWeight: 'bold',
   },
-  feelsLike: {;
+  feelsLike: {
     fontSize: 14,
     color: '#666',
     marginTop: 4,
   },
-  description: {;
+  description: {
     fontSize: 14,
     color: '#1976D2',
     marginTop: 8,
     textAlign: 'center',
   },
-  details: {;
+  details: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: 16,
@@ -296,24 +278,24 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 12,
   },
-  detailItem: {;
+  detailItem: {
     alignItems: 'center',
   },
-  detailText: {;
+  detailText: {
     fontSize: 12,
     color: '#666',
     marginTop: 4,
   },
-  detailValue: {;
+  detailValue: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1976D2',
     marginTop: 2,
   },
-  forecast: {;
+  forecast: {
     marginTop: 8,
   },
-  forecastDay: {;
+  forecastDay: {
     alignItems: 'center',
     marginRight: 16,
     paddingVertical: 8,
@@ -322,76 +304,75 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     minWidth: 70,
   },
-  forecastDate: {;
+  forecastDate: {
     fontSize: 12,
     color: '#666',
     marginBottom: 4,
     textAlign: 'center',
   },
-  forecastHigh: {;
+  forecastHigh: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#1976D2',
     marginTop: 4,
   },
-  forecastLow: {;
+  forecastLow: {
     fontSize: 12,
     color: '#666',
     marginTop: 2,
   },
-  precipitation: {;
+  precipitation: {
     fontSize: 10,
     color: '#2196F3',
     marginTop: 2,
   },
-  compactContent: {;
+  compactContent: {
     flex: 1,
     justifyContent: 'space-between',
   },
-  compactRow: {;
+  compactRow: {
     flexDirection: 'column',
     justifyContent: 'space-between',
     height: '100%',
   },
-  compactIconTemp: {;
+  compactIconTemp: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
   },
-  compactDetails: {;
+  compactDetails: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  compactTemperature: {;
+  compactTemperature: {
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8,
     color: '#1976D2',
   },
-  compactFeelsLike: {;
+  compactFeelsLike: {
     fontSize: 12,
     color: '#555',
     fontWeight: '500',
   },
-  compactDescription: {;
+  compactDescription: {
     fontSize: 13,
     color: '#1976D2',
     fontWeight: '500',
     marginBottom: 6,
     textAlign: 'center',
   },
-  compactDetailsRow: {;
+  compactDetailsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 8,
   },
-  compactDetailText: {;
+  compactDetailText: {
     fontSize: 11,
     color: '#555',
     fontWeight: '500',
   },
-});
-
-export default WeatherWidget;
+})
+export default WeatherWidget

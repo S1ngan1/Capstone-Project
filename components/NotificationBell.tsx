@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -8,61 +8,53 @@ import {
   FlatList,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuthContext } from '../context/AuthContext';
-import { activityLogService, Notification } from '../utils/activityLogService';
-
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useAuthContext } from '../context/AuthContext'
+import { activityLogService, Notification } from '../utils/activityLogService'
 interface NotificationBellProps {
-  navigation?: any;
+  navigation?: any
 }
-
 const NotificationBell: React.FC<NotificationBellProps> = ({ navigation }) => {
-  const { user } = useAuthContext();
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-
+  const { user } = useAuthContext()
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [showModal, setShowModal] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   // Fetch unread count
   const fetchUnreadCount = async () => {
     try {
-      const count = await activityLogService.getUnreadNotificationCount();
-      setUnreadCount(count);
+      const count = await activityLogService.getUnreadNotificationCount()
+      setUnreadCount(count)
     } catch (error) {
-      console.error('Error fetching unread count:', error);
+      console.error('Error fetching unread count:', error)
     }
-  };
-
+  }
   // Fetch notifications
   const fetchNotifications = async (refresh = false) => {
     try {
       if (refresh) {
-        setRefreshing(true);
+        setRefreshing(true)
       } else {
-        setLoading(true);
+        setLoading(true)
       }
-
       const { data } = await activityLogService.getNotifications({
-        limit: 50;
-      });
-
-      setNotifications(data);
+        limit: 50
+      })
+      setNotifications(data)
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('Error fetching notifications:', error)
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setLoading(false)
+      setRefreshing(false)
     }
-  };
-
+  }
   // Mark notification as read
-  const markAsRead = async (notificationId: string) => {;
+  const markAsRead = async (notificationId: string) => {
     try {
-      await activityLogService.markNotificationAsRead(notificationId);
-
+      await activityLogService.markNotificationAsRead(notificationId)
       // Update local state
       setNotifications(prev =>
         prev.map(notif =>
@@ -70,130 +62,112 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ navigation }) => {
             ? { ...notif, is_read: true, read_at: new Date().toISOString() }
             : notif
         )
-      );
-
+      )
       // Update unread count
-      fetchUnreadCount();
+      fetchUnreadCount()
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error('Error marking notification as read:', error)
     }
-  };
-
+  }
   // Mark all as read
   const markAllAsRead = async () => {
     try {
-      await activityLogService.markAllNotificationsAsRead();
-
+      await activityLogService.markAllNotificationsAsRead()
       // Update local state
       setNotifications(prev =>
         prev.map(notif => ({
           ...notif,
           is_read: true,
-          read_at: new Date().toISOString();
+          read_at: new Date().toISOString()
         }))
-      );
-
-      setUnreadCount(0);
-      Alert.alert('Success', 'All notifications marked as read');
+      )
+      setUnreadCount(0)
+      Alert.alert('Success', 'All notifications marked as read')
     } catch (error) {
-      console.error('Error marking all as read:', error);
-      Alert.alert('Error', 'Failed to mark notifications as read');
+      console.error('Error marking all as read:', error)
+      Alert.alert('Error', 'Failed to mark notifications as read')
     }
-  };
-
+  }
   // Subscribe to new notifications
   useEffect(() => {
-    if (!user) return;
-
-    fetchUnreadCount();
-
+    if (!user) return
+    fetchUnreadCount()
     const subscription = activityLogService.subscribeToNotifications(
       user.id,
       (newNotification) => {
-        setUnreadCount(prev => prev + 1);
-        setNotifications(prev => [newNotification, ...prev]);
+        setUnreadCount(prev => prev + 1)
+        setNotifications(prev => [newNotification, ...prev])
       }
-    );
-
+    )
     return () => {
-      subscription.unsubscribe();
-    };
-  }, [user]);
-
+      subscription.unsubscribe()
+    }
+  }, [user])
   // Handle bell press
   const handleBellPress = () => {
-    setShowModal(true);
+    setShowModal(true)
     if (notifications.length === 0) {
-      fetchNotifications();
+      fetchNotifications()
     }
-  };
-
-  const formatTimeAgo = (dateString: string) => {;
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  };
-
-  const getNotificationIcon = (type: string) => {;
+  }
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    if (diffInSeconds < 60) return 'Just now'
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
+    return `${Math.floor(diffInSeconds / 86400)}d ago`
+  }
+  const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'success': return 'checkmark-circle';
-      case 'warning': return 'warning';
-      case 'error': return 'close-circle';
-      default: return 'information-circle';
+      case 'success': return 'checkmark-circle'
+      case 'warning': return 'warning'
+      case 'error': return 'close-circle'
+      default: return 'information-circle'
     }
-  };
-
-  const getNotificationColor = (type: string) => {;
+  }
+  const getNotificationColor = (type: string) => {
     switch (type) {
-      case 'success': return '#4CAF50';
-      case 'warning': return '#FF9800';
-      case 'error': return '#f44336';
-      default: return '#2196F3';
+      case 'success': return '#4CAF50'
+      case 'warning': return '#FF9800'
+      case 'error': return '#f44336'
+      default: return '#2196F3'
     }
-  };
-
+  }
   const renderNotificationItem = ({ item }: { item: Notification }) => {
     const handleNotificationPress = async () => {
       // Mark as read if unread
       if (!item.is_read) {
-        await markAsRead(item.id);
+        await markAsRead(item.id)
       }
-
       // Handle navigation based on metadata or message content
       if (item.metadata) {
         try {
-          const metadata = typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata;
+          const metadata = typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata
           if (metadata.action === 'navigate' && metadata.screen) {
-            setShowModal(false);
-            navigation?.navigate(metadata.screen, metadata.params || {});
-            return;
+            setShowModal(false)
+            navigation?.navigate(metadata.screen, metadata.params || {})
+            return
           }
         } catch (error) {
-          console.error('Error parsing notification metadata:', error);
+          console.error('Error parsing notification metadata:', error)
         }
       }
-
       // Fallback navigation based on message content
       if (item.message.includes('farm request') || item.message.includes('Requested new farm')) {
-        setShowModal(false);
-        navigation?.navigate('UserRequests', { activeTab: 'farm' });
+        setShowModal(false)
+        navigation?.navigate('UserRequests', { activeTab: 'farm' })
       } else if (item.message.includes('sensor request') || item.message.includes('sensor')) {
-        setShowModal(false);
-        navigation?.navigate('UserRequests', { activeTab: 'sensor' });
+        setShowModal(false)
+        navigation?.navigate('UserRequests', { activeTab: 'sensor' })
       }
-    };
-
+    }
     const isClickable = item.metadata ||
                        item.message.includes('farm request') ||
                        item.message.includes('sensor request') ||
                        item.message.includes('Approved') ||
-                       item.message.includes('rejected');
-
+                       item.message.includes('rejected')
     return (
       <TouchableOpacity
         style={[
@@ -228,17 +202,15 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ navigation }) => {
           <Text style={styles.tapHint}>Tap to view details</Text>
         )}
       </TouchableOpacity>
-    );
-  };
-
+    )
+  }
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="notifications-outline" size={64} color="#ccc" />
       <Text style={styles.emptyTitle}>No Notifications</Text>
       <Text style={styles.emptyMessage}>You're all caught up!</Text>
     </View>
-  );
-
+  )
   return (
     <>
       <TouchableOpacity style={styles.bellContainer} onPress={handleBellPress}>
@@ -251,7 +223,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ navigation }) => {
           </View>
         )}
       </TouchableOpacity>
-
       <Modal
         visible={showModal}
         animationType="slide"
@@ -273,7 +244,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ navigation }) => {
               </TouchableOpacity>
             )}
           </View>
-
           <View style={styles.notificationStats}>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>{notifications.length}</Text>
@@ -284,7 +254,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ navigation }) => {
               <Text style={styles.statLabel}>Unread</Text>
             </View>
           </View>
-
           {loading && notifications.length === 0 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#4CAF50" />
@@ -303,13 +272,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ navigation }) => {
               showsVerticalScrollIndicator={false}
             />
           )}
-
           <View style={styles.modalFooter}>
             <TouchableOpacity
               style={styles.viewAllButton}
               onPress={() => {
-                setShowModal(false);
-                navigation?.navigate('ActivityLogs');
+                setShowModal(false)
+                navigation?.navigate('ActivityLogs')
               }}
             >
               <LinearGradient colors={['#4CAF50', '#388E3C']} style={styles.viewAllGradient}>
@@ -321,15 +289,14 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ navigation }) => {
         </LinearGradient>
       </Modal>
     </>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  bellContainer: {;
+  bellContainer: {
     position: 'relative',
     padding: 8,
   },
-  badge: {;
+  badge: {
     position: 'absolute',
     top: 0,
     right: 0,
@@ -341,15 +308,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 4,
   },
-  badgeText: {;
+  badgeText: {
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
   },
-  modalContainer: {;
+  modalContainer: {
     flex: 1,
   },
-  modalHeader: {;
+  modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -359,22 +326,22 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
-  closeButton: {;
+  closeButton: {
     padding: 8,
   },
-  modalTitle: {;
+  modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
   },
-  markAllButton: {;
+  markAllButton: {
     padding: 8,
   },
-  markAllText: {;
+  markAllText: {
     color: '#4CAF50',
     fontWeight: '600',
   },
-  notificationStats: {;
+  notificationStats: {
     flexDirection: 'row',
     backgroundColor: 'white',
     marginHorizontal: 20,
@@ -387,38 +354,38 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  statItem: {;
+  statItem: {
     flex: 1,
     alignItems: 'center',
   },
-  statNumber: {;
+  statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#4CAF50',
   },
-  statLabel: {;
+  statLabel: {
     fontSize: 14,
     color: '#666',
     marginTop: 4,
   },
-  loadingContainer: {;
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {;
+  loadingText: {
     marginTop: 16,
     fontSize: 16,
     color: '#666',
   },
-  notificationsList: {;
+  notificationsList: {
     flex: 1,
     paddingHorizontal: 20,
   },
-  emptyList: {;
+  emptyList: {
     flexGrow: 1,
   },
-  notificationItem: {;
+  notificationItem: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 16,
@@ -429,103 +396,102 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  unreadItem: {;
+  unreadItem: {
     backgroundColor: '#F0F8FF',
     borderLeftWidth: 4,
     borderLeftColor: '#4CAF50',
   },
-  clickableItem: {;
+  clickableItem: {
     borderColor: '#007BFF',
     borderWidth: 1,
   },
-  notificationHeader: {;
+  notificationHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
   },
-  notificationInfo: {;
+  notificationInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     flex: 1,
   },
-  notificationTitle: {;
+  notificationTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
     flex: 1,
   },
-  unreadText: {;
+  unreadText: {
     fontWeight: 'bold',
   },
-  notificationMeta: {;
+  notificationMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  timeAgo: {;
+  timeAgo: {
     fontSize: 12,
     color: '#999',
   },
-  unreadDot: {;
+  unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: '#4CAF50',
   },
-  notificationMessage: {;
+  notificationMessage: {
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
   },
-  emptyContainer: {;
+  emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
   },
-  emptyTitle: {;
+  emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#666',
     marginTop: 16,
   },
-  emptyMessage: {;
+  emptyMessage: {
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
     marginTop: 8,
   },
-  modalFooter: {;
+  modalFooter: {
     padding: 20,
     paddingBottom: 40,
   },
-  viewAllButton: {;
+  viewAllButton: {
     borderRadius: 12,
     overflow: 'hidden',
   },
-  viewAllGradient: {;
+  viewAllGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
     gap: 8,
   },
-  viewAllText: {;
+  viewAllText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
-  tapHint: {;
+  tapHint: {
     marginTop: 8,
     fontSize: 12,
     color: '#007BFF',
     fontStyle: 'italic',
   },
-  clickIcon: {;
+  clickIcon: {
     marginLeft: 8,
   },
-});
-
-export default NotificationBell;
+})
+export default NotificationBell

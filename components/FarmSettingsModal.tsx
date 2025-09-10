@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -9,43 +9,39 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../lib/supabase';
-import { vietnameseProvinces } from '../lib/vietnameseProvinces';
-import { activityLogService } from '../utils/activityLogService';
-
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { supabase } from '../lib/supabase'
+import { vietnameseProvinces } from '../lib/vietnameseProvinces'
+import { activityLogService } from '../utils/activityLogService'
 interface Farm {
-  id: string;
-  name: string;
-  location: string;
-  address?: string;
-  notes?: string;
+  id: string
+  name: string
+  location: string
+  address?: string
+  notes?: string
 }
-
 interface FarmUser {
-  id: string;
-  user_id: string;
-  farm_role: string;
-  profiles: {;
-    username: string;
-    email: string;
-    role: string;
-  };
+  id: string
+  user_id: string
+  farm_role: string
+  profiles: {
+    username: string
+    email: string
+    role: string
+  }
 }
-
 interface FarmSettingsModalProps {
-  visible: boolean;
-  onClose: () => void;
-  farm: Farm | null;
-  userRole: string;
-  farmUsers: FarmUser[];
-  onRefresh: () => void;
-  navigation: any;
+  visible: boolean
+  onClose: () => void
+  farm: Farm | null
+  userRole: string
+  farmUsers: FarmUser[]
+  onRefresh: () => void
+  navigation: any
 }
-
-const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
+const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({
   visible,
   onClose,
   farm,
@@ -54,51 +50,45 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
   onRefresh,
   navigation,
 }) => {
-  const [activeTab, setActiveTab] = useState('farm');
-  const [editingFarm, setEditingFarm] = useState(false);
-  const [farmName, setFarmName] = useState(farm?.name || '');
-  const [farmLocation, setFarmLocation] = useState(farm?.location || '');
-  const [farmAddress, setFarmAddress] = useState(farm?.address || '');
-  const [farmNotes, setFarmNotes] = useState(farm?.notes || '');
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
-  const [newUserEmail, setNewUserEmail] = useState('');
-  const [newUserRole, setNewUserRole] = useState('viewer');
-  const [loading, setLoading] = useState(false);
-  const [editingMember, setEditingMember] = useState<string | null>(null);
-  const [editingMemberRole, setEditingMemberRole] = useState('');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
-
-  const isOwner = userRole === 'owner';
-  const canManage = isOwner || userRole === 'manager';
-
+  const [activeTab, setActiveTab] = useState('farm')
+  const [editingFarm, setEditingFarm] = useState(false)
+  const [farmName, setFarmName] = useState(farm?.name || '')
+  const [farmLocation, setFarmLocation] = useState(farm?.location || '')
+  const [farmAddress, setFarmAddress] = useState(farm?.address || '')
+  const [farmNotes, setFarmNotes] = useState(farm?.notes || '')
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false)
+  const [newUserEmail, setNewUserEmail] = useState('')
+  const [newUserRole, setNewUserRole] = useState('viewer')
+  const [loading, setLoading] = useState(false)
+  const [editingMember, setEditingMember] = useState<string | null>(null)
+  const [editingMemberRole, setEditingMemberRole] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const isOwner = userRole === 'owner'
+  const canManage = isOwner || userRole === 'manager'
   // Reset form when farm changes
   useEffect(() => {
     if (farm) {
-      setFarmName(farm.name);
-      setFarmLocation(farm.location);
-      setFarmAddress(farm.address || '');
-      setFarmNotes(farm.notes || '');
+      setFarmName(farm.name)
+      setFarmLocation(farm.location)
+      setFarmAddress(farm.address || '')
+      setFarmNotes(farm.notes || '')
     }
-  }, [farm]);
-
+  }, [farm])
   const handleUpdateFarm = async () => {
     if (!farm || !farmName.trim() || !farmLocation.trim()) {
-      Alert.alert('Error', 'Farm name and location are required');
-      return;
+      Alert.alert('Error', 'Farm name and location are required')
+      return
     }
-
     try {
-      setLoading(true);
-
+      setLoading(true)
       // Store old data for logging
       const oldData = {
         name: farm.name,
         location: farm.location,
         address: farm.address,
-        notes: farm.notes;
-      };
-
+        notes: farm.notes
+      }
       const { error } = await supabase
         .from('farms')
         .update({
@@ -107,69 +97,57 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
           address: farmAddress.trim() || null,
           notes: farmNotes.trim() || null,
         })
-        .eq('id', farm.id);
-
-      if (error) throw error;
-
+        .eq('id', farm.id)
+      if (error) throw error
       // Log the farm update activity
       const newData = {
         name: farmName.trim(),
         location: farmLocation.trim(),
         address: farmAddress.trim() || null,
-        notes: farmNotes.trim() || null;
-      };
-
-      await activityLogService.logFarmUpdate(farm.id, oldData, newData);
-
-      Alert.alert('Success', 'Farm details updated successfully!');
-      setEditingFarm(false);
-      onRefresh();
-    } catch (error: any) {;
-      Alert.alert('Error', error.message);
+        notes: farmNotes.trim() || null
+      }
+      await activityLogService.logFarmUpdate(farm.id, oldData, newData)
+      Alert.alert('Success', 'Farm details updated successfully!')
+      setEditingFarm(false)
+      onRefresh()
+    } catch (error: any) {
+      Alert.alert('Error', error.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
+  }
   const handleAddMember = async () => {
     if (!newUserEmail.trim()) {
-      Alert.alert('Error', 'Please enter an email address');
-      return;
+      Alert.alert('Error', 'Please enter an email address')
+      return
     }
-
     if (!canManage) {
-      Alert.alert('Permission Denied', 'Only owners and managers can add members');
-      return;
+      Alert.alert('Permission Denied', 'Only owners and managers can add members')
+      return
     }
-
     try {
-      setLoading(true);
-
+      setLoading(true)
       // Find user by email
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('id, username, email')
         .eq('email', newUserEmail.trim().toLowerCase())
-        .single();
-
+        .single()
       if (userError || !userData) {
-        Alert.alert('Error', 'User not found with this email address');
-        return;
+        Alert.alert('Error', 'User not found with this email address')
+        return
       }
-
       // Check if user is already a member
       const { data: existingMember } = await supabase
         .from('farm_users')
         .select('id')
         .eq('farm_id', farm?.id)
         .eq('user_id', userData.id)
-        .single();
-
+        .single()
       if (existingMember) {
-        Alert.alert('Error', 'User is already a member of this farm');
-        return;
+        Alert.alert('Error', 'User is already a member of this farm')
+        return
       }
-
       // Add user to farm
       const { error: addError } = await supabase
         .from('farm_users')
@@ -177,52 +155,44 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
           farm_id: farm?.id,
           user_id: userData.id,
           farm_role: newUserRole,
-        });
-
-      if (addError) throw addError;
-
-      Alert.alert('Success', `${userData.username} added to farm successfully!`);
-      setNewUserEmail('');
-      setNewUserRole('viewer');
-      onRefresh();
-    } catch (error: any) {;
-      Alert.alert('Error', error.message);
+        })
+      if (addError) throw addError
+      Alert.alert('Success', `${userData.username} added to farm successfully!`)
+      setNewUserEmail('')
+      setNewUserRole('viewer')
+      onRefresh()
+    } catch (error: any) {
+      Alert.alert('Error', error.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
-  const handleUpdateMemberRole = async (memberId: string, newRole: string) => {;
+  }
+  const handleUpdateMemberRole = async (memberId: string, newRole: string) => {
     if (!canManage) {
-      Alert.alert('Permission Denied', 'Only owners and managers can change member roles');
-      return;
+      Alert.alert('Permission Denied', 'Only owners and managers can change member roles')
+      return
     }
-
     try {
-      setLoading(true);
+      setLoading(true)
       const { error } = await supabase
         .from('farm_users')
         .update({ farm_role: newRole })
-        .eq('id', memberId);
-
-      if (error) throw error;
-
-      Alert.alert('Success', 'Member role updated successfully!');
-      setEditingMember(null);
-      onRefresh();
-    } catch (error: any) {;
-      Alert.alert('Error', error.message);
+        .eq('id', memberId)
+      if (error) throw error
+      Alert.alert('Success', 'Member role updated successfully!')
+      setEditingMember(null)
+      onRefresh()
+    } catch (error: any) {
+      Alert.alert('Error', error.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
-  const handleRemoveMember = async (memberId: string, memberName: string) => {;
+  }
+  const handleRemoveMember = async (memberId: string, memberName: string) => {
     if (!isOwner) {
-      Alert.alert('Permission Denied', 'Only farm owners can remove members');
-      return;
+      Alert.alert('Permission Denied', 'Only farm owners can remove members')
+      return
     }
-
     Alert.alert(
       'Remove Member',
       `Are you sure you want to remove ${memberName} from this farm?`,
@@ -231,82 +201,70 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
         {
           text: 'Remove',
           style: 'destructive',
-          onPress: async () => {;
+          onPress: async () => {
             try {
-              setLoading(true);
+              setLoading(true)
               const { error } = await supabase
                 .from('farm_users')
                 .delete()
-                .eq('id', memberId);
-
-              if (error) throw error;
-
-              Alert.alert('Success', `${memberName} removed from farm successfully!`);
-              onRefresh();
-            } catch (error: any) {;
-              Alert.alert('Error', error.message);
+                .eq('id', memberId)
+              if (error) throw error
+              Alert.alert('Success', `${memberName} removed from farm successfully!`)
+              onRefresh()
+            } catch (error: any) {
+              Alert.alert('Error', error.message)
             } finally {
-              setLoading(false);
+              setLoading(false)
             }
           },
         },
       ]
-    );
-  };
-
+    )
+  }
   const handleDeleteFarm = async () => {
-    if (!farm || !isOwner) return;
-
+    if (!farm || !isOwner) return
     if (deleteConfirmText.trim() !== farm.name) {
-      Alert.alert('Error', 'Please enter the exact farm name to confirm deletion');
-      return;
+      Alert.alert('Error', 'Please enter the exact farm name to confirm deletion')
+      return
     }
-
     try {
-      setLoading(true);
-
+      setLoading(true)
       // Store farm data for logging before deletion
       const farmData = {
         id: farm.id,
         name: farm.name,
         location: farm.location,
         address: farm.address,
-        notes: farm.notes;
-      };
-
+        notes: farm.notes
+      }
       const { error } = await supabase
         .from('farms')
         .delete()
-        .eq('id', farm.id);
-
-      if (error) throw error;
-
+        .eq('id', farm.id)
+      if (error) throw error
       // Log the farm deletion activity
-      await activityLogService.logFarmDelete(farmData);
-
-      Alert.alert('Success', 'Farm deleted successfully!');
-      setShowDeleteConfirm(false);
-      setDeleteConfirmText('');
-      onClose();
-      navigation.navigate('Home');
-    } catch (error: any) {;
-      Alert.alert('Error', error.message);
+      await activityLogService.logFarmDelete(farmData)
+      Alert.alert('Success', 'Farm deleted successfully!')
+      setShowDeleteConfirm(false)
+      setDeleteConfirmText('')
+      onClose()
+      navigation.navigate('Home')
+    } catch (error: any) {
+      Alert.alert('Error', error.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
-  const getRoleStyle = (role: string) => {;
+  }
+  const getRoleStyle = (role: string) => {
     switch (role) {
       case 'owner':
-        return styles.ownerRoleTag;
+        return styles.ownerRoleTag
       case 'manager':
-        return styles.managerRoleTag;
+        return styles.managerRoleTag
       default:
-        return styles.viewerRoleTag;
+        return styles.viewerRoleTag
     }
-  };
-
+  }
   const renderFarmTab = () => (
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
       <View style={styles.section}>
@@ -337,7 +295,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
             </TouchableOpacity>
           )}
         </View>
-
         {editingFarm ? (
           <View style={styles.editForm}>
             <View style={styles.inputGroup}>
@@ -352,7 +309,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                 editable={!loading}
               />
             </View>
-
             <View style={styles.inputGroup}>
               <Text style={styles.label}>
                 <Text style={styles.required}>* </Text>Province/Location
@@ -371,7 +327,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                   color="#666"
                 />
               </TouchableOpacity>
-
               {showLocationDropdown && (
                 <View style={styles.dropdown}>
                   <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
@@ -380,8 +335,8 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                         key={index}
                         style={styles.dropdownItem}
                         onPress={() => {
-                          setFarmLocation(province);
-                          setShowLocationDropdown(false);
+                          setFarmLocation(province)
+                          setShowLocationDropdown(false)
                         }}
                       >
                         <Text style={styles.dropdownItemText}>{province}</Text>
@@ -391,7 +346,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                 </View>
               )}
             </View>
-
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Detailed Address</Text>
               <TextInput
@@ -404,7 +358,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                 editable={!loading}
               />
             </View>
-
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Farm Notes & Description</Text>
               <TextInput
@@ -417,23 +370,21 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                 editable={!loading}
               />
             </View>
-
             <View style={styles.buttonRow}>
               <TouchableOpacity
                 style={[styles.cancelButton, loading && styles.disabledButton]}
                 onPress={() => {
-                  setEditingFarm(false);
-                  setFarmName(farm?.name || '');
-                  setFarmLocation(farm?.location || '');
-                  setFarmAddress(farm?.address || '');
-                  setFarmNotes(farm?.notes || '');
-                  setShowLocationDropdown(false);
+                  setEditingFarm(false)
+                  setFarmName(farm?.name || '')
+                  setFarmLocation(farm?.location || '')
+                  setFarmAddress(farm?.address || '')
+                  setFarmNotes(farm?.notes || '')
+                  setShowLocationDropdown(false)
                 }}
                 disabled={loading}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={[styles.saveButton, loading && styles.disabledButton]}
                 onPress={handleUpdateFarm}
@@ -465,7 +416,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                   <Text style={styles.infoValue}>{farm?.name}</Text>
                 </View>
               </View>
-
               <View style={styles.infoRow}>
                 <Ionicons name="location" size={24} color="#2196F3" />
                 <View style={styles.infoTextContainer}>
@@ -473,7 +423,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                   <Text style={styles.infoValue}>{farm?.location}</Text>
                 </View>
               </View>
-
               {farm?.address && (
                 <View style={styles.infoRow}>
                   <Ionicons name="navigate" size={24} color="#FF9800" />
@@ -483,7 +432,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                   </View>
                 </View>
               )}
-
               {farm?.notes && (
                 <View style={styles.infoRow}>
                   <Ionicons name="document-text" size={24} color="#9C27B0" />
@@ -494,7 +442,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                 </View>
               )}
             </View>
-
             {isOwner && (
               <TouchableOpacity
                 style={styles.deleteButton}
@@ -513,8 +460,7 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
         )}
       </View>
     </ScrollView>
-  );
-
+  )
   const renderMembersTab = () => (
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
       <View style={styles.section}>
@@ -524,11 +470,9 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
             <Text style={styles.sectionTitle}>Farm Members</Text>
           </View>
         </View>
-
         {canManage && (
           <View style={styles.addMemberForm}>
             <Text style={styles.formTitle}>Add New Member</Text>
-
             <View style={styles.inputGroup}>
               <Text style={styles.label}>
                 <Text style={styles.required}>* </Text>Email Address
@@ -543,7 +487,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                 editable={!loading}
               />
             </View>
-
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Role</Text>
               <View style={styles.roleSelector}>
@@ -567,7 +510,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                 ))}
               </View>
             </View>
-
             <TouchableOpacity
               style={[styles.addButton, loading && styles.disabledButton]}
               onPress={handleAddMember}
@@ -589,10 +531,8 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
             </TouchableOpacity>
           </View>
         )}
-
         <View style={styles.membersList}>
           <Text style={styles.membersTitle}>Current Members ({farmUsers.length})</Text>
-
           {farmUsers.map((member) => (
             <View key={member.id} style={styles.memberCard}>
               <View style={styles.memberInfo}>
@@ -602,7 +542,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                   <Text style={styles.memberEmail}>{member.profiles.email}</Text>
                 </View>
               </View>
-
               <View style={styles.memberActions}>
                 {editingMember === member.id ? (
                   <View style={styles.roleEditContainer}>
@@ -627,18 +566,16 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                         </TouchableOpacity>
                       ))}
                     </View>
-
                     <View style={styles.editActions}>
                       <TouchableOpacity
                         style={styles.cancelEditButton}
                         onPress={() => {
-                          setEditingMember(null);
-                          setEditingMemberRole('');
+                          setEditingMember(null)
+                          setEditingMemberRole('')
                         }}
                       >
                         <Ionicons name="close" size={16} color="#f44336" />
                       </TouchableOpacity>
-
                       <TouchableOpacity
                         style={styles.saveEditButton}
                         onPress={() => handleUpdateMemberRole(member.id, editingMemberRole)}
@@ -652,19 +589,17 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                     <View style={[styles.roleTag, getRoleStyle(member.farm_role)]}>
                       <Text style={styles.roleTagText}>{member.farm_role}</Text>
                     </View>
-
                     {canManage && member.farm_role !== 'owner' && (
                       <View style={styles.memberActionButtons}>
                         <TouchableOpacity
                           style={styles.editMemberButton}
                           onPress={() => {
-                            setEditingMember(member.id);
-                            setEditingMemberRole(member.farm_role);
+                            setEditingMember(member.id)
+                            setEditingMemberRole(member.farm_role)
                           }}
                         >
                           <Ionicons name="create" size={16} color="#2196F3" />
                         </TouchableOpacity>
-
                         {isOwner && (
                           <TouchableOpacity
                             style={styles.removeMemberButton}
@@ -683,8 +618,7 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
         </View>
       </View>
     </ScrollView>
-  );
-
+  )
   return (
     <Modal
       visible={visible}
@@ -703,7 +637,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
           <Text style={styles.title}>Farm Settings</Text>
           <View style={styles.headerSpacer} />
         </View>
-
         <View style={styles.tabContainer}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'farm' && styles.activeTab]}
@@ -721,7 +654,6 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
               Farm Details
             </Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={[styles.tab, activeTab === 'members' && styles.activeTab]}
             onPress={() => setActiveTab('members')}
@@ -739,9 +671,7 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
             </Text>
           </TouchableOpacity>
         </View>
-
         {activeTab === 'farm' ? renderFarmTab() : renderMembersTab()}
-
         {/* Delete Confirmation Modal */}
         <Modal
           visible={showDeleteConfirm}
@@ -755,15 +685,12 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                 <Ionicons name="warning" size={48} color="#f44336" />
                 <Text style={styles.deleteModalTitle}>Delete Farm</Text>
               </View>
-
               <Text style={styles.deleteModalText}>
                 This action cannot be undone. All farm data, sensors, and member access will be permanently removed.
               </Text>
-
               <Text style={styles.deleteModalInstruction}>
                 Type "<Text style={styles.farmNameHighlight}>{farm?.name}</Text>" to confirm:
-              </Text>;
-
+              </Text>
               <TextInput
                 style={[
                   styles.deleteConfirmInput,
@@ -774,19 +701,17 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
                 placeholder="Enter farm name here"
                 editable={!loading}
               />
-
               <View style={styles.deleteModalButtons}>
                 <TouchableOpacity
                   style={styles.deleteCancelButton}
                   onPress={() => {
-                    setShowDeleteConfirm(false);
-                    setDeleteConfirmText('');
+                    setShowDeleteConfirm(false)
+                    setDeleteConfirmText('')
                   }}
                   disabled={loading}
                 >
                   <Text style={styles.deleteCancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={[
                     styles.deleteConfirmButton,
@@ -807,14 +732,13 @@ const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({;
         </Modal>
       </LinearGradient>
     </Modal>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     flex: 1,
   },
-  header: {;
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -824,18 +748,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
-  closeButton: {;
+  closeButton: {
     padding: 8,
   },
-  title: {;
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
   },
-  headerSpacer: {;
+  headerSpacer: {
     width: 44,
   },
-  tabContainer: {;
+  tabContainer: {
     flexDirection: 'row',
     backgroundColor: 'white',
     margin: 20,
@@ -847,7 +771,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  tab: {;
+  tab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -856,22 +780,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     gap: 8,
   },
-  activeTab: {;
+  activeTab: {
     backgroundColor: '#4CAF50',
   },
-  tabText: {;
+  tabText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#666',
   },
-  activeTabText: {;
+  activeTabText: {
     color: 'white',
   },
-  tabContent: {;
+  tabContent: {
     flex: 1,
     paddingHorizontal: 20,
   },
-  section: {;
+  section: {
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 20,
@@ -882,57 +806,57 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  sectionHeader: {;
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 20,
   },
-  headerLeft: {;
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  sectionTitle: {;
+  sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
-  editButton: {;
+  editButton: {
     borderRadius: 12,
     overflow: 'hidden',
   },
-  editButtonActive: {;
+  editButtonActive: {
     // Additional styles for active state if needed
   },
-  editButtonGradient: {;
+  editButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 8,
   },
-  editButtonText: {;
+  editButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
-  editForm: {;
+  editForm: {
     gap: 20,
   },
-  inputGroup: {;
+  inputGroup: {
     gap: 8,
   },
-  label: {;
+  label: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
   },
-  required: {;
+  required: {
     color: '#f44336',
     fontSize: 18,
   },
-  textInput: {;
+  textInput: {
     borderWidth: 2,
     borderColor: '#E0E0E0',
     borderRadius: 12,
@@ -941,19 +865,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#F8F9FA',
   },
-  errorInput: {;
+  errorInput: {
     borderColor: '#f44336',
     backgroundColor: '#FFEBEE',
   },
-  multilineInput: {;
+  multilineInput: {
     height: 80,
     textAlignVertical: 'top',
   },
-  notesInput: {;
+  notesInput: {
     height: 120,
     textAlignVertical: 'top',
   },
-  dropdownButton: {;
+  dropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -964,14 +888,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#F8F9FA',
   },
-  dropdownText: {;
+  dropdownText: {
     fontSize: 16,
     color: '#333',
   },
-  placeholderText: {;
+  placeholderText: {
     color: '#999',
   },
-  dropdown: {;
+  dropdown: {
     borderWidth: 2,
     borderColor: '#E0E0E0',
     borderRadius: 12,
@@ -979,25 +903,25 @@ const styles = StyleSheet.create({
     maxHeight: 200,
     marginTop: 4,
   },
-  dropdownScroll: {;
+  dropdownScroll: {
     maxHeight: 200,
   },
-  dropdownItem: {;
+  dropdownItem: {
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  dropdownItemText: {;
+  dropdownItemText: {
     fontSize: 16,
     color: '#333',
   },
-  buttonRow: {;
+  buttonRow: {
     flexDirection: 'row',
     gap: 12,
     marginTop: 8,
   },
-  cancelButton: {;
+  cancelButton: {
     flex: 1,
     borderWidth: 2,
     borderColor: '#E0E0E0',
@@ -1005,91 +929,91 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
-  cancelButtonText: {;
+  cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#666',
   },
-  saveButton: {;
+  saveButton: {
     flex: 2,
     borderRadius: 12,
     overflow: 'hidden',
   },
-  saveButtonGradient: {;
+  saveButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
     gap: 8,
   },
-  saveButtonText: {;
+  saveButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
-  disabledButton: {;
+  disabledButton: {
     opacity: 0.5,
   },
-  infoDisplay: {;
+  infoDisplay: {
     gap: 20,
   },
-  infoCard: {;
+  infoCard: {
     gap: 16,
   },
-  infoRow: {;
+  infoRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 16,
   },
-  infoTextContainer: {;
+  infoTextContainer: {
     flex: 1,
   },
-  infoLabel: {;
+  infoLabel: {
     fontSize: 14,
     color: '#666',
     marginBottom: 4,
   },
-  infoValue: {;
+  infoValue: {
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
     lineHeight: 22,
   },
-  deleteButton: {;
+  deleteButton: {
     borderRadius: 12,
     overflow: 'hidden',
     marginTop: 10,
   },
-  deleteButtonGradient: {;
+  deleteButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
     gap: 8,
   },
-  deleteButtonText: {;
+  deleteButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
-  addMemberForm: {;
+  addMemberForm: {
     backgroundColor: '#F8F9FA',
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
     gap: 16,
   },
-  formTitle: {;
+  formTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
   },
-  roleSelector: {;
+  roleSelector: {
     flexDirection: 'row',
     gap: 8,
   },
-  roleOption: {;
+  roleOption: {
     flex: 1,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -1099,52 +1023,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
   },
-  roleOptionSelected: {;
+  roleOptionSelected: {
     borderColor: '#2196F3',
     backgroundColor: '#2196F3',
   },
-  roleOptionText: {;
+  roleOptionText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#666',
   },
-  roleOptionTextSelected: {;
+  roleOptionTextSelected: {
     color: 'white',
   },
-  smallRoleOption: {;
+  smallRoleOption: {
     flex: 0,
     paddingVertical: 6,
     paddingHorizontal: 12,
   },
-  smallRoleText: {;
+  smallRoleText: {
     fontSize: 12,
   },
-  addButton: {;
+  addButton: {
     borderRadius: 12,
     overflow: 'hidden',
   },
-  addButtonGradient: {;
+  addButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
     gap: 8,
   },
-  addButtonText: {;
+  addButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
-  membersList: {;
+  membersList: {
     gap: 12,
   },
-  membersTitle: {;
+  membersTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 8,
   },
-  memberCard: {;
+  memberCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1154,124 +1078,124 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
-  memberInfo: {;
+  memberInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     flex: 1,
   },
-  memberDetails: {;
+  memberDetails: {
     flex: 1,
   },
-  memberName: {;
+  memberName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
   },
-  memberEmail: {;
+  memberEmail: {
     fontSize: 14,
     color: '#666',
     marginTop: 2,
   },
-  memberActions: {;
+  memberActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  roleTag: {;
+  roleTag: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
-  ownerRoleTag: {;
+  ownerRoleTag: {
     backgroundColor: '#FFD700',
   },
-  managerRoleTag: {;
+  managerRoleTag: {
     backgroundColor: '#4CAF50',
   },
-  viewerRoleTag: {;
+  viewerRoleTag: {
     backgroundColor: '#2196F3',
   },
-  roleTagText: {;
+  roleTagText: {
     color: 'white',
     fontSize: 12,
     fontWeight: '600',
   },
-  memberActionButtons: {;
+  memberActionButtons: {
     flexDirection: 'row',
     gap: 8,
   },
-  editMemberButton: {;
+  editMemberButton: {
     padding: 8,
     borderRadius: 8,
     backgroundColor: '#E3F2FD',
   },
-  removeMemberButton: {;
+  removeMemberButton: {
     padding: 8,
     borderRadius: 8,
     backgroundColor: '#FFEBEE',
   },
-  roleEditContainer: {;
+  roleEditContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  editActions: {;
+  editActions: {
     flexDirection: 'row',
     gap: 4,
   },
-  cancelEditButton: {;
+  cancelEditButton: {
     padding: 6,
     borderRadius: 6,
     backgroundColor: '#FFEBEE',
   },
-  saveEditButton: {;
+  saveEditButton: {
     padding: 6,
     borderRadius: 6,
     backgroundColor: '#E8F5E8',
   },
-  deleteModalOverlay: {;
+  deleteModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-  deleteModal: {;
+  deleteModal: {
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 24,
     width: '100%',
     maxWidth: 400,
   },
-  deleteModalHeader: {;
+  deleteModalHeader: {
     alignItems: 'center',
     marginBottom: 20,
   },
-  deleteModalTitle: {;
+  deleteModalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#f44336',
     marginTop: 8,
   },
-  deleteModalText: {;
+  deleteModalText: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 20,
   },
-  deleteModalInstruction: {;
+  deleteModalInstruction: {
     fontSize: 16,
     color: '#333',
     textAlign: 'center',
     marginBottom: 16,
   },
-  farmNameHighlight: {;
+  farmNameHighlight: {
     fontWeight: 'bold',
     color: '#f44336',
   },
-  deleteConfirmInput: {;
+  deleteConfirmInput: {
     borderWidth: 2,
     borderColor: '#E0E0E0',
     borderRadius: 12,
@@ -1281,15 +1205,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
-  deleteConfirmInputValid: {;
+  deleteConfirmInputValid: {
     borderColor: '#4CAF50',
     backgroundColor: '#E8F5E8',
   },
-  deleteModalButtons: {;
+  deleteModalButtons: {
     flexDirection: 'row',
     gap: 12,
   },
-  deleteCancelButton: {;
+  deleteCancelButton: {
     flex: 1,
     borderWidth: 2,
     borderColor: '#E0E0E0',
@@ -1297,23 +1221,22 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
-  deleteCancelButtonText: {;
+  deleteCancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#666',
   },
-  deleteConfirmButton: {;
+  deleteConfirmButton: {
     flex: 1,
     backgroundColor: '#f44336',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  deleteConfirmButtonText: {;
+  deleteConfirmButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
-});
-
-export default FarmSettingsModal;
+})
+export default FarmSettingsModal

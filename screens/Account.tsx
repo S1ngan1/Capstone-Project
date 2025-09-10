@@ -1,13 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../hooks/useAuth';
-
-const Account: React.FC = () => {;
-  const navigation = useNavigation();
-  const { session } = useAuth();
-
+import React from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
+import { useAuth } from '../hooks/useAuth'
+const Account: React.FC = () => {
+  const navigation = useNavigation()
+  const { session } = useAuth()
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -31,7 +29,6 @@ const Account: React.FC = () => {;
             </View>
           </View>
         </View>
-
         {/* Menu Items */}
         <View style={styles.menuSection}>
           <TouchableOpacity
@@ -41,7 +38,6 @@ const Account: React.FC = () => {;
             <Text style={styles.menuItemText}>Settings</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => navigation.navigate('Notification' as never)}
@@ -49,7 +45,6 @@ const Account: React.FC = () => {;
             <Text style={styles.menuItemText}>Notifications</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => navigation.navigate('UserManagement' as never)}
@@ -58,13 +53,11 @@ const Account: React.FC = () => {;
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
         </View>
-
         {/* Account Actions */}
         <View style={styles.actionsSection}>
           <TouchableOpacity style={styles.actionButton}>
             <Text style={styles.actionButtonText}>Edit Profile</Text>
           </TouchableOpacity>
-
           <TouchableOpacity style={[styles.actionButton, styles.logoutButton]}>
             <Text style={[styles.actionButtonText, styles.logoutButtonText]}>
               Sign Out
@@ -73,56 +66,55 @@ const Account: React.FC = () => {;
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  scrollView: {;
+  scrollView: {
     flex: 1,
   },
-  header: {;
+  header: {
     backgroundColor: '#4CAF50',
     paddingVertical: 30,
     paddingHorizontal: 20,
   },
-  profileSection: {;
+  profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  avatarContainer: {;
+  avatarContainer: {
     marginRight: 15,
   },
-  avatar: {;
+  avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
     backgroundColor: '#ddd',
   },
-  userInfo: {;
+  userInfo: {
     flex: 1,
   },
-  userName: {;
+  userName: {
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
     marginBottom: 5,
   },
-  userEmail: {;
+  userEmail: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.8)',
   },
-  menuSection: {;
+  menuSection: {
     backgroundColor: 'white',
     marginTop: 20,
     marginHorizontal: 15,
     borderRadius: 10,
     overflow: 'hidden',
   },
-  menuItem: {;
+  menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -131,19 +123,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  menuItemText: {;
+  menuItemText: {
     fontSize: 16,
     color: '#333',
   },
-  menuItemArrow: {;
+  menuItemArrow: {
     fontSize: 20,
     color: '#ccc',
   },
-  actionsSection: {;
+  actionsSection: {
     padding: 20,
     marginTop: 20,
   },
-  actionButton: {;
+  actionButton: {
     backgroundColor: '#4CAF50',
     paddingVertical: 15,
     paddingHorizontal: 20,
@@ -151,17 +143,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
   },
-  actionButtonText: {;
+  actionButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
-  logoutButton: {;
+  logoutButton: {
     backgroundColor: '#f44336',
   },
-  logoutButtonText: {;
+  logoutButtonText: {
     color: 'white',
   },
-});
-
-export default Account;
+})
+export default Account

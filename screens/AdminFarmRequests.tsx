@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -11,80 +11,72 @@ import {
   Modal,
   TextInput,
   ScrollView,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { supabase } from '../lib/supabase';
-import { useAuthContext } from '../context/AuthContext';
-import { activityLogService } from '../utils/activityLogService';
-import BottomNavigation from '../components/BottomNavigation';
-
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
+import { supabase } from '../lib/supabase'
+import { useAuthContext } from '../context/AuthContext'
+import { activityLogService } from '../utils/activityLogService'
+import BottomNavigation from '../components/BottomNavigation'
 interface FarmRequest {
-  id: string;
-  farm_name: string;
-  location: string;
-  requested_by: string;
-  status: 'pending' | 'approved' | 'rejected';
-  notes?: string;
-  admin_feedback?: string;
-  created_at: string;
-  processed_at?: string;
-  profiles: {;
-    username: string;
-    email: string;
-    role?: string;
-  };
+  id: string
+  farm_name: string
+  location: string
+  requested_by: string
+  status: 'pending' | 'approved' | 'rejected'
+  notes?: string
+  admin_feedback?: string
+  created_at: string
+  processed_at?: string
+  profiles: {
+    username: string
+    email: string
+    role?: string
+  }
 }
-
-const AdminFarmRequests: React.FC = () => {;
-  const navigation = useNavigation();
-  const { session } = useAuthContext();
-  const [requests, setRequests] = useState<FarmRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [processingRequest, setProcessingRequest] = useState<string | null>(null);
-  const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
-  const [currentRequest, setCurrentRequest] = useState<FarmRequest | null>(null);
-  const [adminFeedback, setAdminFeedback] = useState('');
-  const [rejectMode, setRejectMode] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
-
+const AdminFarmRequests: React.FC = () => {
+  const navigation = useNavigation()
+  const { session } = useAuthContext()
+  const [requests, setRequests] = useState<FarmRequest[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [processingRequest, setProcessingRequest] = useState<string | null>(null)
+  const [feedbackModalVisible, setFeedbackModalVisible] = useState(false)
+  const [currentRequest, setCurrentRequest] = useState<FarmRequest | null>(null)
+  const [adminFeedback, setAdminFeedback] = useState('')
+  const [rejectMode, setRejectMode] = useState(false)
+  const [selectedFilter, setSelectedFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending')
   useEffect(() => {
-    checkAdminAccess();
-    fetchRequests();
-  }, []);
-
+    checkAdminAccess()
+    fetchRequests()
+  }, [])
   const checkAdminAccess = async () => {
     if (!session?.user?.id) {
-      Alert.alert('Access Denied', 'You must be logged in to access this page');
-      navigation.goBack();
-      return;
+      Alert.alert('Access Denied', 'You must be logged in to access this page')
+      navigation.goBack()
+      return
     }
-
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', session.user.id)
-        .single();
-
+        .single()
       if (error || !profile || profile.role !== 'admin') {
-        Alert.alert('Access Denied', 'You do not have permission to access this page');
-        navigation.goBack();
-        return;
+        Alert.alert('Access Denied', 'You do not have permission to access this page')
+        navigation.goBack()
+        return
       }
     } catch (error) {
-      console.error('Error checking admin access:', error);
-      Alert.alert('Error', 'Failed to verify permissions');
-      navigation.goBack();
+      console.error('Error checking admin access:', error)
+      Alert.alert('Error', 'Failed to verify permissions')
+      navigation.goBack()
     }
-  };
-
+  }
   const fetchRequests = async () => {
     try {
-      setLoading(true);
-
+      setLoading(true)
       const { data: requestsData, error: requestsError } = await supabase
         .from('farm_requests')
         .select(`
@@ -98,44 +90,38 @@ const AdminFarmRequests: React.FC = () => {;
           created_at,
           processed_at
         `)
-        .order('created_at', { ascending: false });
-
+        .order('created_at', { ascending: false })
       if (requestsError) {
-        console.error('Error fetching requests:', requestsError);
-        Alert.alert('Error', 'Failed to fetch farm requests');
-        return;
+        console.error('Error fetching requests:', requestsError)
+        Alert.alert('Error', 'Failed to fetch farm requests')
+        return
       }
-
-      const requestsWithProfiles = [];
+      const requestsWithProfiles = []
       for (const request of requestsData || []) {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('username, email, role')
           .eq('id', request.requested_by)
-          .single();
-
+          .single()
         requestsWithProfiles.push({
           ...request,
           profiles: profileData || { username: 'Unknown User', email: '', role: 'user' }
-        });
+        })
       }
-
-      setRequests(requestsWithProfiles);
+      setRequests(requestsWithProfiles)
     } catch (error) {
-      console.error('Error:', error);
-      Alert.alert('Error', 'An unexpected error occurred');
+      console.error('Error:', error)
+      Alert.alert('Error', 'An unexpected error occurred')
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setLoading(false)
+      setRefreshing(false)
     }
-  };
-
+  }
   const handleRefresh = () => {
-    setRefreshing(true);
-    fetchRequests();
-  };
-
-  const handleApproveRequest = async (request: FarmRequest) => {;
+    setRefreshing(true)
+    fetchRequests()
+  }
+  const handleApproveRequest = async (request: FarmRequest) => {
     Alert.alert(
       'Approve Request',
       `Are you sure you want to approve the farm request for "${request.farm_name}"?`,
@@ -144,10 +130,9 @@ const AdminFarmRequests: React.FC = () => {;
         {
           text: 'Approve',
           style: 'default',
-          onPress: async () => {;
+          onPress: async () => {
             try {
-              setProcessingRequest(request.id);
-
+              setProcessingRequest(request.id)
               const { data: farmData, error: farmError } = await supabase
                 .from('farms')
                 .insert({
@@ -156,24 +141,20 @@ const AdminFarmRequests: React.FC = () => {;
                   notes: request.notes,
                 })
                 .select()
-                .single();
-
+                .single()
               if (farmError) {
-                throw new Error(`Failed to create farm: ${farmError.message}`);
+                throw new Error(`Failed to create farm: ${farmError.message}`)
               }
-
               const { error: farmUserError } = await supabase
                 .from('farm_users')
                 .insert({
                   farm_id: farmData.id,
                   user_id: request.requested_by,
                   farm_role: 'owner',
-                });
-
+                })
               if (farmUserError) {
-                console.error('Error adding user to farm:', farmUserError);
+                console.error('Error adding user to farm:', farmUserError)
               }
-
               const { error: requestError } = await supabase
                 .from('farm_requests')
                 .update({
@@ -181,144 +162,122 @@ const AdminFarmRequests: React.FC = () => {;
                   processed_at: new Date().toISOString(),
                   processed_by: session?.user?.id,
                 })
-                .eq('id', request.id);
-
+                .eq('id', request.id)
               if (requestError) {
-                throw new Error(`Failed to update request: ${requestError.message}`);
+                throw new Error(`Failed to update request: ${requestError.message}`)
               }
-
               // Log the approval action for admin
               await activityLogService.logActivity({
                 actionType: 'APPROVE',
                 tableName: 'farm_requests',
                 recordId: request.id,
                 description: `Approved farm request for "${request.farm_name}" by ${request.profiles.username}`
-              });
-
+              })
               // Create notification for the user whose request was approved
               await activityLogService.createFarmRequestNotification({
                 userId: request.requested_by,
                 farmRequestId: request.id,
                 status: 'approved',
-                farmName: request.farm_name;
-              });
-
+                farmName: request.farm_name
+              })
               // Create farm management notification
               await activityLogService.createFarmManagementNotification({
                 userId: request.requested_by,
                 farmId: farmData.id,
                 farmName: request.farm_name,
                 actionType: 'created',
-                details: 'Your farm request has been approved and the farm has been created.';
-              });
-
-              Alert.alert('Success', `Farm request approved and farm "${request.farm_name}" created successfully`);
-              fetchRequests();
-            } catch (error: any) {;
-              console.error('Error approving request:', error);
-              Alert.alert('Error', error.message || 'Failed to approve request');
+                details: 'Your farm request has been approved and the farm has been created.'
+              })
+              Alert.alert('Success', `Farm request approved and farm "${request.farm_name}" created successfully`)
+              fetchRequests()
+            } catch (error: any) {
+              console.error('Error approving request:', error)
+              Alert.alert('Error', error.message || 'Failed to approve request')
             } finally {
-              setProcessingRequest(null);
+              setProcessingRequest(null)
             }
           }
         }
       ]
-    );
-  };
-
-  const handleRejectRequest = (request: FarmRequest) => {;
-    setCurrentRequest(request);
-    setRejectMode(true);
-    setAdminFeedback('');
-    setFeedbackModalVisible(true);
-  };
-
+    )
+  }
+  const handleRejectRequest = (request: FarmRequest) => {
+    setCurrentRequest(request)
+    setRejectMode(true)
+    setAdminFeedback('')
+    setFeedbackModalVisible(true)
+  }
   const confirmRejectRequest = async () => {
-    if (!currentRequest) return;
-
+    if (!currentRequest) return
     try {
-      setProcessingRequest(currentRequest.id);
-
+      setProcessingRequest(currentRequest.id)
       const { error } = await supabase
         .from('farm_requests')
         .update({
           status: 'rejected',
           processed_at: new Date().toISOString(),
           processed_by: session?.user?.id,
-          admin_feedback: adminFeedback.trim() || 'No feedback provided';
+          admin_feedback: adminFeedback.trim() || 'No feedback provided'
         })
-        .eq('id', currentRequest.id);
-
+        .eq('id', currentRequest.id)
       if (error) {
-        throw error;
+        throw error
       }
-
       // Log the rejection action for admin
       await activityLogService.logActivity({
         actionType: 'REJECT',
         tableName: 'farm_requests',
         recordId: currentRequest.id,
         description: `Rejected farm request for "${currentRequest.farm_name}" by ${currentRequest.profiles.username}. Reason: ${adminFeedback || 'No reason provided'}`
-      });
-
+      })
       // Create notification for the user whose request was rejected
       await activityLogService.createFarmRequestNotification({
         userId: currentRequest.requested_by,
         farmRequestId: currentRequest.id,
         status: 'rejected',
         farmName: currentRequest.farm_name,
-        adminFeedback: adminFeedback;
-      });
-
-      setFeedbackModalVisible(false);
-      setCurrentRequest(null);
-      setAdminFeedback('');
-      Alert.alert('Success', `Farm request for "${currentRequest.farm_name}" has been rejected`);
-      fetchRequests();
-    } catch (error: any) {;
-      console.error('Error rejecting request:', error);
-      Alert.alert('Error', error.message || 'Failed to reject request');
+        adminFeedback: adminFeedback
+      })
+      setFeedbackModalVisible(false)
+      setCurrentRequest(null)
+      setAdminFeedback('')
+      Alert.alert('Success', `Farm request for "${currentRequest.farm_name}" has been rejected`)
+      fetchRequests()
+    } catch (error: any) {
+      console.error('Error rejecting request:', error)
+      Alert.alert('Error', error.message || 'Failed to reject request')
     } finally {
-      setProcessingRequest(null);
+      setProcessingRequest(null)
     }
-  };
-
-  const handleEditFeedback = (request: FarmRequest) => {;
-    setCurrentRequest(request);
-    setAdminFeedback(request.admin_feedback || '');
-    setRejectMode(false);
-    setFeedbackModalVisible(true);
-  };
-
+  }
+  const handleEditFeedback = (request: FarmRequest) => {
+    setCurrentRequest(request)
+    setAdminFeedback(request.admin_feedback || '')
+    setRejectMode(false)
+    setFeedbackModalVisible(true)
+  }
   const handleSaveFeedback = async () => {
-    if (!currentRequest) return;
-
+    if (!currentRequest) return
     try {
-      setProcessingRequest(currentRequest.id);
-
-      const updateData: any = {;
+      setProcessingRequest(currentRequest.id)
+      const updateData: any = {
         admin_feedback: adminFeedback.trim() || null,
         processed_at: new Date().toISOString(),
         processed_by: session?.user?.id,
-      };
-
-      if (rejectMode) {
-        updateData.status = 'rejected';
       }
-
+      if (rejectMode) {
+        updateData.status = 'rejected'
+      }
       const { error } = await supabase
         .from('farm_requests')
         .update(updateData)
-        .eq('id', currentRequest.id);
-
+        .eq('id', currentRequest.id)
       if (error) {
-        throw new Error(`Failed to save feedback: ${error.message}`);
+        throw new Error(`Failed to save feedback: ${error.message}`)
       }
-
       // Log the rejection action properly
       if (rejectMode) {
-        await activityLogService.logFarmRequestRejection(currentRequest, adminFeedback.trim());
-
+        await activityLogService.logFarmRequestRejection(currentRequest, adminFeedback.trim())
         // Create notification for the user whose request was rejected
         await supabase
           .from('notifications')
@@ -327,12 +286,12 @@ const AdminFarmRequests: React.FC = () => {;
             title: 'Farm Request Update ⚠️',
             message: `Your farm request for "${currentRequest.farm_name}" has been rejected. ${adminFeedback.trim() ? 'Reason: ' + adminFeedback.trim() : ''} Click to view details.`,
             type: 'warning',
-            metadata: JSON.stringify({;
+            metadata: JSON.stringify({
               action: 'navigate',
               screen: 'UserRequests',
               params: { activeTab: 'farm', requestId: currentRequest.id }
             })
-          });
+          })
       } else {
         // Just editing feedback, log as update
         await activityLogService.logActivity({
@@ -342,68 +301,59 @@ const AdminFarmRequests: React.FC = () => {;
           oldData: { admin_feedback: currentRequest.admin_feedback },
           newData: { admin_feedback: adminFeedback.trim() },
           description: `Updated admin feedback for farm request "${currentRequest.farm_name}"`
-        });
+        })
       }
-
-      Alert.alert('Success', rejectMode ? 'Request rejected with feedback' : 'Feedback saved successfully');
-      setFeedbackModalVisible(false);
-      setCurrentRequest(null);
-      setAdminFeedback('');
-      setRejectMode(false);
-      fetchRequests();
-    } catch (error: any) {;
-      console.error('Error saving feedback:', error);
-      Alert.alert('Error', error.message || 'Failed to save feedback');
+      Alert.alert('Success', rejectMode ? 'Request rejected with feedback' : 'Feedback saved successfully')
+      setFeedbackModalVisible(false)
+      setCurrentRequest(null)
+      setAdminFeedback('')
+      setRejectMode(false)
+      fetchRequests()
+    } catch (error: any) {
+      console.error('Error saving feedback:', error)
+      Alert.alert('Error', error.message || 'Failed to save feedback')
     } finally {
-      setProcessingRequest(null);
+      setProcessingRequest(null)
     }
-  };
-
-  const handleFilterChange = (filter: 'pending' | 'approved' | 'rejected' | 'all') => {;
-    setSelectedFilter(filter);
-  };
-
+  }
+  const handleFilterChange = (filter: 'pending' | 'approved' | 'rejected' | 'all') => {
+    setSelectedFilter(filter)
+  }
   const getFilteredRequests = () => {
     if (selectedFilter === 'all') {
-      return requests;
+      return requests
     }
-    return requests.filter(request => request.status === selectedFilter);
-  };
-
-  const getStatusColor = (status: string) => {;
+    return requests.filter(request => request.status === selectedFilter)
+  }
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return '#FF9800';
-      case 'approved': return '#4CAF50';
-      case 'rejected': return '#F44336';
-      default: return '#666';
+      case 'pending': return '#FF9800'
+      case 'approved': return '#4CAF50'
+      case 'rejected': return '#F44336'
+      default: return '#666'
     }
-  };
-
-  const getStatusIcon = (status: string) => {;
+  }
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending': return 'time-outline';
-      case 'approved': return 'checkmark-circle';
-      case 'rejected': return 'close-circle';
-      default: return 'help-circle';
+      case 'pending': return 'time-outline'
+      case 'approved': return 'checkmark-circle'
+      case 'rejected': return 'close-circle'
+      default: return 'help-circle'
     }
-  };
-
+  }
   const getUserRoleBadge = (role?: string) => {
-    if (!role) return null;
-
+    if (!role) return null
     const roleColors = {
       admin: '#9C27B0',
       user: '#2196F3',
-      tester: '#FF5722';
-    };
-
+      tester: '#FF5722'
+    }
     return (
       <View style={[styles.roleBadge, { backgroundColor: roleColors[role as keyof typeof roleColors] || '#666' }]}>
         <Text style={styles.roleText}>{role.toUpperCase()}</Text>
       </View>
-    );
-  };
-
+    )
+  }
   const renderRequestItem = ({ item }: { item: FarmRequest }) => (
     <View style={styles.requestCard}>
       <LinearGradient
@@ -430,21 +380,18 @@ const AdminFarmRequests: React.FC = () => {;
             <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
           </View>
         </View>
-
         {item.notes && (
           <View style={styles.notesContainer}>
-            <Text style={styles.notesLabel}>User Notes:</Text>;
+            <Text style={styles.notesLabel}>User Notes:</Text>
             <Text style={styles.notesText}>{item.notes}</Text>
           </View>
         )}
-
         {item.admin_feedback && (
           <View style={styles.adminFeedbackContainer}>
-            <Text style={styles.adminFeedbackLabel}>Admin Feedback:</Text>;
+            <Text style={styles.adminFeedbackLabel}>Admin Feedback:</Text>
             <Text style={styles.adminFeedbackText}>{item.admin_feedback}</Text>
           </View>
         )}
-
         <View style={styles.datesContainer}>
           <Text style={styles.dateText}>
             Requested: {new Date(item.created_at).toLocaleDateString()}
@@ -455,7 +402,6 @@ const AdminFarmRequests: React.FC = () => {;
             </Text>
           )}
         </View>
-
         <View style={styles.actionButtons}>
           {item.status === 'pending' && (
             <>
@@ -478,7 +424,6 @@ const AdminFarmRequests: React.FC = () => {;
                   )}
                 </LinearGradient>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={styles.rejectButton}
                 onPress={() => handleRejectRequest(item)}
@@ -494,7 +439,6 @@ const AdminFarmRequests: React.FC = () => {;
               </TouchableOpacity>
             </>
           )}
-
           <TouchableOpacity
             style={styles.feedbackButton}
             onPress={() => handleEditFeedback(item)}
@@ -507,8 +451,7 @@ const AdminFarmRequests: React.FC = () => {;
         </View>
       </LinearGradient>
     </View>
-  );
-
+  )
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="document-text-outline" size={64} color="#666" />
@@ -517,12 +460,10 @@ const AdminFarmRequests: React.FC = () => {;
         There are currently no farm requests to review
       </Text>
     </View>
-  );
-
-  const pendingCount = requests.filter(r => r.status === 'pending').length;
-  const approvedCount = requests.filter(r => r.status === 'approved').length;
-  const rejectedCount = requests.filter(r => r.status === 'rejected').length;
-
+  )
+  const pendingCount = requests.filter(r => r.status === 'pending').length
+  const approvedCount = requests.filter(r => r.status === 'approved').length
+  const rejectedCount = requests.filter(r => r.status === 'rejected').length
   return (
     <LinearGradient
       colors={['#e7fbe8ff', '#cdffcfff']}
@@ -535,12 +476,11 @@ const AdminFarmRequests: React.FC = () => {;
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Admin: Farm Requests</Text>;
+        <Text style={styles.headerTitle}>Admin: Farm Requests</Text>
         <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
           <Ionicons name="refresh" size={24} color="white" />
         </TouchableOpacity>
       </LinearGradient>
-
       {/* Merged Stats and Filter Container - Clickable for Both Display and Filtering */}
       <View style={styles.statsContainer}>
         <TouchableOpacity
@@ -550,7 +490,6 @@ const AdminFarmRequests: React.FC = () => {;
           <Text style={[styles.statNumber, selectedFilter === 'pending' && styles.statNumberActive]}>{pendingCount}</Text>
           <Text style={[styles.statLabel, { color: '#FF9800' }, selectedFilter === 'pending' && styles.statLabelActive]}>Pending</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.statItem, selectedFilter === 'approved' && styles.statItemActive]}
           onPress={() => handleFilterChange('approved')}
@@ -558,7 +497,6 @@ const AdminFarmRequests: React.FC = () => {;
           <Text style={[styles.statNumber, selectedFilter === 'approved' && styles.statNumberActive]}>{approvedCount}</Text>
           <Text style={[styles.statLabel, { color: '#4CAF50' }, selectedFilter === 'approved' && styles.statLabelActive]}>Approved</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.statItem, selectedFilter === 'rejected' && styles.statItemActive]}
           onPress={() => handleFilterChange('rejected')}
@@ -566,7 +504,6 @@ const AdminFarmRequests: React.FC = () => {;
           <Text style={[styles.statNumber, selectedFilter === 'rejected' && styles.statNumberActive]}>{rejectedCount}</Text>
           <Text style={[styles.statLabel, { color: '#F44336' }, selectedFilter === 'rejected' && styles.statLabelActive]}>Rejected</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.statItem, selectedFilter === 'all' && styles.statItemActive]}
           onPress={() => handleFilterChange('all')}
@@ -575,7 +512,6 @@ const AdminFarmRequests: React.FC = () => {;
           <Text style={[styles.statLabel, { color: '#666' }, selectedFilter === 'all' && styles.statLabelActive]}>All</Text>
         </TouchableOpacity>
       </View>
-
       <View style={styles.content}>
         {loading ? (
           <View style={styles.loadingContainer}>
@@ -600,7 +536,6 @@ const AdminFarmRequests: React.FC = () => {;
           />
         )}
       </View>
-
       <Modal
         visible={feedbackModalVisible}
         animationType="slide"
@@ -623,17 +558,15 @@ const AdminFarmRequests: React.FC = () => {;
                 <Ionicons name="close" size={24} color="white" />
               </TouchableOpacity>
             </LinearGradient>
-
             <ScrollView style={styles.modalScrollView}>
               {currentRequest && (
                 <View style={styles.requestSummary}>
-                  <Text style={styles.summaryTitle}>Request Summary:</Text>;
+                  <Text style={styles.summaryTitle}>Request Summary:</Text>
                   <Text style={styles.summaryText}>Farm: {currentRequest.farm_name}</Text>
                   <Text style={styles.summaryText}>Location: {currentRequest.location}</Text>
                   <Text style={styles.summaryText}>User: {currentRequest.profiles?.username}</Text>
                 </View>
               )}
-
               <View style={styles.feedbackInputContainer}>
                 <Text style={styles.feedbackInputLabel}>
                   {rejectMode ? 'Rejection Reason (Required):' : 'Admin Feedback:'}
@@ -650,7 +583,6 @@ const AdminFarmRequests: React.FC = () => {;
                 />
               </View>
             </ScrollView>
-
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.modalCancelButton}
@@ -676,17 +608,15 @@ const AdminFarmRequests: React.FC = () => {;
           </View>
         </View>
       </Modal>
-
       <BottomNavigation />
     </LinearGradient>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     flex: 1,
   },
-  header: {;
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -694,20 +624,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
-  backButton: {;
+  backButton: {
     padding: 8,
   },
-  headerTitle: {;
+  headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
     flex: 1,
     textAlign: 'center',
   },
-  refreshButton: {;
+  refreshButton: {
     padding: 8,
   },
-  statsContainer: {;
+  statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 15,
@@ -722,51 +652,51 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  statItem: {;
+  statItem: {
     alignItems: 'center',
     padding: 10,
     borderRadius: 10,
     minWidth: 60,
   },
-  statItemActive: {;
+  statItemActive: {
     backgroundColor: 'rgba(74, 144, 226, 0.1)',
     borderWidth: 2,
     borderColor: '#4A90E2',
   },
-  statNumber: {;
+  statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
   },
-  statNumberActive: {;
+  statNumberActive: {
     color: '#4A90E2',
   },
-  statLabel: {;
+  statLabel: {
     fontSize: 12,
     fontWeight: '600',
     marginTop: 4,
   },
-  statLabelActive: {;
+  statLabelActive: {
     color: '#4A90E2',
   },
-  content: {;
+  content: {
     flex: 1,
     paddingHorizontal: 10,
   },
-  loadingContainer: {;
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {;
+  loadingText: {
     marginTop: 10,
     fontSize: 16,
     color: '#666',
   },
-  listContainer: {;
+  listContainer: {
     paddingBottom: 100,
   },
-  requestCard: {;
+  requestCard: {
     marginBottom: 15,
     borderRadius: 15,
     overflow: 'hidden',
@@ -776,50 +706,50 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  requestCardGradient: {;
+  requestCardGradient: {
     padding: 20,
   },
-  requestHeader: {;
+  requestHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 15,
   },
-  requestInfo: {;
+  requestInfo: {
     flex: 1,
     marginRight: 10,
   },
-  farmName: {;
+  farmName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 5,
   },
-  location: {;
+  location: {
     fontSize: 14,
     color: '#666',
     marginBottom: 8,
   },
-  userInfo: {;
+  userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  requester: {;
+  requester: {
     fontSize: 14,
     color: '#666',
   },
-  roleBadge: {;
+  roleBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 12,
   },
-  roleText: {;
+  roleText: {
     fontSize: 10,
     fontWeight: 'bold',
     color: 'white',
   },
-  statusBadge: {;
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
@@ -827,83 +757,83 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     gap: 5,
   },
-  statusText: {;
+  statusText: {
     fontSize: 12,
     fontWeight: 'bold',
     color: 'white',
   },
-  notesContainer: {;
+  notesContainer: {
     backgroundColor: 'rgba(74, 144, 226, 0.1)',
     padding: 12,
     borderRadius: 8,
     marginBottom: 10,
   },
-  notesLabel: {;
+  notesLabel: {
     fontSize: 12,
     fontWeight: 'bold',
     color: '#4A90E2',
     marginBottom: 4,
   },
-  notesText: {;
+  notesText: {
     fontSize: 14,
     color: '#333',
     lineHeight: 20,
   },
-  adminFeedbackContainer: {;
+  adminFeedbackContainer: {
     backgroundColor: 'rgba(76, 175, 80, 0.1)',
     padding: 12,
     borderRadius: 8,
     marginBottom: 10,
   },
-  adminFeedbackLabel: {;
+  adminFeedbackLabel: {
     fontSize: 12,
     fontWeight: 'bold',
     color: '#4CAF50',
     marginBottom: 4,
   },
-  adminFeedbackText: {;
+  adminFeedbackText: {
     fontSize: 14,
     color: '#333',
     lineHeight: 20,
   },
-  datesContainer: {;
+  datesContainer: {
     marginBottom: 15,
   },
-  dateText: {;
+  dateText: {
     fontSize: 12,
     color: '#666',
     marginBottom: 2,
   },
-  actionButtons: {;
+  actionButtons: {
     flexDirection: 'row',
     gap: 10,
     flexWrap: 'wrap',
   },
-  approveButton: {;
+  approveButton: {
     flex: 1,
     minWidth: 100,
     borderRadius: 8,
     overflow: 'hidden',
   },
-  rejectButton: {;
+  rejectButton: {
     flex: 1,
     minWidth: 100,
     borderRadius: 8,
     overflow: 'hidden',
   },
-  actionButtonGradient: {;
+  actionButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
     gap: 5,
   },
-  actionButtonText: {;
+  actionButtonText: {
     color: 'white',
     fontWeight: 'bold',
     fontSize: 14,
   },
-  feedbackButton: {;
+  feedbackButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -915,88 +845,88 @@ const styles = StyleSheet.create({
     gap: 5,
     marginTop: 8,
   },
-  feedbackButtonText: {;
+  feedbackButtonText: {
     color: '#2196F3',
     fontSize: 12,
     fontWeight: '600',
   },
-  emptyContainer: {;
+  emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 60,
   },
-  emptyTitle: {;
+  emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#666',
     marginTop: 16,
     marginBottom: 8,
   },
-  emptySubtitle: {;
+  emptySubtitle: {
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
     paddingHorizontal: 40,
   },
-  modalContainer: {;
+  modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalContent: {;
+  modalContent: {
     backgroundColor: 'white',
     borderRadius: 20,
     width: '90%',
     maxHeight: '80%',
     overflow: 'hidden',
   },
-  modalHeader: {;
+  modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 20,
   },
-  modalTitle: {;
+  modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
     flex: 1,
   },
-  modalCloseButton: {;
+  modalCloseButton: {
     padding: 4,
   },
-  modalScrollView: {;
+  modalScrollView: {
     maxHeight: 400,
   },
-  requestSummary: {;
+  requestSummary: {
     padding: 20,
     backgroundColor: '#f8f9fa',
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
   },
-  summaryTitle: {;
+  summaryTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 10,
   },
-  summaryText: {;
+  summaryText: {
     fontSize: 14,
     color: '#666',
     marginBottom: 4,
   },
-  feedbackInputContainer: {;
+  feedbackInputContainer: {
     padding: 20,
   },
-  feedbackInputLabel: {;
+  feedbackInputLabel: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 10,
   },
-  feedbackInput: {;
+  feedbackInput: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
@@ -1005,14 +935,14 @@ const styles = StyleSheet.create({
     color: '#333',
     minHeight: 100,
   },
-  modalActions: {;
+  modalActions: {
     flexDirection: 'row',
     padding: 20,
     gap: 10,
     borderTopWidth: 1,
     borderTopColor: '#e9ecef',
   },
-  modalCancelButton: {;
+  modalCancelButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
@@ -1020,26 +950,25 @@ const styles = StyleSheet.create({
     borderColor: '#666',
     alignItems: 'center',
   },
-  modalCancelText: {;
+  modalCancelText: {
     color: '#666',
     fontWeight: 'bold',
   },
-  modalSaveButton: {;
+  modalSaveButton: {
     flex: 1,
     borderRadius: 8,
     overflow: 'hidden',
   },
-  modalRejectButton: {;
+  modalRejectButton: {
     // Additional styles for reject mode
   },
-  modalSaveButtonGradient: {;
+  modalSaveButtonGradient: {
     paddingVertical: 12,
     alignItems: 'center',
   },
-  modalSaveText: {;
+  modalSaveText: {
     color: 'white',
     fontWeight: 'bold',
   },
-});
-
-export default AdminFarmRequests;
+})
+export default AdminFarmRequests

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -7,146 +7,127 @@ import {
   ActivityIndicator,
   ScrollView,
   RefreshControl,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuthContext } from '../context/AuthContext';
-import { activityLogService, Notification as NotificationType } from '../utils/activityLogService';
-import { useNavigation } from '@react-navigation/native';
-import BottomNavigation from '../components/BottomNavigation';
-
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useAuthContext } from '../context/AuthContext'
+import { activityLogService, Notification as NotificationType } from '../utils/activityLogService'
+import { useNavigation } from '@react-navigation/native'
+import BottomNavigation from '../components/BottomNavigation'
 const Notification = () => {
-  const navigation = useNavigation();
-  const { user } = useAuthContext();
-  const [notifications, setNotifications] = useState<NotificationType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'unread' | 'success' | 'warning' | 'error'>('all');
-
+  const navigation = useNavigation()
+  const { user } = useAuthContext()
+  const [notifications, setNotifications] = useState<NotificationType[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'unread' | 'success' | 'warning' | 'error'>('all')
   useEffect(() => {
     if (user?.id) {
-      fetchNotifications();
-
+      fetchNotifications()
       // Subscribe to real-time notifications
       const subscription = activityLogService.subscribeToNotifications(
         user.id,
         (newNotification) => {
-          setNotifications(prev => [newNotification, ...prev]);
+          setNotifications(prev => [newNotification, ...prev])
         }
-      );
-
+      )
       return () => {
-        subscription.unsubscribe();
-      };
+        subscription.unsubscribe()
+      }
     }
-  }, [user?.id]);
-
+  }, [user?.id])
   const fetchNotifications = async () => {
     try {
-      setLoading(true);
+      setLoading(true)
       const { data } = await activityLogService.getNotifications({
         page: 1,
         limit: 50,
-        unreadOnly: selectedCategory === 'unread';
-      });
-
+        unreadOnly: selectedCategory === 'unread'
+      })
       // Filter by category if not 'all' or 'unread'
-      let filteredData = data;
+      let filteredData = data
       if (selectedCategory !== 'all' && selectedCategory !== 'unread') {
-        filteredData = data.filter(notification => notification.type === selectedCategory);
+        filteredData = data.filter(notification => notification.type === selectedCategory)
       }
-
-      setNotifications(filteredData);
+      setNotifications(filteredData)
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('Error fetching notifications:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
+  }
   const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchNotifications();
-    setRefreshing(false);
-  };
-
-  const handleNotificationPress = async (notification: NotificationType) => {;
+    setRefreshing(true)
+    await fetchNotifications()
+    setRefreshing(false)
+  }
+  const handleNotificationPress = async (notification: NotificationType) => {
     // Mark as read if unread
     if (!notification.is_read) {
-      await activityLogService.markNotificationAsRead(notification.id);
+      await activityLogService.markNotificationAsRead(notification.id)
       setNotifications(prev =>
         prev.map(n => n.id === notification.id ? { ...n, is_read: true } : n)
-      );
+      )
     }
-
     // Navigate based on metadata
     if (notification.metadata?.navigation) {
-      const { navigation: screenName, navigationParams } = notification.metadata;
-      navigation.navigate(screenName as any, navigationParams);
+      const { navigation: screenName, navigationParams } = notification.metadata
+      navigation.navigate(screenName as any, navigationParams)
     }
-  };
-
+  }
   const markAllAsRead = async () => {
     try {
-      await activityLogService.markAllNotificationsAsRead();
+      await activityLogService.markAllNotificationsAsRead()
       setNotifications(prev =>
         prev.map(n => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
-      );
+      )
     } catch (error) {
-      console.error('Error marking all as read:', error);
+      console.error('Error marking all as read:', error)
     }
-  };
-
-  const getNotificationIcon = (type: string) => {;
+  }
+  const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'success': return 'checkmark-circle';
-      case 'warning': return 'warning';
-      case 'error': return 'close-circle';
-      default: return 'information-circle';
+      case 'success': return 'checkmark-circle'
+      case 'warning': return 'warning'
+      case 'error': return 'close-circle'
+      default: return 'information-circle'
     }
-  };
-
-  const getNotificationColor = (type: string) => {;
+  }
+  const getNotificationColor = (type: string) => {
     switch (type) {
-      case 'success': return '#4CAF50';
-      case 'warning': return '#FF9800';
-      case 'error': return '#f44336';
-      default: return '#2196F3';
+      case 'success': return '#4CAF50'
+      case 'warning': return '#FF9800'
+      case 'error': return '#f44336'
+      default: return '#2196F3'
     }
-  };
-
-  const getCategoryIcon = (category: string) => {;
+  }
+  const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'all': return 'list';
-      case 'unread': return 'ellipse';
-      case 'success': return 'checkmark-circle';
-      case 'warning': return 'warning';
-      case 'error': return 'close-circle';
-      default: return 'list';
+      case 'all': return 'list'
+      case 'unread': return 'ellipse'
+      case 'success': return 'checkmark-circle'
+      case 'warning': return 'warning'
+      case 'error': return 'close-circle'
+      default: return 'list'
     }
-  };
-
-  const formatTimeAgo = (dateString: string) => {;
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    return `${Math.floor(diffInSeconds / 604800)}w ago`;
-  };
-
+  }
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    if (diffInSeconds < 60) return 'Just now'
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`
+    return `${Math.floor(diffInSeconds / 604800)}w ago`
+  }
   const getFilteredNotifications = () => {
-    if (selectedCategory === 'all') return notifications;
-    if (selectedCategory === 'unread') return notifications.filter(n => !n.is_read);
-    return notifications.filter(n => n.type === selectedCategory);
-  };
-
-  const unreadCount = notifications.filter(n => !n.is_read).length;
-  const filteredNotifications = getFilteredNotifications();
-
+    if (selectedCategory === 'all') return notifications
+    if (selectedCategory === 'unread') return notifications.filter(n => !n.is_read)
+    return notifications.filter(n => n.type === selectedCategory)
+  }
+  const unreadCount = notifications.filter(n => !n.is_read).length
+  const filteredNotifications = getFilteredNotifications()
   if (loading) {
     return (
       <LinearGradient colors={['#4CAF50', '#45a049']} style={styles.safeArea}>
@@ -155,9 +136,8 @@ const Notification = () => {
           <Text style={styles.loadingText}>Loading notifications...</Text>
         </View>
       </LinearGradient>
-    );
+    )
   }
-
   return (
     <LinearGradient colors={['#4CAF50', '#45a049']} style={styles.safeArea}>
       <View style={styles.header}>
@@ -175,7 +155,6 @@ const Notification = () => {
           </TouchableOpacity>
         )}
       </View>
-
       <View style={styles.filterContainer}>
         {['all', 'unread', 'success', 'warning', 'error'].map((category) => (
           <TouchableOpacity
@@ -200,7 +179,6 @@ const Notification = () => {
           </TouchableOpacity>
         ))}
       </View>
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
@@ -218,8 +196,7 @@ const Notification = () => {
           </View>
         ) : (
           filteredNotifications.map((notification) => {
-            const isClickable = notification.metadata?.navigation;
-
+            const isClickable = notification.metadata?.navigation
             return (
               <TouchableOpacity
                 key={notification.id}
@@ -263,21 +240,19 @@ const Notification = () => {
                   </View>
                 </View>
               </TouchableOpacity>
-            );
+            )
           })
         )}
       </ScrollView>
-
       <BottomNavigation />
     </LinearGradient>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  safeArea: {;
+  safeArea: {
     flex: 1,
   },
-  header: {;
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -285,12 +260,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
-  headerTitle: {;
+  headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
   },
-  unreadBadge: {;
+  unreadBadge: {
     backgroundColor: '#f44336',
     borderRadius: 10,
     minWidth: 20,
@@ -302,19 +277,19 @@ const styles = StyleSheet.create({
     top: -5,
     right: -30,
   },
-  unreadBadgeText: {;
+  unreadBadgeText: {
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
   },
-  markAllButton: {;
+  markAllButton: {
     padding: 8,
   },
-  markAllText: {;
+  markAllText: {
     color: 'white',
     fontWeight: '600',
   },
-  filterContainer: {;
+  filterContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 15,
@@ -324,7 +299,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     borderRadius: 15,
   },
-  filterButton: {;
+  filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
@@ -332,39 +307,39 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'transparent',
   },
-  filterButtonActive: {;
+  filterButtonActive: {
     backgroundColor: '#4CAF50',
   },
-  filterButtonText: {;
+  filterButtonText: {
     marginLeft: 6,
     fontSize: 12,
     color: '#666',
   },
-  filterButtonTextActive: {;
+  filterButtonTextActive: {
     color: 'white',
   },
-  content: {;
+  content: {
     flex: 1,
     paddingHorizontal: 20,
   },
-  loadingContainer: {;
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {;
+  loadingText: {
     marginTop: 16,
     fontSize: 16,
     color: 'white',
   },
-  scrollView: {;
+  scrollView: {
     flex: 1,
     paddingHorizontal: 20,
   },
-  scrollViewContent: {;
+  scrollViewContent: {
     paddingBottom: 120, // Increased padding to accommodate bottom navigation
   },
-  notificationItem: {;
+  notificationItem: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 16,
@@ -375,79 +350,78 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  unreadItem: {;
+  unreadItem: {
     backgroundColor: '#F0F8FF',
     borderLeftWidth: 4,
     borderLeftColor: '#4CAF50',
   },
-  clickableItem: {;
+  clickableItem: {
     borderColor: '#007BFF',
     borderWidth: 1,
   },
-  notificationHeader: {;
+  notificationHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  notificationInfo: {;
+  notificationInfo: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     flex: 1,
   },
-  notificationTextContainer: {;
+  notificationTextContainer: {
     marginLeft: 12,
     flex: 1,
   },
-  notificationTitle: {;
+  notificationTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
     marginBottom: 4,
   },
-  unreadText: {;
+  unreadText: {
     fontWeight: 'bold',
   },
-  notificationMessage: {;
+  notificationMessage: {
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
   },
-  notificationMeta: {;
+  notificationMeta: {
     alignItems: 'flex-end',
     marginLeft: 8,
   },
-  timeAgo: {;
+  timeAgo: {
     fontSize: 12,
     color: '#999',
     marginBottom: 4,
   },
-  unreadDot: {;
+  unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: '#4CAF50',
     marginBottom: 4,
   },
-  emptyContainer: {;
+  emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
     paddingVertical: 60,
   },
-  emptyTitle: {;
+  emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#666',
     marginTop: 16,
   },
-  emptyMessage: {;
+  emptyMessage: {
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 20,
   },
-});
-
-export default Notification;
+})
+export default Notification

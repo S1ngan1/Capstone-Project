@@ -1,122 +1,106 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, FlatList } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { useAuthContext } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
-import SensorDataTable from '../components/Charts/SensorDataTable';
-import WeatherWidget from '../components/WeatherWidget';
-import BottomNavigation from '../components/BottomNavigation';
-import FarmSettingsModal from '../components/FarmSettingsModal';
-import CreateSensorRequest from '../components/CreateSensorRequest';
-
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, FlatList } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'
+import { useAuthContext } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
+import SensorDataTable from '../components/Charts/SensorDataTable'
+import WeatherWidget from '../components/WeatherWidget'
+import BottomNavigation from '../components/BottomNavigation'
+import FarmSettingsModal from '../components/FarmSettingsModal'
+import CreateSensorRequest from '../components/CreateSensorRequest'
 // Types
 interface Farm {
-  id: string;
-  name: string;
-  location: string;
-  address?: string; // Add address field for detailed location
-  notes?: string; // Add notes field for farm description
+  id: string
+  name: string
+  location: string
+  address?: string // Add address field for detailed location
+  notes?: string // Add notes field for farm description
 }
-
 interface FarmUser {
-  id: string;
-  user_id: string;
-  farm_role: string; // Changed from 'role' to 'farm_role'
-  profiles: {;
-    username: string;
-    email: string;
-    role: string; // Add application-level role
-  };
+  id: string
+  user_id: string
+  farm_role: string // Changed from 'role' to 'farm_role'
+  profiles: {
+    username: string
+    email: string
+    role: string // Add application-level role
+  }
 }
-
 interface Sensor {
-  id: string;
-  name: string;
-  type: string;
-  status: 'active' | 'inactive' | 'maintenance';
-  last_reading: number;
-  unit: string;
-  updated_at: string;
-  farm_id: string;
-  location?: string;
+  id: string
+  name: string
+  type: string
+  status: 'active' | 'inactive' | 'maintenance'
+  last_reading: number
+  unit: string
+  updated_at: string
+  farm_id: string
+  location?: string
 }
-
 interface SensorData {
-  id: string;
-  sensor_id: string;
-  value: number;
-  timestamp: string;
-  sensors: {;
-    id: string;
-    name: string;
-    type: string;
-    status: string;
-    unit: string;
-    farm_id: string;
-    location?: string;
-  };
+  id: string
+  sensor_id: string
+  value: number
+  timestamp: string
+  sensors: {
+    id: string
+    name: string
+    type: string
+    status: string
+    unit: string
+    farm_id: string
+    location?: string
+  }
 }
-
 type RootStackParamList = {
-  FarmDetails: { farmId: string };
-};
-
-type FarmDetailsRouteProp = RouteProp<RootStackParamList, 'FarmDetails'>;
-
+  FarmDetails: { farmId: string }
+}
+type FarmDetailsRouteProp = RouteProp<RootStackParamList, 'FarmDetails'>
 const FarmDetails = () => {
-  const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
-  const route = useRoute<FarmDetailsRouteProp>();
-  const { session } = useAuthContext();
-  const { farmId } = route.params;
-
-  const [farm, setFarm] = useState<Farm | null>(null);
-  const [farmUsers, setFarmUsers] = useState<FarmUser[]>([]);
-  const [sensors, setSensors] = useState<Sensor[]>([]);
-  const [userRole, setUserRole] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showCreateSensorModal, setShowCreateSensorModal] = useState(false);
-
+  const insets = useSafeAreaInsets()
+  const navigation = useNavigation()
+  const route = useRoute<FarmDetailsRouteProp>()
+  const { session } = useAuthContext()
+  const { farmId } = route.params
+  const [farm, setFarm] = useState<Farm | null>(null)
+  const [farmUsers, setFarmUsers] = useState<FarmUser[]>([])
+  const [sensors, setSensors] = useState<Sensor[]>([])
+  const [userRole, setUserRole] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [showCreateSensorModal, setShowCreateSensorModal] = useState(false)
   useEffect(() => {
-    fetchFarmDetails();
-  }, [farmId, session]);
-
+    fetchFarmDetails()
+  }, [farmId, session])
   const fetchFarmDetails = async () => {
     if (!session?.user?.id || !farmId) {
-      setLoading(false);
-      return;
+      setLoading(false)
+      return
     }
-
     try {
-      setLoading(true);
-
+      setLoading(true)
       // Fetch farm details including notes and address
       const { data: farmData, error: farmError } = await supabase
         .from('farms')
         .select('id, name, location, address, notes')
         .eq('id', farmId)
-        .single();
-
+        .single()
       if (!farmError && farmData) {
-        setFarm(farmData);
+        setFarm(farmData)
       }
-
       // Fetch current user's farm role for this farm
       const { data: userRoleData, error: roleError } = await supabase
         .from('farm_users')
         .select('farm_role')
         .eq('farm_id', farmId)
         .eq('user_id', session.user.id)
-        .single();
-
+        .single()
       if (!roleError && userRoleData) {
-        setUserRole(userRoleData.farm_role);
+        setUserRole(userRoleData.farm_role)
       }
-
       // Fetch all users for this farm with updated schema
       const { data: usersData, error: usersError } = await supabase
         .from('farm_users')
@@ -130,15 +114,12 @@ const FarmDetails = () => {
             role
           )
         `)
-        .eq('farm_id', farmId);
-
+        .eq('farm_id', farmId)
       if (!usersError && usersData) {
-        setFarmUsers(usersData);
+        setFarmUsers(usersData)
       }
-
       // Fetch real sensors from sensor table with correct column names
-      console.log('Fetching sensors for farm:', farmId);
-
+      console.log('Fetching sensors for farm:', farmId)
       const { data: sensorTableData, error: sensorTableError } = await supabase
         .from('sensor')
         .select(`
@@ -152,14 +133,11 @@ const FarmDetails = () => {
           calibration_date,
           notes
         `)
-        .eq('farm_id', farmId);
-
+        .eq('farm_id', farmId)
       if (!sensorTableError && sensorTableData && sensorTableData.length > 0) {
-        console.log('Found real sensors:', sensorTableData);
-
+        console.log('Found real sensors:', sensorTableData)
         // Get latest readings for each sensor from sensor_data table
-        const sensorsWithReadings: Sensor[] = [];
-
+        const sensorsWithReadings: Sensor[] = []
         for (const sensor of sensorTableData) {
           // Fetch latest reading for this sensor
           const { data: latestReading, error: readingError } = await supabase
@@ -168,8 +146,7 @@ const FarmDetails = () => {
             .eq('sensor_id', sensor.sensor_id)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
-
+            .single()
           sensorsWithReadings.push({
             id: sensor.sensor_id,
             name: sensor.sensor_name || 'Unknown Sensor',
@@ -180,23 +157,21 @@ const FarmDetails = () => {
             updated_at: latestReading?.created_at || sensor.calibration_date || new Date().toISOString(),
             farm_id: sensor.farm_id,
             location: sensor.notes || 'Farm Location',
-          });
+          })
         }
-
-        setSensors(sensorsWithReadings);
-        console.log('Processed sensors with readings:', sensorsWithReadings);
+        setSensors(sensorsWithReadings)
+        console.log('Processed sensors with readings:', sensorsWithReadings)
       } else {
-        console.error('Error fetching sensors or no sensors found:', sensorTableError);
-        setSensors([]);
+        console.error('Error fetching sensors or no sensors found:', sensorTableError)
+        setSensors([])
       }
     } catch (error) {
-      console.error('Error fetching farm details:', error);
-      setSensors([]);
+      console.error('Error fetching farm details:', error)
+      setSensors([])
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
+  }
   const renderUserItem = ({ item }: { item: FarmUser }) => (
     <TouchableOpacity
       style={styles.userCard}
@@ -221,8 +196,7 @@ const FarmDetails = () => {
         </Text>
       </View>
     </TouchableOpacity>
-  );
-
+  )
   const renderSensorItem = ({ item }: { item: Sensor }) => (
     <TouchableOpacity
       style={styles.sensorCard}
@@ -247,19 +221,17 @@ const FarmDetails = () => {
         </Text>
       </View>
     </TouchableOpacity>
-  );
-
-  const getFarmRoleStyle = (farmRole: string) => {;
+  )
+  const getFarmRoleStyle = (farmRole: string) => {
     switch (farmRole) {
       case 'owner':
-        return styles.ownerRole;
+        return styles.ownerRole
       case 'manager':
-        return styles.managerRole;
+        return styles.managerRole
       default:
-        return styles.viewerRole;
+        return styles.viewerRole
     }
-  };
-
+  }
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -274,9 +246,8 @@ const FarmDetails = () => {
           </View>
         </LinearGradient>
       </View>
-    );
+    )
   }
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
@@ -308,7 +279,6 @@ const FarmDetails = () => {
             <Ionicons name="settings" size={24} color="#333" />
           </TouchableOpacity>
         </View>
-
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Farm Notes Section - New addition for farm description */}
           {farm?.notes && (
@@ -328,7 +298,6 @@ const FarmDetails = () => {
               </View>
             </View>
           )}
-
           {/* Weather Section */}
           {farm?.location && (
             <View style={styles.weatherSection}>
@@ -339,13 +308,11 @@ const FarmDetails = () => {
               />
             </View>
           )}
-
           {/* Sensor Data Section */}
           <View style={styles.sensorSection}>
             <Text style={styles.sectionTitle}>📊 Sensor Data & Analytics</Text>
             <SensorDataTable farmId={farmId} />
           </View>
-
           {/* Sensors List */}
           <View style={styles.sensorsSection}>
             <View style={styles.sectionHeader}>
@@ -363,7 +330,6 @@ const FarmDetails = () => {
                 <Text style={styles.addSensorText}> Add Sensor</Text>
               </TouchableOpacity>
             </View>
-
             {loading ? (
               <View style={styles.loadingContainer}>
                 <Text style={styles.loadingText}>Loading sensors...</Text>
@@ -383,7 +349,6 @@ const FarmDetails = () => {
               </View>
             )}
           </View>
-
           {/* Farm Members Section */}
           <View style={styles.membersSection}>
             <View style={styles.sectionHeader}>
@@ -394,7 +359,6 @@ const FarmDetails = () => {
                 </View>
               </View>
             </View>
-
             {farmUsers.length > 0 ? (
               <FlatList
                 data={farmUsers}
@@ -433,18 +397,17 @@ const FarmDetails = () => {
         />
       )}
     </View>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     flex: 1,
   },
-  background: {;
+  background: {
     flex: 1,
     paddingBottom: 70,
   },
-  header: {;
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -454,74 +417,74 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
-  backButton: {;
+  backButton: {
     padding: 5,
   },
-  headerContent: {;
+  headerContent: {
     flex: 1,
     alignItems: 'center',
   },
-  farmName: {;
+  farmName: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
-  farmLocation: {;
+  farmLocation: {
     fontSize: 14,
     color: '#666',
     marginTop: 2,
   },
-  farmAddress: {;
+  farmAddress: {
     fontSize: 14,
     color: '#666',
     marginTop: 2,
   },
-  userRole: {;
+  userRole: {
     fontSize: 12,
     color: '#4CAF50',
     fontWeight: '600',
     marginTop: 2,
   },
-  settingsButton: {;
+  settingsButton: {
     padding: 5,
   },
-  content: {;
+  content: {
     flex: 1,
     paddingHorizontal: 20,
   },
-  sectionTitle: {;
+  sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
   },
-  weatherSection: {;
+  weatherSection: {
     marginBottom: 20,
     paddingHorizontal: 20,
   },
-  sensorSection: {;
+  sensorSection: {
     marginBottom: 20,
     paddingHorizontal: 20,
   },
-  sensorsSection: {;
+  sensorsSection: {
     marginBottom: 20,
     paddingHorizontal: 20,
   },
-  membersSection: {;
+  membersSection: {
     marginBottom: 100,
     paddingHorizontal: 20,
   },
-  sectionHeader: {;
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
   },
-  titleWithCount: {;
+  titleWithCount: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  sensorCount: {;
+  sensorCount: {
     backgroundColor: '#4CAF50',
     borderRadius: 12,
     paddingVertical: 4,
@@ -530,12 +493,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-  sensorCountText: {;
+  sensorCountText: {
     color: 'white',
     fontSize: 14,
     fontWeight: 'bold',
   },
-  memberCount: {;
+  memberCount: {
     backgroundColor: '#2196F3',
     borderRadius: 12,
     paddingVertical: 4,
@@ -544,12 +507,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-  memberCountText: {;
+  memberCountText: {
     color: 'white',
     fontSize: 14,
     fontWeight: 'bold',
   },
-  sensorCard: {;
+  sensorCard: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 15,
@@ -560,55 +523,55 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  sensorHeader: {;
+  sensorHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
   },
-  sensorInfo: {;
+  sensorInfo: {
     flex: 1,
   },
-  sensorName: {;
+  sensorName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
   },
-  sensorType: {;
+  sensorType: {
     fontSize: 12,
     color: '#666',
     marginTop: 2,
   },
-  statusIndicator: {;
+  statusIndicator: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  activeStatus: {;
+  activeStatus: {
     backgroundColor: '#d4edda',
   },
-  inactiveStatus: {;
+  inactiveStatus: {
     backgroundColor: '#f8d7da',
   },
-  statusText: {;
+  statusText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#333',
   },
-  sensorReading: {;
+  sensorReading: {
     alignItems: 'flex-start',
   },
-  readingValue: {;
+  readingValue: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#4CAF50',
   },
-  lastUpdated: {;
+  lastUpdated: {
     fontSize: 12,
     color: '#666',
     marginTop: 4,
   },
-  userCard: {;
+  userCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -622,12 +585,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  userInfo: {;
+  userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  userAvatar: {;
+  userAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -636,61 +599,61 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  userDetails: {;
+  userDetails: {
     flex: 1,
   },
-  userName: {;
+  userName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
   },
-  userEmail: {;
+  userEmail: {
     fontSize: 14,
     color: '#666',
     marginTop: 2,
   },
-  appRoleText: {;
+  appRoleText: {
     fontSize: 12,
     color: '#007bff',
     marginTop: 2,
   },
-  roleContainer: {;
+  roleContainer: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 15,
   },
-  roleText: {;
+  roleText: {
     fontSize: 12,
     fontWeight: 'bold',
   },
-  ownerRole: {;
+  ownerRole: {
     backgroundColor: '#ffd700',
     color: '#333',
   },
-  managerRole: {;
+  managerRole: {
     backgroundColor: '#4CAF50',
     color: 'white',
   },
-  viewerRole: {;
+  viewerRole: {
     backgroundColor: '#ddd',
     color: '#333',
   },
-  loadingContainer: {;
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {;
+  loadingText: {
     fontSize: 16,
     color: '#666',
   },
-  lastSection: {;
+  lastSection: {
     marginBottom: 80, // Add margin to ensure visibility above bottom navigation
   },
-  bottomSpacer: {;
+  bottomSpacer: {
     height: 70, // Height of the bottom navigation
   },
-  noDataCard: {;
+  noDataCard: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 20,
@@ -704,13 +667,13 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  noDataTitle: {;
+  noDataTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginTop: 10,
   },
-  noDataText: {;
+  noDataText: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
@@ -718,21 +681,21 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   // Farm Notes Section Styles - New addition
-  farmNotesSection: {;
+  farmNotesSection: {
     marginBottom: 20,
   },
-  farmNotesHeader: {;
+  farmNotesHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
-  farmNotesTitle: {;
+  farmNotesTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
     marginLeft: 8,
   },
-  farmNotesCard: {;
+  farmNotesCard: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 15,
@@ -744,14 +707,14 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#4CAF50',
   },
-  farmNotesText: {;
+  farmNotesText: {
     fontSize: 15,
     color: '#333',
     lineHeight: 22,
     marginBottom: 12,
     fontStyle: 'italic',
   },
-  aiIndicator: {;
+  aiIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 107, 107, 0.1)',
@@ -760,13 +723,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 107, 107, 0.2)',
   },
-  aiIndicatorText: {;
+  aiIndicatorText: {
     fontSize: 12,
     color: '#D32F2F',
     marginLeft: 6,
     flex: 1,
     fontWeight: '500',
   },
-});
-
-export default FarmDetails;
+})
+export default FarmDetails

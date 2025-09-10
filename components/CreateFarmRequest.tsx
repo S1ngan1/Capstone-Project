@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 import {
   View,
   Text,
@@ -9,46 +9,41 @@ import {
   ActivityIndicator,
   Modal,
   Alert,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { supabase } from '../lib/supabase';
-import { useAuthContext } from '../context/AuthContext';
-import { useDialog } from '../context/DialogContext';
-import { vietnameseProvinces } from '../lib/vietnameseProvinces';
-import { activityLogService } from '../utils/activityLogService';
-
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
+import { supabase } from '../lib/supabase'
+import { useAuthContext } from '../context/AuthContext'
+import { useDialog } from '../context/DialogContext'
+import { vietnameseProvinces } from '../lib/vietnameseProvinces'
+import { activityLogService } from '../utils/activityLogService'
 interface Props {
-  onClose: () => void;
-  onSuccess: () => void;
+  onClose: () => void
+  onSuccess: () => void
 }
-
 const CreateFarmRequest: React.FC<Props> = ({ onClose, onSuccess }) => {
-  const navigation = useNavigation();
-  const { session } = useAuthContext();
-  const { showDialog } = useDialog();
-  const [farmName, setFarmName] = useState('');
-  const [selectedProvince, setSelectedProvince] = useState<string>('');
-  const [notes, setNotes] = useState('');
-  const [address, setAddress] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showProvinceModal, setShowProvinceModal] = useState(false);
-
+  const navigation = useNavigation()
+  const { session } = useAuthContext()
+  const { showDialog } = useDialog()
+  const [farmName, setFarmName] = useState('')
+  const [selectedProvince, setSelectedProvince] = useState<string>('')
+  const [notes, setNotes] = useState('')
+  const [address, setAddress] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [showProvinceModal, setShowProvinceModal] = useState(false)
   const handleSubmit = async () => {
     if (!farmName.trim() || !selectedProvince) {
-      Alert.alert('Error', 'Please fill in all required fields');
-      return;
+      Alert.alert('Error', 'Please fill in all required fields')
+      return
     }
-
-    setLoading(true);
+    setLoading(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        Alert.alert('Error', 'You must be logged in to create a farm request');
-        return;
+        Alert.alert('Error', 'You must be logged in to create a farm request')
+        return
       }
-
       const { data, error } = await supabase
         .from('farm_requests')
         .insert({
@@ -57,73 +52,66 @@ const CreateFarmRequest: React.FC<Props> = ({ onClose, onSuccess }) => {
           location: selectedProvince,
           notes: notes.trim() || null,
           address: address.trim() || null,
-          status: 'pending';
+          status: 'pending'
         })
         .select()
-        .single();
-
+        .single()
       if (error) {
-        throw error;
+        throw error
       }
-
       // Log the activity
       await activityLogService.logActivity({
         actionType: 'REQUEST',
         tableName: 'farm_requests',
         recordId: data.id,
         description: `Submitted farm request for "${farmName}"`
-      });
-
+      })
       // Create success notification
       await activityLogService.createSystemNotification({
         userId: user.id,
         title: 'Farm Request Submitted',
         message: `Your farm request for "${farmName}" has been submitted successfully and is pending admin approval.`,
         type: 'success',
-        navigationScreen: 'UserRequests';
-      });
-
+        navigationScreen: 'UserRequests'
+      })
       // Reset form
-      setFarmName('');
-      setSelectedProvince('');
-      setNotes('');
-      setAddress('');
-
-      onClose();
-
+      setFarmName('')
+      setSelectedProvince('')
+      setNotes('')
+      setAddress('')
+      onClose()
       // Show success dialog
       showDialog({
         title: 'Request Submitted Successfully',
         message: `Your farm request for "${farmName}" has been submitted and is pending admin approval. You will be notified once it's reviewed.`,
         type: 'success',
-        actions: [;
+        actions: [
           {
             text: 'View My Requests',
             onPress: () => navigation.navigate('UserRequests' as never),
-            style: 'primary';
+            style: 'primary'
           },
           {
             text: 'OK',
             onPress: () => {},
-            style: 'default';
+            style: 'default'
           }
         ]
-      });
-    } catch (error: any) {;
-      console.error('Error creating farm request:', error);
-      Alert.alert('Error', error.message || 'Failed to submit farm request');
+      })
+    } catch (error: any) {
+      console.error('Error creating farm request:', error)
+      Alert.alert('Error', error.message || 'Failed to submit farm request')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
-  const renderProvinceItem = (province: any) => (;
+  }
+  const renderProvinceItem = (province: any) => (
     <TouchableOpacity
       key={province.name}
       style={styles.provinceItem}
       onPress={() => {
-        setSelectedProvince(province.name);
-        setShowProvinceModal(false);
+        setSelectedProvince(province.name)
+        setShowProvinceModal(false)
       }}
     >
       <View style={styles.provinceInfo}>
@@ -134,8 +122,7 @@ const CreateFarmRequest: React.FC<Props> = ({ onClose, onSuccess }) => {
         <Text style={styles.regionText}>{province.region}</Text>
       </View>
     </TouchableOpacity>
-  );
-
+  )
   return (
     <LinearGradient
       colors={['#e7fbe8ff', '#cdffcfff']}
@@ -152,14 +139,12 @@ const CreateFarmRequest: React.FC<Props> = ({ onClose, onSuccess }) => {
         <Text style={styles.headerTitle}>Request New Farm</Text>
         <View style={styles.headerSpacer} />
       </LinearGradient>
-
       {/* Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.formContainer}>
           <Text style={styles.subtitle}>
             Submit a request to create a new farm. An admin will review and approve your request.
           </Text>
-
           {/* Farm Name Input */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>
@@ -175,7 +160,6 @@ const CreateFarmRequest: React.FC<Props> = ({ onClose, onSuccess }) => {
               maxLength={50}
             />
           </View>
-
           {/* Province Selector */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>
@@ -195,7 +179,6 @@ const CreateFarmRequest: React.FC<Props> = ({ onClose, onSuccess }) => {
               <Ionicons name="chevron-down" size={20} color="#666" />
             </TouchableOpacity>
           </View>
-
           {/* Address Input */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Address (Optional)</Text>
@@ -208,7 +191,6 @@ const CreateFarmRequest: React.FC<Props> = ({ onClose, onSuccess }) => {
               maxLength={100}
             />
           </View>
-
           {/* Notes Input */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Notes (Optional)</Text>
@@ -224,7 +206,6 @@ const CreateFarmRequest: React.FC<Props> = ({ onClose, onSuccess }) => {
             />
             <Text style={styles.characterCount}>{notes.length}/500</Text>
           </View>
-
           {/* Submit Button */}
           <TouchableOpacity
             style={styles.submitButton}
@@ -245,13 +226,11 @@ const CreateFarmRequest: React.FC<Props> = ({ onClose, onSuccess }) => {
               )}
             </LinearGradient>
           </TouchableOpacity>
-
           <Text style={styles.disclaimer}>
             * Required fields. Your request will be reviewed by an administrator.
           </Text>
         </View>
       </ScrollView>
-
       {/* Province Selection Modal */}
       <Modal
         visible={showProvinceModal}
@@ -276,21 +255,19 @@ const CreateFarmRequest: React.FC<Props> = ({ onClose, onSuccess }) => {
             <Text style={styles.modalHeaderTitle}>Select Province</Text>
             <View style={styles.headerSpacer} />
           </LinearGradient>
-
           <ScrollView style={styles.provinceList} showsVerticalScrollIndicator={false}>
             {vietnameseProvinces.map(renderProvinceItem)}
           </ScrollView>
         </LinearGradient>
       </Modal>
     </LinearGradient>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     flex: 1,
   },
-  header: {;
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -298,46 +275,46 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
-  closeButton: {;
+  closeButton: {
     padding: 8,
   },
-  headerTitle: {;
+  headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
     flex: 1,
     textAlign: 'center',
   },
-  headerSpacer: {;
+  headerSpacer: {
     width: 40,
   },
-  content: {;
+  content: {
     flex: 1,
   },
-  formContainer: {;
+  formContainer: {
     padding: 20,
   },
-  subtitle: {;
+  subtitle: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
     marginBottom: 30,
     lineHeight: 24,
   },
-  inputContainer: {;
+  inputContainer: {
     marginBottom: 20,
   },
-  inputLabel: {;
+  inputLabel: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
     marginBottom: 8,
   },
-  required: {;
+  required: {
     color: '#FF0000',
     fontSize: 16,
   },
-  input: {;
+  input: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
@@ -347,20 +324,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     color: '#333',
   },
-  notesInput: {;
+  notesInput: {
     height: 100,
     textAlignVertical: 'top',
   },
-  addressInput: {;
+  addressInput: {
     height: 48,
   },
-  characterCount: {;
+  characterCount: {
     fontSize: 12,
     color: '#999',
     textAlign: 'right',
     marginTop: 4,
   },
-  provinceSelector: {;
+  provinceSelector: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -371,18 +348,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#fff',
   },
-  disabledSelector: {;
+  disabledSelector: {
     backgroundColor: '#f5f5f5',
     opacity: 0.6,
   },
-  provinceSelectorText: {;
+  provinceSelectorText: {
     fontSize: 16,
     color: '#333',
   },
-  placeholderText: {;
+  placeholderText: {
     color: '#999',
   },
-  submitButton: {;
+  submitButton: {
     marginTop: 20,
     marginBottom: 20,
     borderRadius: 12,
@@ -393,30 +370,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },
-  submitButtonGradient: {;
+  submitButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
     paddingHorizontal: 32,
   },
-  submitButtonText: {;
+  submitButtonText: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8,
   },
-  disclaimer: {;
+  disclaimer: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
     fontStyle: 'italic',
   },
   // Modal styles
-  modalContainer: {;
+  modalContainer: {
     flex: 1,
   },
-  modalHeader: {;
+  modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -424,21 +401,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
-  modalCloseButton: {;
+  modalCloseButton: {
     padding: 8,
   },
-  modalHeaderTitle: {;
+  modalHeaderTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
     flex: 1,
     textAlign: 'center',
   },
-  provinceList: {;
+  provinceList: {
     flex: 1,
     paddingHorizontal: 20,
   },
-  provinceItem: {;
+  provinceItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -453,30 +430,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
-  provinceInfo: {;
+  provinceInfo: {
     flex: 1,
   },
-  provinceName: {;
+  provinceName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
   },
-  provinceNameEn: {;
+  provinceNameEn: {
     fontSize: 14,
     color: '#666',
     marginTop: 2,
   },
-  regionBadge: {;
+  regionBadge: {
     backgroundColor: '#e3f2fd',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  regionText: {;
+  regionText: {
     fontSize: 12,
     color: '#1976d2',
     fontWeight: '500',
   },
-});
-
-export default CreateFarmRequest;
+})
+export default CreateFarmRequest

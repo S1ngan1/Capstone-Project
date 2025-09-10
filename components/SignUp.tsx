@@ -1,66 +1,55 @@
-import { Alert, StyleSheet, Text, TextInput, View, ImageBackground, useWindowDimensions, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, View, ImageBackground, useWindowDimensions, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
-
 interface SignUpProps {
-  onBackToLogin: () => void;
+  onBackToLogin: () => void
 }
-
 const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useWindowDimensions()
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
-
   async function signUpWithEmail() {
     // Validate that all fields are entered
     if (!email.trim() || !username.trim() || !password.trim() || !confirmPassword.trim()) {
       Alert.alert('Missing Information', 'Please fill in all fields.')
       return
     }
-
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       Alert.alert('Invalid Email', 'Please enter a valid email address.')
       return
     }
-
     // Username validation
     if (username.length < 3) {
       Alert.alert('Invalid Username', 'Username must be at least 3 characters long.')
       return
     }
-
     // Password length validation
     if (password.length < 6) {
       Alert.alert('Weak Password', 'Password must be at least 6 characters long.')
       return
     }
-
     // Password confirmation validation
     if (password !== confirmPassword) {
       Alert.alert('Password Mismatch', 'Passwords do not match. Please try again.')
       return
     }
-
     setLoading(true)
-
     try {
       // First, create the user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email,
         password: password,
       })
-
       if (authError) {
         Alert.alert('Sign Up Error', authError.message)
         setLoading(false)
         return
       }
-
       // If user was created successfully, create their profile
       if (authData.user) {
         const { error: profileError } = await supabase
@@ -72,7 +61,6 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
               email: email,
             }
           ])
-
         if (profileError) {
           console.error('Profile creation error:', profileError)
           Alert.alert(
@@ -81,7 +69,6 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
           )
         }
       }
-
       if (authData.user && !authData.user.email_confirmed_at) {
         Alert.alert(
           'Check your email',
@@ -89,7 +76,7 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
           [
             {
               text: 'OK',
-              onPress: () => onBackToLogin();
+              onPress: () => onBackToLogin()
             }
           ]
         )
@@ -100,7 +87,7 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
           [
             {
               text: 'OK',
-              onPress: () => onBackToLogin();
+              onPress: () => onBackToLogin()
             }
           ]
         )
@@ -112,17 +99,14 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
       setLoading(false)
     }
   }
-
   return (
     <View style={[styles.container, { width, height }]}>
       <ImageBackground source={require('../assets/images/auth/background_login.png')} style={[styles.image, { width, height }]} resizeMode="cover">
         <View style={styles.overlay} />
-
         <View style={styles.header}>
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Sign up to get started</Text>
         </View>
-
         <View style={[styles.verticallySpaced, styles.mt20]}>
           <Text style={styles.label}>Email</Text>
           <TextInput
@@ -134,7 +118,6 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
             keyboardType="email-address"
           />
         </View>
-
         <View style={styles.verticallySpaced}>
           <Text style={styles.label}>Username</Text>
           <TextInput
@@ -145,7 +128,6 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
             autoCapitalize="none"
           />
         </View>
-
         <View style={styles.verticallySpaced}>
           <Text style={styles.label}>Password</Text>
           <TextInput
@@ -157,7 +139,6 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
             autoCapitalize="none"
           />
         </View>
-
         <View style={styles.verticallySpaced}>
           <Text style={styles.label}>Confirm Password</Text>
           <TextInput
@@ -169,7 +150,6 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
             autoCapitalize="none"
           />
         </View>
-
         <View style={[styles.verticallySpaced, styles.horizontalSpaced]}>
            <TouchableOpacity style={styles.button} onPress={signUpWithEmail} disabled={loading}>
                       <Text style={styles.buttonText}>
@@ -177,7 +157,6 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
                       </Text>
             </TouchableOpacity>
         </View>
-
         <View style={[styles.verticallySpaced, styles.horizontalSpaced]}>
            <TouchableOpacity style={styles.backButton} onPress={onBackToLogin} disabled={loading}>
                       <Text style={styles.backButtonText}>
@@ -188,54 +167,52 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
       </ImageBackground>
     </View>
   )
-};
-
-export default SignUp;
-
+}
+export default SignUp
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     flex: 1,
     justifyContent: 'center',
     maxWidth: 762,
   },
-  image: {;
+  image: {
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
   },
-  overlay: {;
+  overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  header: {;
+  header: {
     alignItems: 'center',
     marginBottom: 30,
   },
-  title: {;
+  title: {
     color: 'white',
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 5,
   },
-  subtitle: {;
+  subtitle: {
     color: 'white',
     fontSize: 16,
     opacity: 0.8,
   },
-  verticallySpaced: {;
+  verticallySpaced: {
     marginVertical: 10,
   },
-  horizontalSpaced: {;
+  horizontalSpaced: {
       marginTop: 20,
       marginHorizontal: 100,
   },
-  button: {;
+  button: {
     backgroundColor: '#7DDA58',
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 25,
   },
-  backButton: {;
+  backButton: {
     backgroundColor: 'transparent',
     paddingVertical: 12,
     paddingHorizontal: 40,
@@ -243,33 +220,33 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#7DDA58',
   },
-  input: {;
+  input: {
     backgroundColor: 'white',
     marginHorizontal: 30,
     padding: 10,
     borderRadius: 8,
     fontSize: 16,
   },
-  label: {;
+  label: {
     color: 'white',
     marginBottom: 5,
     marginLeft: 30,
     fontSize: 14,
     fontWeight: '500',
   },
-  buttonText: {;
+  buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
   },
-  backButtonText: {;
+  backButtonText: {
     color: '#7DDA58',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
   },
-  mt20: {;
+  mt20: {
     marginTop: 20,
   }
 })

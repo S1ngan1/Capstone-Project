@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -8,28 +8,25 @@ import {
   Animated,
   Dimensions,
   Easing,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
 interface CustomDialogProps {
-  visible: boolean;
-  onClose: () => void;
-  title: string;
-  message: string;
-  type: 'success' | 'error' | 'warning' | 'info' | 'confirm';
+  visible: boolean
+  onClose: () => void
+  title: string
+  message: string
+  type: 'success' | 'error' | 'warning' | 'info' | 'confirm'
   buttons?: Array<{
-    text: string;
-    onPress: () => void;
-    style?: 'default' | 'cancel' | 'destructive' | 'primary';
-  }>;
-  icon?: string;
-  autoClose?: number; // Auto close after milliseconds
+    text: string
+    onPress: () => void
+    style?: 'default' | 'cancel' | 'destructive' | 'primary'
+  }>
+  icon?: string
+  autoClose?: number // Auto close after milliseconds
 }
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
-export const CustomDialog: React.FC<CustomDialogProps> = ({;
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window')
+export const CustomDialog: React.FC<CustomDialogProps> = ({
   visible,
   onClose,
   title,
@@ -39,9 +36,8 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({;
   icon,
   autoClose,
 }) => {
-  const [animation] = useState(new Animated.Value(0));
-  const [scaleAnimation] = useState(new Animated.Value(0.8));
-
+  const [animation] = useState(new Animated.Value(0))
+  const [scaleAnimation] = useState(new Animated.Value(0.8))
   useEffect(() => {
     if (visible) {
       Animated.parallel([
@@ -57,14 +53,13 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({;
           friction: 8,
           useNativeDriver: true,
         }),
-      ]).start();
-
+      ]).start()
       // Auto close functionality
       if (autoClose && autoClose > 0) {
         const timer = setTimeout(() => {
-          onClose();
-        }, autoClose);
-        return () => clearTimeout(timer);
+          onClose()
+        }, autoClose)
+        return () => clearTimeout(timer)
       }
     } else {
       Animated.parallel([
@@ -78,10 +73,9 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({;
           duration: 200,
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start()
     }
-  }, [visible, autoClose]);
-
+  }, [visible, autoClose])
   const getTypeConfig = () => {
     switch (type) {
       case 'success':
@@ -89,78 +83,72 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({;
           colors: ['#4CAF50', '#45a049', '#388e3c'],
           iconName: icon || 'checkmark-circle',
           iconColor: '#4CAF50',
-        };
+        }
       case 'error':
         return {
           colors: ['#F44336', '#e53935', '#d32f2f'],
           iconName: icon || 'close-circle',
           iconColor: '#F44336',
-        };
+        }
       case 'warning':
         return {
           colors: ['#FF9800', '#f57c00', '#e65100'],
           iconName: icon || 'warning',
           iconColor: '#FF9800',
-        };
+        }
       case 'info':
         return {
           colors: ['#2196F3', '#1976d2', '#1565c0'],
           iconName: icon || 'information-circle',
           iconColor: '#2196F3',
-        };
+        }
       case 'confirm':
         return {
           colors: ['#4A90E2', '#357ABD', '#2E5B8A'],
           iconName: icon || 'help-circle',
           iconColor: '#4A90E2',
-        };
+        }
       default:
-        return {;
+        return {
           colors: ['#6c757d', '#5a6268', '#495057'],
           iconName: icon || 'information-circle',
           iconColor: '#6c757d',
-        };
+        }
     }
-  };
-
-  const getButtonStyle = (buttonStyle: string = 'default') => {;
+  }
+  const getButtonStyle = (buttonStyle: string = 'default') => {
     switch (buttonStyle) {
       case 'primary':
-        return styles.primaryButton;
+        return styles.primaryButton
       case 'destructive':
-        return styles.destructiveButton;
+        return styles.destructiveButton
       case 'cancel':
-        return styles.cancelButton;
+        return styles.cancelButton
       default:
-        return styles.defaultButton;
+        return styles.defaultButton
     }
-  };
-
-  const getButtonTextStyle = (buttonStyle: string = 'default') => {;
+  }
+  const getButtonTextStyle = (buttonStyle: string = 'default') => {
     switch (buttonStyle) {
       case 'primary':
-        return styles.primaryButtonText;
+        return styles.primaryButtonText
       case 'destructive':
-        return styles.destructiveButtonText;
+        return styles.destructiveButtonText
       case 'cancel':
-        return styles.cancelButtonText;
+        return styles.cancelButtonText
       default:
-        return styles.defaultButtonText;
+        return styles.defaultButtonText
     }
-  };
-
-  const typeConfig = getTypeConfig();
-
+  }
+  const typeConfig = getTypeConfig()
   const defaultButtons = buttons || [
     {
       text: 'OK',
       onPress: onClose,
       style: 'primary' as const,
     },
-  ];
-
-  if (!visible) return null;
-
+  ]
+  if (!visible) return null
   return (
     <Modal
       transparent
@@ -182,7 +170,6 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({;
           activeOpacity={1}
           onPress={onClose}
         />
-
         <Animated.View
           style={[
             styles.dialogContainer,
@@ -206,13 +193,11 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({;
                 />
               </View>
             </View>
-
             {/* Content */}
             <View style={styles.content}>
               <Text style={styles.title}>{title}</Text>
               <Text style={styles.message}>{message}</Text>
             </View>
-
             {/* Buttons */}
             <View style={styles.buttonContainer}>
               {defaultButtons.map((button, index) => (
@@ -249,9 +234,8 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({;
         </Animated.View>
       </Animated.View>
     </Modal>
-  );
-};
-
+  )
+}
 // Convenience functions for common dialog types
 export const showSuccessDialog = (
   title: string,
@@ -266,9 +250,8 @@ export const showSuccessDialog = (
     message,
     onClose: onClose || (() => {}),
     autoClose,
-  };
-};
-
+  }
+}
 export const showErrorDialog = (
   title: string,
   message: string,
@@ -279,9 +262,8 @@ export const showErrorDialog = (
     title,
     message,
     onClose: onClose || (() => {}),
-  };
-};
-
+  }
+}
 export const showConfirmDialog = (
   title: string,
   message: string,
@@ -292,7 +274,7 @@ export const showConfirmDialog = (
     type: 'confirm' as const,
     title,
     message,
-    buttons: [;
+    buttons: [
       {
         text: 'Cancel',
         onPress: onCancel || (() => {}),
@@ -304,29 +286,28 @@ export const showConfirmDialog = (
         style: 'primary' as const,
       },
     ],
-  };
-};
-
+  }
+}
 const styles = StyleSheet.create({
-  overlay: {;
+  overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  overlayTouch: {;
+  overlayTouch: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
-  dialogContainer: {;
+  dialogContainer: {
     width: screenWidth * 0.85,
     maxWidth: 400,
     marginHorizontal: 20,
   },
-  dialog: {;
+  dialog: {
     borderRadius: 20,
     overflow: 'hidden',
     elevation: 10,
@@ -335,43 +316,43 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 15,
   },
-  header: {;
+  header: {
     alignItems: 'center',
     paddingTop: 30,
     paddingBottom: 10,
   },
-  iconContainer: {;
+  iconContainer: {
     width: 70,
     height: 70,
     borderRadius: 35,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  content: {;
+  content: {
     paddingHorizontal: 25,
     paddingVertical: 15,
     alignItems: 'center',
   },
-  title: {;
+  title: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 10,
     textAlign: 'center',
   },
-  message: {;
+  message: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 5,
   },
-  buttonContainer: {;
+  buttonContainer: {
     flexDirection: 'row',
     padding: 20,
     gap: 12,
   },
-  button: {;
+  button: {
     flex: 1,
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -380,16 +361,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 50,
   },
-  singleButton: {;
+  singleButton: {
     marginHorizontal: 20,
   },
-  firstButton: {;
+  firstButton: {
     marginRight: 6,
   },
-  lastButton: {;
+  lastButton: {
     marginLeft: 6,
   },
-  buttonGradient: {;
+  buttonGradient: {
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 12,
@@ -397,44 +378,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
   },
-  primaryButton: {;
+  primaryButton: {
     backgroundColor: 'transparent',
   },
-  defaultButton: {;
+  defaultButton: {
     backgroundColor: '#f8f9fa',
     borderWidth: 1,
     borderColor: '#e9ecef',
   },
-  cancelButton: {;
+  cancelButton: {
     backgroundColor: '#f8f9fa',
     borderWidth: 1,
     borderColor: '#dee2e6',
   },
-  destructiveButton: {;
+  destructiveButton: {
     backgroundColor: '#fff5f5',
     borderWidth: 1,
     borderColor: '#fed7d7',
   },
-  primaryButtonText: {;
+  primaryButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
-  defaultButtonText: {;
+  defaultButtonText: {
     color: '#495057',
     fontSize: 16,
     fontWeight: '500',
   },
-  cancelButtonText: {;
+  cancelButtonText: {
     color: '#6c757d',
     fontSize: 16,
     fontWeight: '500',
   },
-  destructiveButtonText: {;
+  destructiveButtonText: {
     color: '#e53e3e',
     fontSize: 16,
     fontWeight: '600',
   },
-});
-
-export default CustomDialog;
+})
+export default CustomDialog

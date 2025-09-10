@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -9,44 +9,40 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuthContext } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
-import { activityLogService } from '../utils/activityLogService';
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useAuthContext } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
+import { activityLogService } from '../utils/activityLogService'
 import {
   SENSOR_TYPES,
   BUDGET_RANGES,
   PRIORITY_LEVELS,
   CreateSensorRequestData,
   SensorRequest
-} from '../interfaces/SensorRequest';
-import { SensorRequestService } from '../hooks/useSensorRequests';
-
+} from '../interfaces/SensorRequest'
+import { SensorRequestService } from '../hooks/useSensorRequests'
 interface Props {
-  visible: boolean;
-  onClose: () => void;
-  onRefresh: () => void;
-  farmId?: string;
+  visible: boolean
+  onClose: () => void
+  onRefresh: () => void
+  farmId?: string
 }
-
 interface Farm {
-  id: string;
-  name: string;
-  location: string;
+  id: string
+  name: string
+  location: string
 }
-
 const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, farmId }) => {
-  const { session } = useAuthContext();
-  const [farms, setFarms] = useState<Farm[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(1);
-  const [showFarmModal, setShowFarmModal] = useState(false);
-  const [showSensorTypeModal, setShowSensorTypeModal] = useState(false);
-  const [showBudgetModal, setShowBudgetModal] = useState(false);
-  const [showPriorityModal, setShowPriorityModal] = useState(false);
-
+  const { session } = useAuthContext()
+  const [farms, setFarms] = useState<Farm[]>([])
+  const [loading, setLoading] = useState(false)
+  const [step, setStep] = useState(1)
+  const [showFarmModal, setShowFarmModal] = useState(false)
+  const [showSensorTypeModal, setShowSensorTypeModal] = useState(false)
+  const [showBudgetModal, setShowBudgetModal] = useState(false)
+  const [showPriorityModal, setShowPriorityModal] = useState(false)
   // Form state
   const [formData, setFormData] = useState<CreateSensorRequestData>({
     farm_id: farmId || '',
@@ -58,15 +54,13 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
     justification: '',
     technical_requirements: '',
     budget_range: '100_500',
-    priority_level: 'medium';
-  });
-
+    priority_level: 'medium'
+  })
   useEffect(() => {
     if (!farmId) {
-      fetchUserFarms();
+      fetchUserFarms()
     }
-  }, [farmId]);
-
+  }, [farmId])
   const fetchUserFarms = async () => {
     try {
       const { data, error } = await supabase
@@ -76,69 +70,58 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
           farms!inner(id, name, location)
         `)
         .eq('user_id', session?.user?.id)
-        .in('farm_role', ['owner', 'manager']);
-
-      if (error) throw error;
-      setFarms(data?.map(item => item.farms) || []);
-    } catch (error: any) {;
-      console.error('Error fetching farms:', error);
-      Alert.alert('Error', 'Failed to load your farms');
+        .in('farm_role', ['owner', 'manager'])
+      if (error) throw error
+      setFarms(data?.map(item => item.farms) || [])
+    } catch (error: any) {
+      console.error('Error fetching farms:', error)
+      Alert.alert('Error', 'Failed to load your farms')
     }
-  };
-
-  const validateStep = (stepNumber: number): boolean => {;
+  }
+  const validateStep = (stepNumber: number): boolean => {
     switch (stepNumber) {
       case 1:
-        return !!(formData.farm_id && formData.sensor_type && formData.quantity > 0);
+        return !!(formData.farm_id && formData.sensor_type && formData.quantity > 0)
       case 2:
-        return !!(formData.installation_location.trim() && formData.justification.trim());
+        return !!(formData.installation_location.trim() && formData.justification.trim())
       case 3:
-        return !!(formData.budget_range && formData.priority_level);
+        return !!(formData.budget_range && formData.priority_level)
       default:
-        return true;
+        return true
     }
-  };
-
+  }
   const handleNext = () => {
     if (validateStep(step)) {
-      setStep(step + 1);
+      setStep(step + 1)
     } else {
-      Alert.alert('Incomplete Information', 'Please fill in all required fields before proceeding.');
+      Alert.alert('Incomplete Information', 'Please fill in all required fields before proceeding.')
     }
-  };
-
+  }
   const handlePrevious = () => {
-    setStep(step - 1);
-  };
-
+    setStep(step - 1)
+  }
   const handleSubmit = async () => {
     if (!formData.farm_id || !formData.sensor_type || formData.quantity <= 0) {
-      Alert.alert('Error', 'Please fill in all required fields');
-      return;
+      Alert.alert('Error', 'Please fill in all required fields')
+      return
     }
-
-    setLoading(true);
+    setLoading(true)
     try {
-      console.log('CreateSensorRequest: Starting submission process...');
-      console.log('CreateSensorRequest: Form data:', formData);
-
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log('CreateSensorRequest: Starting submission process...')
+      console.log('CreateSensorRequest: Form data:', formData)
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        Alert.alert('Error', 'You must be logged in to create a sensor request');
-        return;
+        Alert.alert('Error', 'You must be logged in to create a sensor request')
+        return
       }
-
-      console.log('CreateSensorRequest: User authenticated:', user.id);
-
+      console.log('CreateSensorRequest: User authenticated:', user.id)
       // Get farm details for notification
       const { data: farmData } = await supabase
         .from('farms')
         .select('name')
         .eq('id', formData.farm_id)
-        .single();
-
-      console.log('CreateSensorRequest: Farm data:', farmData);
-
+        .single()
+      console.log('CreateSensorRequest: Farm data:', farmData)
       // Create the sensor request with all required fields
       const requestData = {
         requested_by: user.id,
@@ -150,41 +133,34 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         technical_requirements: formData.technical_requirements?.trim() || null,
         budget_range: formData.budget_range || '100_500',
         priority_level: formData.priority_level || 'medium',
-        status: 'pending';
-      };
-
-      console.log('CreateSensorRequest: Inserting request data:', requestData);
-
+        status: 'pending'
+      }
+      console.log('CreateSensorRequest: Inserting request data:', requestData)
       const { data, error } = await supabase
         .from('sensor_requests')
         .insert(requestData)
         .select()
-        .single();
-
+        .single()
       if (error) {
-        console.error('CreateSensorRequest: Database error:', error);
-        throw error;
+        console.error('CreateSensorRequest: Database error:', error)
+        throw error
       }
-
-      console.log('CreateSensorRequest: Successfully created request:', data);
-
+      console.log('CreateSensorRequest: Successfully created request:', data)
       // Log the activity
       await activityLogService.logActivity({
         actionType: 'REQUEST',
         tableName: 'sensor_requests',
         recordId: data.id,
         description: `Submitted ${formData.sensor_type} sensor request for farm "${farmData?.name}"`
-      });
-
+      })
       // Create success notification
       await activityLogService.createSystemNotification({
         userId: user.id,
         title: 'Sensor Request Submitted',
         message: `Your ${formData.sensor_type} sensor request for "${farmData?.name}" has been submitted successfully and is pending admin approval.`,
         type: 'success',
-        navigationScreen: 'UserRequests';
-      });
-
+        navigationScreen: 'UserRequests'
+      })
       // Reset form
       setFormData({
         farm_id: farmId || '',
@@ -196,11 +172,9 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         justification: '',
         technical_requirements: '',
         budget_range: '100_500',
-        priority_level: 'medium';
-      });
-
-      onClose();
-
+        priority_level: 'medium'
+      })
+      onClose()
       Alert.alert(
         'Success',
         `Your ${formData.sensor_type} sensor request has been submitted successfully and is pending admin approval.`,
@@ -210,28 +184,23 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
             onPress: () => {},
           }
         ]
-      );
-
-      console.log('CreateSensorRequest: Request submission completed successfully');
-    } catch (error: any) {;
-      console.error('CreateSensorRequest: Error creating sensor request:', error);
-      Alert.alert('Error', error.message || 'Failed to submit sensor request');
+      )
+      console.log('CreateSensorRequest: Request submission completed successfully')
+    } catch (error: any) {
+      console.error('CreateSensorRequest: Error creating sensor request:', error)
+      Alert.alert('Error', error.message || 'Failed to submit sensor request')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
-  const updateFormData = (updates: Partial<CreateSensorRequestData>) => {;
-    setFormData(prev => ({ ...prev, ...updates }));
-  };
-
+  }
+  const updateFormData = (updates: Partial<CreateSensorRequestData>) => {
+    setFormData(prev => ({ ...prev, ...updates }))
+  }
   // Get selected farm object
   const selectedFarm = farms.find(farm => farm.id === formData.farm_id) ||
-    (farmId ? { id: farmId, name: 'Current Farm', location: 'Farm Location' } : null);
-
+    (farmId ? { id: farmId, name: 'Current Farm', location: 'Farm Location' } : null)
   // Get selected sensor type object
-  const selectedSensorType = SENSOR_TYPES[formData.sensor_type];
-
+  const selectedSensorType = SENSOR_TYPES[formData.sensor_type]
   const renderStepIndicator = () => (
     <View style={styles.stepIndicator}>
       {[1, 2, 3].map((stepNumber) => (
@@ -256,13 +225,11 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         </View>
       ))}
     </View>
-  );
-
+  )
   const renderStep1 = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>Sensor Selection</Text>
       <Text style={styles.stepDescription}>Choose your farm and sensor type</Text>
-
       {/* Farm Selection */}
       {!farmId && (
         <View style={styles.inputGroup}>
@@ -283,7 +250,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
           )}
         </View>
       )}
-
       {/* Sensor Type Selection */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>
@@ -302,7 +268,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         <Text style={styles.helperText}>{selectedSensorType.description}</Text>
         <Text style={styles.costInfo}>💰 {selectedSensorType.typical_cost_range}</Text>
       </View>
-
       {/* Quantity */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>
@@ -327,7 +292,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         </View>
         <Text style={styles.helperText}>Maximum 10 sensors per request</Text>
       </View>
-
       {/* Optional: Brand and Model */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Preferred Brand (Optional)</Text>
@@ -339,7 +303,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
           placeholderTextColor="#999"
         />
       </View>
-
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Preferred Model (Optional)</Text>
         <TextInput
@@ -351,13 +314,11 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         />
       </View>
     </View>
-  );
-
+  )
   const renderStep2 = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>Installation Details</Text>
       <Text style={styles.stepDescription}>Provide location and justification for the sensor</Text>
-
       {/* Installation Location */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>
@@ -375,7 +336,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         />
         <Text style={styles.helperText}>Be specific about the exact location for optimal installation</Text>
       </View>
-
       {/* Justification */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>
@@ -393,7 +353,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         />
         <Text style={styles.helperText}>Help us understand the impact this sensor will have</Text>
       </View>
-
       {/* Technical Requirements */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Technical Requirements (Optional)</Text>
@@ -409,13 +368,11 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         />
       </View>
     </View>
-  );
-
+  )
   const renderStep3 = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>Budget & Priority</Text>
       <Text style={styles.stepDescription}>Set your budget range and priority level</Text>
-
       {/* Budget Range */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>
@@ -432,7 +389,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         </TouchableOpacity>
         <Text style={styles.helperText}>This helps us recommend appropriate sensors</Text>
       </View>
-
       {/* Priority Level */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>
@@ -457,7 +413,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
           {PRIORITY_LEVELS[formData.priority_level].description}
         </Text>
       </View>
-
       {/* Summary */}
       <View style={styles.summaryContainer}>
         <Text style={styles.summaryTitle}>Request Summary</Text>
@@ -490,8 +445,7 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         </View>
       </View>
     </View>
-  );
-
+  )
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen">
       <LinearGradient colors={['#e7fbe8ff', '#cdffcfff']} style={styles.container}>
@@ -506,17 +460,14 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
           <Text style={styles.headerTitle}>Request Sensor</Text>
           <View style={styles.headerRight} />
         </LinearGradient>
-
         {/* Progress Indicator */}
         {renderStepIndicator()}
-
         {/* Content */}
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
         </ScrollView>
-
         {/* Navigation Buttons */}
         <View style={styles.navigationContainer}>
           {step > 1 && (
@@ -524,7 +475,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
               <Text style={styles.previousButtonText}>Previous</Text>
             </TouchableOpacity>
           )}
-
           {step < 3 ? (
             <TouchableOpacity
               style={[styles.nextButton, !validateStep(step) && styles.nextButtonDisabled]}
@@ -561,7 +511,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
             </TouchableOpacity>
           )}
         </View>
-
         {/* Modals */}
         {/* Farm Selection Modal */}
         {!farmId && (
@@ -580,8 +529,8 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
                       key={farm.id}
                       style={styles.modalItem}
                       onPress={() => {
-                        updateFormData({ farm_id: farm.id });
-                        setShowFarmModal(false);
+                        updateFormData({ farm_id: farm.id })
+                        setShowFarmModal(false)
                       }}
                     >
                       <Text style={styles.modalItemTitle}>{farm.name}</Text>
@@ -593,7 +542,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
             </View>
           </Modal>
         )}
-
         {/* Sensor Type Selection Modal */}
         <Modal visible={showSensorTypeModal} animationType="slide" transparent>
           <View style={styles.modalContainer}>
@@ -610,8 +558,8 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
                     key={key}
                     style={styles.modalItem}
                     onPress={() => {
-                      updateFormData({ sensor_type: key as any });
-                      setShowSensorTypeModal(false);
+                      updateFormData({ sensor_type: key as any })
+                      setShowSensorTypeModal(false)
                     }}
                   >
                     <View style={styles.sensorTypeModalItem}>
@@ -628,7 +576,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
             </View>
           </View>
         </Modal>
-
         {/* Budget Range Modal */}
         <Modal visible={showBudgetModal} animationType="slide" transparent>
           <View style={styles.modalContainer}>
@@ -645,8 +592,8 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
                     key={key}
                     style={styles.modalItem}
                     onPress={() => {
-                      updateFormData({ budget_range: key as any });
-                      setShowBudgetModal(false);
+                      updateFormData({ budget_range: key as any })
+                      setShowBudgetModal(false)
                     }}
                   >
                     <Text style={styles.modalItemTitle}>{range}</Text>
@@ -656,7 +603,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
             </View>
           </View>
         </Modal>
-
         {/* Priority Level Modal */}
         <Modal visible={showPriorityModal} animationType="slide" transparent>
           <View style={styles.modalContainer}>
@@ -673,8 +619,8 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
                     key={key}
                     style={styles.modalItem}
                     onPress={() => {
-                      updateFormData({ priority_level: key as any });
-                      setShowPriorityModal(false);
+                      updateFormData({ priority_level: key as any })
+                      setShowPriorityModal(false)
                     }}
                   >
                     <View style={styles.priorityModalItem}>
@@ -692,14 +638,13 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         </Modal>
       </LinearGradient>
     </Modal>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     flex: 1,
   },
-  header: {;
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -707,18 +652,18 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     paddingHorizontal: 20,
   },
-  backButton: {;
+  backButton: {
     padding: 5,
   },
-  headerTitle: {;
+  headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
   },
-  headerRight: {;
+  headerRight: {
     width: 34,
   },
-  stepIndicator: {;
+  stepIndicator: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -726,11 +671,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
-  stepItem: {;
+  stepItem: {
     alignItems: 'center',
     flex: 1,
   },
-  stepCircle: {;
+  stepCircle: {
     width: 30,
     height: 30,
     borderRadius: 15,
@@ -738,63 +683,63 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 5,
   },
-  stepCircleActive: {;
+  stepCircleActive: {
     backgroundColor: '#4A90E2',
   },
-  stepCircleInactive: {;
+  stepCircleInactive: {
     backgroundColor: '#E0E0E0',
   },
-  stepNumber: {;
+  stepNumber: {
     fontSize: 14,
     fontWeight: 'bold',
   },
-  stepNumberActive: {;
+  stepNumberActive: {
     color: 'white',
   },
-  stepNumberInactive: {;
+  stepNumberInactive: {
     color: '#666',
   },
-  stepLabel: {;
+  stepLabel: {
     fontSize: 12,
     fontWeight: '600',
   },
-  stepLabelActive: {;
+  stepLabelActive: {
     color: '#4A90E2',
   },
-  stepLabelInactive: {;
+  stepLabelInactive: {
     color: '#666',
   },
-  content: {;
+  content: {
     flex: 1,
     paddingHorizontal: 20,
   },
-  stepContent: {;
+  stepContent: {
     paddingVertical: 20,
   },
-  stepTitle: {;
+  stepTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 8,
   },
-  stepDescription: {;
+  stepDescription: {
     fontSize: 16,
     color: '#666',
     marginBottom: 20,
   },
-  inputGroup: {;
+  inputGroup: {
     marginBottom: 20,
   },
-  label: {;
+  label: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
     marginBottom: 8,
   },
-  required: {;
+  required: {
     color: '#E74C3C',
   },
-  input: {;
+  input: {
     backgroundColor: 'white',
     borderWidth: 1,
     borderColor: '#E0E0E0',
@@ -803,11 +748,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  textArea: {;
+  textArea: {
     minHeight: 80,
     textAlignVertical: 'top',
   },
-  selectButton: {;
+  selectButton: {
     backgroundColor: 'white',
     borderWidth: 1,
     borderColor: '#E0E0E0',
@@ -817,29 +762,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  selectButtonText: {;
+  selectButtonText: {
     fontSize: 16,
     color: '#333',
   },
-  placeholder: {;
+  placeholder: {
     color: '#999',
   },
-  helperText: {;
+  helperText: {
     fontSize: 14,
     color: '#666',
     marginTop: 5,
   },
-  costInfo: {;
+  costInfo: {
     fontSize: 14,
     color: '#4A90E2',
     fontWeight: '600',
     marginTop: 3,
   },
-  sensorTypeDisplay: {;
+  sensorTypeDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  quantityContainer: {;
+  quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
@@ -848,17 +793,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 4,
   },
-  quantityButton: {;
+  quantityButton: {
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 6,
   },
-  quantityButtonDisabled: {;
+  quantityButtonDisabled: {
     opacity: 0.5,
   },
-  quantityText: {;
+  quantityText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
@@ -866,17 +811,17 @@ const styles = StyleSheet.create({
     minWidth: 30,
     textAlign: 'center',
   },
-  priorityDisplay: {;
+  priorityDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  priorityDot: {;
+  priorityDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
     marginRight: 8,
   },
-  summaryContainer: {;
+  summaryContainer: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 16,
@@ -887,23 +832,23 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  summaryTitle: {;
+  summaryTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 12,
   },
-  summaryItem: {;
+  summaryItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
   },
-  summaryText: {;
+  summaryText: {
     fontSize: 16,
     color: '#333',
     marginLeft: 8,
   },
-  navigationContainer: {;
+  navigationContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
@@ -912,68 +857,68 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(0, 0, 0, 0.1)',
   },
-  previousButton: {;
+  previousButton: {
     padding: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#4A90E2',
   },
-  previousButtonText: {;
+  previousButtonText: {
     color: '#4A90E2',
     fontSize: 16,
     fontWeight: '600',
   },
-  nextButton: {;
+  nextButton: {
     borderRadius: 8,
     overflow: 'hidden',
   },
-  nextButtonDisabled: {;
+  nextButtonDisabled: {
     opacity: 0.5,
   },
-  nextButtonGradient: {;
+  nextButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 20,
   },
-  nextButtonText: {;
+  nextButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
     marginRight: 8,
   },
-  submitButton: {;
+  submitButton: {
     borderRadius: 8,
     overflow: 'hidden',
   },
-  submitButtonDisabled: {;
+  submitButtonDisabled: {
     opacity: 0.5,
   },
-  submitButtonGradient: {;
+  submitButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 20,
   },
-  submitButtonText: {;
+  submitButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
   },
-  modalContainer: {;
+  modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
-  modalContent: {;
+  modalContent: {
     backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '80%',
   },
-  modalHeader: {;
+  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -981,51 +926,50 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
-  modalTitle: {;
+  modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
   },
-  modalList: {;
+  modalList: {
     maxHeight: 400,
   },
-  modalItem: {;
+  modalItem: {
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  modalItemTitle: {;
+  modalItemTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
   },
-  modalItemSubtitle: {;
+  modalItemSubtitle: {
     fontSize: 14,
     color: '#666',
     marginTop: 2,
   },
-  sensorTypeModalItem: {;
+  sensorTypeModalItem: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  sensorTypeModalInfo: {;
+  sensorTypeModalInfo: {
     marginLeft: 12,
     flex: 1,
   },
-  sensorTypeCost: {;
+  sensorTypeCost: {
     fontSize: 14,
     color: '#4A90E2',
     fontWeight: '600',
     marginTop: 2,
   },
-  priorityModalItem: {;
+  priorityModalItem: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  priorityModalInfo: {;
+  priorityModalInfo: {
     marginLeft: 12,
     flex: 1,
   },
-});
-
-export default CreateSensorRequest;
+})
+export default CreateSensorRequest

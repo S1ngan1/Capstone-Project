@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -10,63 +10,56 @@ import {
   Alert,
   Modal,
   ScrollView,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuthContext } from '../context/AuthContext';
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useAuthContext } from '../context/AuthContext'
 import {
   SensorRequest,
   SENSOR_TYPES,
   BUDGET_RANGES,
   PRIORITY_LEVELS,
   STATUS_INFO
-} from '../interfaces/SensorRequest';
-import { SensorRequestService } from '../hooks/useSensorRequests';
-
+} from '../interfaces/SensorRequest'
+import { SensorRequestService } from '../hooks/useSensorRequests'
 interface Props {
-  onClose: () => void;
-  onSuccess: () => void;
-  farmId?: string;
+  onClose: () => void
+  onSuccess: () => void
+  farmId?: string
 }
-
 const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => {
-  const { session } = useAuthContext();
-  const [requests, setRequests] = useState<SensorRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<'pending' | 'approved' | 'rejected' | 'installed' | 'cancelled' | 'all'>('all');
-  const [selectedRequest, setSelectedRequest] = useState<SensorRequest | null>(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-
+  const { session } = useAuthContext()
+  const [requests, setRequests] = useState<SensorRequest[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [selectedFilter, setSelectedFilter] = useState<'pending' | 'approved' | 'rejected' | 'installed' | 'cancelled' | 'all'>('all')
+  const [selectedRequest, setSelectedRequest] = useState<SensorRequest | null>(null)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
   useEffect(() => {
-    fetchUserRequests();
-  }, [farmId]);
-
+    fetchUserRequests()
+  }, [farmId])
   const fetchUserRequests = async () => {
     try {
-      setLoading(true);
-      const data = await SensorRequestService.getUserRequests(session?.user?.id, farmId);
-      setRequests(data);
-    } catch (error: any) {;
-      console.error('Error fetching sensor requests:', error);
-      Alert.alert('Error', 'Failed to fetch your sensor requests');
+      setLoading(true)
+      const data = await SensorRequestService.getUserRequests(session?.user?.id, farmId)
+      setRequests(data)
+    } catch (error: any) {
+      console.error('Error fetching sensor requests:', error)
+      Alert.alert('Error', 'Failed to fetch your sensor requests')
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setLoading(false)
+      setRefreshing(false)
     }
-  };
-
+  }
   const handleRefresh = () => {
-    setRefreshing(true);
-    fetchUserRequests();
-  };
-
-  const handleCancelRequest = async (request: SensorRequest) => {;
+    setRefreshing(true)
+    fetchUserRequests()
+  }
+  const handleCancelRequest = async (request: SensorRequest) => {
     if (!SensorRequestService.canUserCancelRequest(request, session?.user?.id || '')) {
-      Alert.alert('Cannot Cancel', 'This request cannot be cancelled at this time.');
-      return;
+      Alert.alert('Cannot Cancel', 'This request cannot be cancelled at this time.')
+      return
     }
-
     Alert.alert(
       'Cancel Request',
       `Are you sure you want to cancel the ${SENSOR_TYPES[request.sensor_type].name} request?`,
@@ -75,54 +68,48 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
         {
           text: 'Yes, Cancel',
           style: 'destructive',
-          onPress: async () => {;
+          onPress: async () => {
             try {
-              await SensorRequestService.cancelRequest(request.id, 'Cancelled by user');
-              Alert.alert('Success', 'Request cancelled successfully');
-              fetchUserRequests();
-              onSuccess();
-            } catch (error: any) {;
-              console.error('Error cancelling request:', error);
-              Alert.alert('Error', error.message || 'Failed to cancel request');
+              await SensorRequestService.cancelRequest(request.id, 'Cancelled by user')
+              Alert.alert('Success', 'Request cancelled successfully')
+              fetchUserRequests()
+              onSuccess()
+            } catch (error: any) {
+              console.error('Error cancelling request:', error)
+              Alert.alert('Error', error.message || 'Failed to cancel request')
             }
           },
         },
       ]
-    );
-  };
-
-  const handleFilterChange = (filter: typeof selectedFilter) => {;
-    setSelectedFilter(filter);
-  };
-
+    )
+  }
+  const handleFilterChange = (filter: typeof selectedFilter) => {
+    setSelectedFilter(filter)
+  }
   const getFilteredRequests = () => {
     if (selectedFilter === 'all') {
-      return requests;
+      return requests
     }
-    return requests.filter(request => request.status === selectedFilter);
-  };
-
-  const showRequestDetails = (request: SensorRequest) => {;
-    setSelectedRequest(request);
-    setShowDetailsModal(true);
-  };
-
-  const getStatusMessage = (status: SensorRequest['status']): string => {;
+    return requests.filter(request => request.status === selectedFilter)
+  }
+  const showRequestDetails = (request: SensorRequest) => {
+    setSelectedRequest(request)
+    setShowDetailsModal(true)
+  }
+  const getStatusMessage = (status: SensorRequest['status']): string => {
     switch (status) {
-      case 'pending': return 'Your request is being reviewed by administrators';
-      case 'approved': return 'Your request has been approved and is being processed';
-      case 'rejected': return 'Your request was not approved';
-      case 'installed': return 'Your sensor has been successfully installed';
-      case 'cancelled': return 'This request was cancelled';
-      default: return 'Status unknown';
+      case 'pending': return 'Your request is being reviewed by administrators'
+      case 'approved': return 'Your request has been approved and is being processed'
+      case 'rejected': return 'Your request was not approved'
+      case 'installed': return 'Your sensor has been successfully installed'
+      case 'cancelled': return 'This request was cancelled'
+      default: return 'Status unknown'
     }
-  };
-
+  }
   const renderRequestItem = ({ item }: { item: SensorRequest }) => {
-    const sensorType = SENSOR_TYPES[item.sensor_type];
-    const statusInfo = STATUS_INFO[item.status];
-    const canCancel = SensorRequestService.canUserCancelRequest(item, session?.user?.id || '');
-
+    const sensorType = SENSOR_TYPES[item.sensor_type]
+    const statusInfo = STATUS_INFO[item.status]
+    const canCancel = SensorRequestService.canUserCancelRequest(item, session?.user?.id || '')
     return (
       <TouchableOpacity
         style={styles.requestCard}
@@ -152,12 +139,10 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
               <Text style={styles.statusText}>{statusInfo.label}</Text>
             </View>
           </View>
-
           {/* Status Message */}
           <View style={styles.statusMessageContainer}>
             <Text style={styles.statusMessage}>{getStatusMessage(item.status)}</Text>
           </View>
-
           {/* Priority and Budget */}
           <View style={styles.detailsRow}>
             <View style={styles.priorityContainer}>
@@ -173,23 +158,20 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
               💰 {BUDGET_RANGES[item.budget_range]}
             </Text>
           </View>
-
           {/* Installation Location */}
           <View style={styles.locationContainer}>
-            <Text style={styles.locationLabel}>Installation Location:</Text>;
+            <Text style={styles.locationLabel}>Installation Location:</Text>
             <Text style={styles.locationText} numberOfLines={2}>
               {item.installation_location}
             </Text>
           </View>
-
           {/* Admin Feedback for rejected requests */}
           {item.status === 'rejected' && item.admin_feedback && (
             <View style={styles.feedbackContainer}>
-              <Text style={styles.feedbackLabel}>Reason for Rejection:</Text>;
+              <Text style={styles.feedbackLabel}>Reason for Rejection:</Text>
               <Text style={styles.feedbackText}>{item.admin_feedback}</Text>
             </View>
           )}
-
           {/* Installation info for approved/installed requests */}
           {(item.status === 'approved' || item.status === 'installed') && (
             <View style={styles.approvalContainer}>
@@ -207,7 +189,6 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
               )}
             </View>
           )}
-
           {/* Dates */}
           <View style={styles.datesContainer}>
             <Text style={styles.dateText}>
@@ -219,7 +200,6 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
               </Text>
             )}
           </View>
-
           {/* Action Button */}
           {canCancel && (
             <TouchableOpacity
@@ -230,7 +210,6 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
               <Text style={styles.cancelButtonText}>Cancel Request</Text>
             </TouchableOpacity>
           )}
-
           {/* Info for non-cancellable requests */}
           {(item.status === 'approved' || item.status === 'rejected' || item.status === 'installed') && (
             <View style={styles.logInfoContainer}>
@@ -242,9 +221,8 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
           )}
         </LinearGradient>
       </TouchableOpacity>
-    );
-  };
-
+    )
+  }
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="hardware-chip-outline" size={64} color="#666" />
@@ -265,15 +243,13 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
         </LinearGradient>
       </TouchableOpacity>
     </View>
-  );
-
+  )
   const renderStatsContainer = () => {
-    const pendingCount = requests.filter(r => r.status === 'pending').length;
-    const approvedCount = requests.filter(r => r.status === 'approved').length;
-    const rejectedCount = requests.filter(r => r.status === 'rejected').length;
-    const installedCount = requests.filter(r => r.status === 'installed').length;
-    const cancelledCount = requests.filter(r => r.status === 'cancelled').length;
-
+    const pendingCount = requests.filter(r => r.status === 'pending').length
+    const approvedCount = requests.filter(r => r.status === 'approved').length
+    const rejectedCount = requests.filter(r => r.status === 'rejected').length
+    const installedCount = requests.filter(r => r.status === 'installed').length
+    const cancelledCount = requests.filter(r => r.status === 'cancelled').length
     return (
       <View style={styles.statsContainer}>
         <TouchableOpacity
@@ -287,7 +263,6 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
             Pending
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.statItem, selectedFilter === 'approved' && styles.statItemActive]}
           onPress={() => handleFilterChange('approved')}
@@ -299,7 +274,6 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
             Approved
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.statItem, selectedFilter === 'installed' && styles.statItemActive]}
           onPress={() => handleFilterChange('installed')}
@@ -311,7 +285,6 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
             Installed
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.statItem, selectedFilter === 'all' && styles.statItemActive]}
           onPress={() => handleFilterChange('all')}
@@ -324,9 +297,8 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
           </Text>
         </TouchableOpacity>
       </View>
-    );
-  };
-
+    )
+  }
   return (
     <LinearGradient colors={['#e7fbe8ff', '#cdffcfff']} style={styles.container}>
       {/* Header */}
@@ -342,10 +314,8 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
           <Ionicons name="refresh" size={24} color="white" />
         </TouchableOpacity>
       </LinearGradient>
-
       {/* Stats Container - Clickable for Both Display and Filtering */}
       {requests.length > 0 && renderStatsContainer()}
-
       {/* Content */}
       <View style={styles.content}>
         {loading ? (
@@ -371,7 +341,6 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
           />
         )}
       </View>
-
       {/* Request Details Modal */}
       <Modal
         visible={showDetailsModal}
@@ -394,7 +363,6 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
                   <Ionicons name="close" size={24} color="white" />
                 </TouchableOpacity>
               </LinearGradient>
-
               <ScrollView style={styles.modalScrollView}>
                 {/* Sensor Information */}
                 <View style={styles.detailSection}>
@@ -412,24 +380,20 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
                     <Text style={styles.detailText}>Model: {selectedRequest.sensor_model}</Text>
                   )}
                 </View>
-
                 {/* Installation Details */}
                 <View style={styles.detailSection}>
                   <Text style={styles.detailSectionTitle}>Installation Details</Text>
-                  <Text style={styles.detailLabel}>Location:</Text>;
+                  <Text style={styles.detailLabel}>Location:</Text>
                   <Text style={styles.detailText}>{selectedRequest.installation_location}</Text>
-
-                  <Text style={styles.detailLabel}>Justification:</Text>;
+                  <Text style={styles.detailLabel}>Justification:</Text>
                   <Text style={styles.detailText}>{selectedRequest.justification}</Text>
-
                   {selectedRequest.technical_requirements && (
                     <>
-                      <Text style={styles.detailLabel}>Technical Requirements:</Text>;
+                      <Text style={styles.detailLabel}>Technical Requirements:</Text>
                       <Text style={styles.detailText}>{selectedRequest.technical_requirements}</Text>
                     </>
                   )}
                 </View>
-
                 {/* Budget & Priority */}
                 <View style={styles.detailSection}>
                   <Text style={styles.detailSectionTitle}>Budget & Priority</Text>
@@ -446,7 +410,6 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
                     </Text>
                   </View>
                 </View>
-
                 {/* Status Information */}
                 <View style={styles.detailSection}>
                   <Text style={styles.detailSectionTitle}>Status Information</Text>
@@ -460,27 +423,23 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
                     </View>
                   </View>
                   <Text style={styles.detailText}>{getStatusMessage(selectedRequest.status)}</Text>
-
                   {selectedRequest.admin_feedback && (
                     <>
-                      <Text style={styles.detailLabel}>Admin Feedback:</Text>;
+                      <Text style={styles.detailLabel}>Admin Feedback:</Text>
                       <Text style={styles.detailText}>{selectedRequest.admin_feedback}</Text>
                     </>
                   )}
-
                   {selectedRequest.estimated_cost && (
                     <Text style={styles.detailText}>
                       Estimated Cost: ${selectedRequest.estimated_cost.toFixed(2)}
                     </Text>
                   )}
-
                   {selectedRequest.installation_date && (
                     <Text style={styles.detailText}>
                       Installation Date: {new Date(selectedRequest.installation_date).toLocaleDateString()}
                     </Text>
                   )}
                 </View>
-
                 {/* Dates */}
                 <View style={styles.detailSection}>
                   <Text style={styles.detailSectionTitle}>Timeline</Text>
@@ -497,15 +456,14 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
                   </Text>
                 </View>
               </ScrollView>
-
               {/* Modal Actions */}
               {SensorRequestService.canUserCancelRequest(selectedRequest, session?.user?.id || '') && (
                 <View style={styles.modalActions}>
                   <TouchableOpacity
                     style={styles.modalCancelButton}
                     onPress={() => {
-                      setShowDetailsModal(false);
-                      setTimeout(() => handleCancelRequest(selectedRequest), 300);
+                      setShowDetailsModal(false)
+                      setTimeout(() => handleCancelRequest(selectedRequest), 300)
                     }}
                   >
                     <Text style={styles.modalCancelText}>Cancel Request</Text>
@@ -517,14 +475,13 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
         )}
       </Modal>
     </LinearGradient>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     flex: 1,
   },
-  header: {;
+  header: {
     paddingTop: 40,
     paddingBottom: 16,
     paddingHorizontal: 16,
@@ -532,158 +489,158 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 24,
     elevation: 4,
   },
-  backButton: {;
+  backButton: {
     position: 'absolute',
     left: 16,
     top: 16,
   },
-  refreshButton: {;
+  refreshButton: {
     position: 'absolute',
     right: 16,
     top: 16,
   },
-  headerTitle: {;
+  headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
     textAlign: 'center',
   },
-  content: {;
+  content: {
     flex: 1,
     padding: 16,
   },
-  requestCard: {;
+  requestCard: {
     marginBottom: 16,
     borderRadius: 12,
     overflow: 'hidden',
     elevation: 2,
   },
-  requestCardGradient: {;
+  requestCardGradient: {
     padding: 16,
   },
-  requestHeader: {;
+  requestHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  requestInfo: {;
+  requestInfo: {
     flexDirection: 'column',
   },
-  sensorTypeHeader: {;
+  sensorTypeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  sensorTypeName: {;
+  sensorTypeName: {
     fontSize: 16,
     fontWeight: '500',
     marginLeft: 8,
     color: '#333',
   },
-  quantityBadge: {;
+  quantityBadge: {
     backgroundColor: '#e1f5fe',
     borderRadius: 12,
     paddingVertical: 2,
     paddingHorizontal: 8,
     marginLeft: 8,
   },
-  quantityText: {;
+  quantityText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#01579b',
   },
-  farmName: {;
+  farmName: {
     fontSize: 14,
     color: '#666',
     marginTop: 4,
   },
-  statusBadge: {;
+  statusBadge: {
     borderRadius: 12,
     paddingVertical: 4,
     paddingHorizontal: 8,
   },
-  statusText: {;
+  statusText: {
     fontSize: 14,
     fontWeight: '500',
     color: 'white',
     marginLeft: 4,
   },
-  statusMessageContainer: {;
+  statusMessageContainer: {
     marginTop: 8,
   },
-  statusMessage: {;
+  statusMessage: {
     fontSize: 14,
     color: '#666',
   },
-  detailsRow: {;
+  detailsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 8,
   },
-  priorityContainer: {;
+  priorityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  priorityDot: {;
+  priorityDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     marginRight: 4,
   },
-  priorityText: {;
+  priorityText: {
     fontSize: 14,
     color: '#333',
   },
-  budgetText: {;
+  budgetText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#4CAF50',
   },
-  locationContainer: {;
+  locationContainer: {
     marginTop: 8,
   },
-  locationLabel: {;
+  locationLabel: {
     fontSize: 14,
     color: '#333',
     marginBottom: 4,
   },
-  locationText: {;
+  locationText: {
     fontSize: 14,
     color: '#666',
   },
-  feedbackContainer: {;
+  feedbackContainer: {
     marginTop: 8,
     padding: 12,
     borderRadius: 8,
     backgroundColor: '#f8d7da',
   },
-  feedbackLabel: {;
+  feedbackLabel: {
     fontSize: 14,
     fontWeight: '500',
     color: '#721c24',
   },
-  feedbackText: {;
+  feedbackText: {
     fontSize: 14,
     color: '#721c24',
     marginTop: 4,
   },
-  approvalContainer: {;
+  approvalContainer: {
     marginTop: 8,
     padding: 12,
     borderRadius: 8,
     backgroundColor: '#d1e7dd',
   },
-  approvalText: {;
+  approvalText: {
     fontSize: 14,
     color: '#0f5132',
   },
-  datesContainer: {;
+  datesContainer: {
     marginTop: 8,
   },
-  dateText: {;
+  dateText: {
     fontSize: 12,
     color: '#999',
   },
-  cancelButton: {;
+  cancelButton: {
     marginTop: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -692,12 +649,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#f44336',
   },
-  cancelButtonText: {;
+  cancelButtonText: {
     fontSize: 14,
     color: 'white',
     marginLeft: 4,
   },
-  logInfoContainer: {;
+  logInfoContainer: {
     marginTop: 8,
     padding: 12,
     borderRadius: 8,
@@ -705,46 +662,46 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  logInfoText: {;
+  logInfoText: {
     fontSize: 14,
     color: '#0c5460',
     marginLeft: 8,
   },
-  emptyContainer: {;
+  emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
   },
-  emptyTitle: {;
+  emptyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginTop: 16,
   },
-  emptySubtitle: {;
+  emptySubtitle: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
     marginTop: 8,
   },
-  createRequestButton: {;
+  createRequestButton: {
     marginTop: 24,
     borderRadius: 8,
     overflow: 'hidden',
   },
-  createRequestButtonGradient: {;
+  createRequestButtonGradient: {
     paddingVertical: 12,
     paddingHorizontal: 24,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  createRequestButtonText: {;
+  createRequestButtonText: {
     fontSize: 16,
     color: 'white',
     marginLeft: 8,
   },
-  statsContainer: {;
+  statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 12,
@@ -755,36 +712,36 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e0e0e0',
     backgroundColor: 'white',
   },
-  statItem: {;
+  statItem: {
     flex: 1,
     alignItems: 'center',
   },
-  statItemActive: {;
+  statItemActive: {
     backgroundColor: '#e8f5e9',
   },
-  statNumber: {;
+  statNumber: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
   },
-  statNumberActive: {;
+  statNumberActive: {
     color: '#4CAF50',
   },
-  statLabel: {;
+  statLabel: {
     fontSize: 14,
     color: '#666',
     marginTop: 4,
   },
-  statLabelActive: {;
+  statLabelActive: {
     color: '#4CAF50',
   },
-  modalContainer: {;
+  modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     margin: 0,
   },
-  modalContent: {;
+  modalContent: {
     width: '90%',
     maxWidth: 600,
     backgroundColor: 'white',
@@ -792,84 +749,83 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     elevation: 4,
   },
-  modalHeader: {;
+  modalHeader: {
     paddingTop: 24,
     paddingBottom: 16,
     paddingHorizontal: 16,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
-  modalTitle: {;
+  modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
     textAlign: 'center',
   },
-  modalCloseButton: {;
+  modalCloseButton: {
     position: 'absolute',
     right: 16,
     top: 16,
   },
-  modalScrollView: {;
+  modalScrollView: {
     padding: 16,
   },
-  detailSection: {;
+  detailSection: {
     marginBottom: 16,
   },
-  detailSectionTitle: {;
+  detailSectionTitle: {
     fontSize: 16,
     fontWeight: '500',
     color: '#333',
     marginBottom: 8,
   },
-  detailLabel: {;
+  detailLabel: {
     fontSize: 14,
     color: '#333',
     marginTop: 8,
   },
-  detailText: {;
+  detailText: {
     fontSize: 14,
     color: '#666',
     marginTop: 4,
   },
-  priorityDetail: {;
+  priorityDetail: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 4,
   },
-  statusDetail: {;
+  statusDetail: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 4,
   },
-  statusBadge: {;
+  statusBadge: {
     borderRadius: 12,
     paddingVertical: 4,
     paddingHorizontal: 8,
   },
-  statusText: {;
+  statusText: {
     fontSize: 14,
     fontWeight: '500',
     color: 'white',
     marginLeft: 4,
   },
-  modalActions: {;
+  modalActions: {
     flexDirection: 'row',
     justifyContent: 'center',
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
   },
-  modalCancelButton: {;
+  modalCancelButton: {
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
     backgroundColor: '#f44336',
   },
-  modalCancelText: {;
+  modalCancelText: {
     fontSize: 16,
     color: 'white',
   },
-});
-
-export default UserSensorRequests;
+})
+export default UserSensorRequests

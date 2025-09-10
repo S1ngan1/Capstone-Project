@@ -1,18 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { useAuthContext } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
-import ActivityCounter from './ActivityCounter';
-import NotificationCounter from './NotificationCounter';
-
-const BottomNavigation: React.FC = () => {;
-  const navigation = useNavigation();
-  const { session } = useAuthContext();
-  const [userRole, setUserRole] = useState<string | null>(null);
-
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
+import { useAuthContext } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
+import ActivityCounter from './ActivityCounter'
+import NotificationCounter from './NotificationCounter'
+const BottomNavigation: React.FC = () => {
+  const navigation = useNavigation()
+  const { session } = useAuthContext()
+  const [userRole, setUserRole] = useState<string | null>(null)
   useEffect(() => {
     const fetchUserRole = async () => {
       if (session?.user?.id) {
@@ -21,53 +19,42 @@ const BottomNavigation: React.FC = () => {;
             .from('profiles')
             .select('role')
             .eq('id', session.user.id)
-            .single();
-
+            .single()
           if (!error && profile) {
-            setUserRole(profile.role);
-            console.log('User role set to:', profile.role);
+            setUserRole(profile.role)
+            console.log('User role set to:', profile.role)
           }
         } catch (error) {
-          console.error('Error fetching user role:', error);
+          console.error('Error fetching user role:', error)
         }
       }
-    };
-
-    fetchUserRole();
-  }, [session?.user?.id]);
-
+    }
+    fetchUserRole()
+  }, [session?.user?.id])
   const navigateToHome = () => {
-    navigation.navigate('Home' as never);
-  };
-
+    navigation.navigate('Home' as never)
+  }
   const navigateToRequests = () => {
-    navigation.navigate('UserRequests' as never);
-  };
-
+    navigation.navigate('UserRequests' as never)
+  }
   const navigateToNotifications = () => {
-    navigation.navigate('Notification' as never);
-  };
-
+    navigation.navigate('Notification' as never)
+  }
   const navigateToSuggestions = () => {
-    navigation.navigate('Suggestion' as never);
-  };
-
+    navigation.navigate('Suggestion' as never)
+  }
   const navigateToSettings = () => {
-    navigation.navigate('Settings' as never);
-  };
-
+    navigation.navigate('Settings' as never)
+  }
   const navigateToAdminFarmRequests = () => {
-    navigation.navigate('AdminFarmRequests' as never);
-  };
-
+    navigation.navigate('AdminFarmRequests' as never)
+  }
   const navigateToAdminSensorRequests = () => {
-    navigation.navigate('AdminSensorRequests' as never);
-  };
-
+    navigation.navigate('AdminSensorRequests' as never)
+  }
   const navigateToActivityLogs = () => {
-    navigation.navigate('ActivityLogs' as never);
-  };
-
+    navigation.navigate('ActivityLogs' as never)
+  }
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -81,13 +68,11 @@ const BottomNavigation: React.FC = () => {;
             <Ionicons name="home" size={24} color="#2E8B57" />
             <Text style={styles.navText}>Home</Text>
           </TouchableOpacity>
-
           {/* User Requests Button */}
           <TouchableOpacity style={styles.navItem} onPress={navigateToRequests}>
             <Ionicons name="document-text" size={24} color="#2E8B57" />
             <Text style={styles.navText}>Requests</Text>
           </TouchableOpacity>
-
           {/* Activity Log Button with Counter */}
           <View style={styles.navItem}>
             <ActivityCounter
@@ -98,7 +83,6 @@ const BottomNavigation: React.FC = () => {;
             />
             <Text style={styles.navText}>Activity</Text>
           </View>
-
           {/* Notifications Button with Counter */}
           <View style={styles.navItem}>
             <NotificationCounter
@@ -109,20 +93,17 @@ const BottomNavigation: React.FC = () => {;
             />
             <Text style={styles.navText}>Alerts</Text>
           </View>
-
           {/* Suggestions Button */}
           <TouchableOpacity style={styles.navItem} onPress={navigateToSuggestions}>
             <Ionicons name="bulb" size={24} color="#2E8B57" />
             <Text style={styles.navText}>Tips</Text>
           </TouchableOpacity>
-
           {/* Settings Button */}
           <TouchableOpacity style={styles.navItem} onPress={navigateToSettings}>
             <Ionicons name="settings" size={24} color="#2E8B57" />
             <Text style={styles.navText}>Settings</Text>
           </TouchableOpacity>
         </View>
-
         {/* Admin Only Section */}
         {userRole === 'admin' && (
           <View style={styles.adminSection}>
@@ -133,7 +114,6 @@ const BottomNavigation: React.FC = () => {;
                 <Ionicons name="business" size={20} color="#4A90E2" />
                 <Text style={styles.adminNavText}>Farm Requests</Text>
               </TouchableOpacity>
-
               <TouchableOpacity style={styles.adminNavItem} onPress={navigateToAdminSensorRequests}>
                 <Ionicons name="hardware-chip" size={20} color="#4A90E2" />
                 <Text style={styles.adminNavText}>Sensor Requests</Text>
@@ -143,64 +123,63 @@ const BottomNavigation: React.FC = () => {;
         )}
       </LinearGradient>
     </View>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
-  container: {;
+  container: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: 'transparent',
   },
-  gradient: {;
+  gradient: {
     paddingTop: 10,
     paddingBottom: 30,
     paddingHorizontal: 10,
   },
-  mainNavigation: {;
+  mainNavigation: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
   },
-  navItem: {;
+  navItem: {
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 12,
     minWidth: 60,
   },
-  navText: {;
+  navText: {
     fontSize: 12,
     color: '#2E8B57',
     fontWeight: '600',
     marginTop: 4,
     textAlign: 'center',
   },
-  adminSection: {;
+  adminSection: {
     marginTop: 15,
     paddingTop: 15,
   },
-  adminDivider: {;
+  adminDivider: {
     height: 1,
     backgroundColor: 'rgba(46, 139, 87, 0.2)',
     marginBottom: 10,
     marginHorizontal: 20,
   },
-  adminLabel: {;
+  adminLabel: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#4A90E2',
     textAlign: 'center',
     marginBottom: 10,
   },
-  adminButtons: {;
+  adminButtons: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
   },
-  adminNavItem: {;
+  adminNavItem: {
     alignItems: 'center',
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -210,13 +189,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#4A90E2',
   },
-  adminNavText: {;
+  adminNavText: {
     fontSize: 11,
     color: '#4A90E2',
     fontWeight: '600',
     marginTop: 2,
     textAlign: 'center',
   },
-});
-
-export default BottomNavigation;
+})
+export default BottomNavigation
