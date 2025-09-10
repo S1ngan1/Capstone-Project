@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, ScrollView } from 'react-native';
 import UVSimple from "../components/Charts/UVSimple";
 import { PH } from '../components/Charts/PH';
@@ -8,6 +8,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import BottomNavigation from '../components/BottomNavigation';
+import { useAuthContext } from '../context/AuthContext';
+import { supabase } from '../lib/supabase'; // chỗ này tùy path của em
 
 export type RootStackParamList = {
     Auth: undefined;
@@ -22,6 +24,28 @@ export type RootStackParamList = {
 
 const Home = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+    const { session } = useAuthContext();
+    const [username, setUsername] = useState<string>("");
+
+    useEffect(() => {
+        const fetchUsername = async () => {
+            if (session?.user?.id) {
+                const { data, error } = await supabase
+                    .from("profiles")
+                    .select("username")
+                    .eq("id", session.user.id)
+                    .single();
+
+                if (!error && data) {
+                    setUsername(data.username);
+                } else {
+                    console.error("Error fetching username:", error);
+                }
+            }
+        };
+
+        fetchUsername();
+    }, [session]);
 
     return (
         <LinearGradient
@@ -39,17 +63,10 @@ const Home = () => {
                     <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}}>
                         <View style={styles.headerTitle}>
                             <View style={styles.headerContent}>
-                                <Text style={styles.usernameText}>Username</Text>
+                                {/* thay Username = username từ DB */}
+                                <Text style={styles.usernameText}>{username || "Loading..."}</Text>
                                 <Text style={styles.farmNameText}>Farm 1</Text>
                             </View>
-                        </View>
-                        <View style={styles.notiProfile}>
-                            <TouchableOpacity
-                                style={styles.profileIconContainer}
-                                onPress={() => navigation.navigate("Notification")}
-                            >
-                                <Ionicons name="notifications" size={28} color="white" style={styles.icon} />
-                            </TouchableOpacity>
                         </View>
                     </View>
                     <Temperature />
@@ -67,6 +84,7 @@ const Home = () => {
 }
 
 export default Home;
+
 
 const styles = StyleSheet.create({
     container: {
@@ -106,18 +124,9 @@ const styles = StyleSheet.create({
         color: '#fff',
         marginBottom: 30,
     },
-    icon: {
-        marginHorizontal: 10,
-    },
-    notiProfile: {
-        flexDirection: 'row',
-        paddingRight: 20,
-    },
     chartBox: {
         flexDirection: 'column',
         alignItems: 'center',
         width: '100%',
-    },
-    profileIconContainer: {
     },
 });

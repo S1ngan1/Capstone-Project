@@ -1,41 +1,40 @@
-import * as React from "react";
-import { View, StyleSheet, Text} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabase";
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { supabase } from '../../lib/supabase';
 
-interface PHReading {
+interface ECReading {
   value: number;
   timestamp: string;
 }
 
-interface PHChartProps {
+interface ECChartProps {
   farmId: string;
 }
 
-export const PH: React.FC<PHChartProps> = ({ farmId }) => {
-  const [phData, setPhData] = useState<PHReading[]>([]);
+const ECChart: React.FC<ECChartProps> = ({ farmId }) => {
+  const [ecData, setEcData] = useState<ECReading[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentValue, setCurrentValue] = useState<number>(0);
 
   useEffect(() => {
-    fetchPhData();
+    fetchECData();
   }, [farmId]);
 
-  const fetchPhData = async () => {
+  const fetchECData = async () => {
     try {
       setLoading(true);
-      console.log('Fetching pH data for farm:', farmId);
+      console.log('Fetching EC data for farm:', farmId);
 
-      // Get pH sensors for this farm
-      const { data: phSensors, error: sensorError } = await supabase
+      // Get EC sensors for this farm
+      const { data: ecSensors, error: sensorError } = await supabase
         .from('sensor')
         .select('sensor_id, sensor_name, sensor_type, units')
-        .eq('sensor_type', 'Analog pH Sensor')
+        .eq('sensor_type', 'Electrical Conductivity')
         .eq('farm_id', farmId);
 
-      if (!sensorError && phSensors && phSensors.length > 0) {
-        const sensorIds = phSensors.map(s => s.sensor_id);
+      if (!sensorError && ecSensors && ecSensors.length > 0) {
+        const sensorIds = ecSensors.map(s => s.sensor_id);
 
         // Get last 24 hours of readings
         const twentyFourHoursAgo = new Date();
@@ -54,19 +53,20 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
             timestamp: reading.created_at
           }));
 
-          setPhData(processedData);
+          setEcData(processedData);
           setCurrentValue(readings[readings.length - 1].value);
-          console.log(`Found ${readings.length} pH readings`);
+          console.log(`Found ${readings.length} EC readings`);
         } else {
-          console.log('No pH readings found');
+          console.log('No EC readings found');
+          // Use mock data as fallback
           generateMockData();
         }
       } else {
-        console.log('No pH sensors found for farm');
+        console.log('No EC sensors found for farm');
         generateMockData();
       }
     } catch (error) {
-      console.error('Error fetching pH data:', error);
+      console.error('Error fetching EC data:', error);
       generateMockData();
     } finally {
       setLoading(false);
@@ -75,28 +75,32 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
 
   const generateMockData = () => {
     const mockData = Array.from({ length: 24 }, (_, i) => ({
-      value: 6.0 + Math.random() * 2, // 6.0-8.0 pH
+      value: 1.2 + Math.random() * 0.8, // 1.2-2.0 mS/cm
       timestamp: new Date(Date.now() - (23 - i) * 3600000).toISOString()
     }));
-    setPhData(mockData);
+    setEcData(mockData);
     setCurrentValue(mockData[mockData.length - 1].value);
   };
 
   const getStatusColor = (value: number) => {
-    if (value < 6.0 || value > 7.5) return '#ffc107'; // Suboptimal - yellow
+    if (value < 0.8) return '#dc3545'; // Too low - red
+    if (value > 2.0) return '#dc3545'; // Too high - red
+    if (value < 1.0 || value > 1.8) return '#ffc107'; // Suboptimal - yellow
     return '#28a745'; // Optimal - green
   };
 
   const getStatusText = (value: number) => {
-    if (value < 6.0 || value > 7.5) return 'Suboptimal';
+    if (value < 0.8) return 'Too Low';
+    if (value > 2.0) return 'Too High';
+    if (value < 1.0 || value > 1.8) return 'Suboptimal';
     return 'Optimal';
   };
 
-  const renderChart = () => {
-    if (phData.length === 0) return null;
+  const renderSimpleChart = () => {
+    if (ecData.length === 0) return null;
 
-    const maxValue = Math.max(...phData.map(d => d.value));
-    const minValue = Math.min(...phData.map(d => d.value));
+    const maxValue = Math.max(...ecData.map(d => d.value));
+    const minValue = Math.min(...ecData.map(d => d.value));
     const range = maxValue - minValue || 1;
 
     // Calculate time range for proper time series display
@@ -105,7 +109,7 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
     const timeRange = now.getTime() - twentyFourHoursAgo.getTime();
 
     // Calculate positions for all points
-    const points = phData.map((point) => {
+    const points = ecData.map((point) => {
       const pointTime = new Date(point.timestamp).getTime();
       const timePosition = ((pointTime - twentyFourHoursAgo.getTime()) / timeRange) * 200;
       const height = ((point.value - minValue) / range) * 120;
@@ -173,7 +177,7 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
             <View
               key={`line-${segment.key}`}
               style={[
-                styles.connectionLine,
+                styles.continuousLine,
                 {
                   left: segment.left,
                   bottom: segment.bottom,
@@ -211,9 +215,9 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
         end={{ x: 0.5, y: 1 }}
         style={styles.container}
       >
-        <Text style={styles.title}>pH Index</Text>
+        <Text style={styles.title}>Electrical Conductivity</Text>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading pH data...</Text>
+          <Text style={styles.loadingText}>Loading EC data...</Text>
         </View>
       </LinearGradient>
     );
@@ -226,12 +230,12 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
       end={{ x: 0.5, y: 1 }}
       style={styles.container}
     >
-      <Text style={styles.title}>pH Index</Text>
+      <Text style={styles.title}>Electrical Conductivity</Text>
 
       {/* Current Value Display */}
       <View style={styles.currentValueContainer}>
         <Text style={[styles.currentValue, { color: getStatusColor(currentValue) }]}>
-          {currentValue.toFixed(2)} pH
+          {currentValue.toFixed(2)} mS/cm
         </Text>
         <Text style={[styles.statusText, { color: getStatusColor(currentValue) }]}>
           {getStatusText(currentValue)}
@@ -239,7 +243,7 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
       </View>
 
       {/* Chart */}
-      {renderChart()}
+      {renderSimpleChart()}
 
       {/* Time Labels */}
       <View style={styles.timeLabels}>
@@ -305,30 +309,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 8,
   },
-  dataPoint: {
-    position: 'absolute',
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
   dataPointSmall: {
     position: 'absolute',
     width: 4,
     height: 4,
     borderRadius: 2,
-  },
-  lineContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  connectionLine: {
-    position: 'absolute',
-    height: 2,
-    backgroundColor: '#FF9800',
-    opacity: 0.7,
   },
   gridContainer: {
     position: 'absolute',
@@ -340,8 +325,14 @@ const styles = StyleSheet.create({
   gridLine: {
     position: 'absolute',
     height: 1,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#ddd',
     width: '100%',
+  },
+  continuousLine: {
+    position: 'absolute',
+    height: 2,
+    backgroundColor: '#4CAF50',
+    opacity: 0.7,
   },
   timeLabels: {
     flexDirection: 'row',
@@ -362,3 +353,5 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 });
+
+export default ECChart;

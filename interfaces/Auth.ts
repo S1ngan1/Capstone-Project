@@ -1,5 +1,5 @@
 
-export interface ConfirmLogoutDialogProps {
+export interface ConfirmDialogProps {
   visible: boolean
   onConfirm: () => void
   onCancel: () => void

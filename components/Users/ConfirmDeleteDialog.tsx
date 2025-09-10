@@ -1,20 +1,21 @@
-// components/ConfirmLogoutDialog.tsx
+// components/ConfirmDeleteDialog.tsx
 import React from 'react'
 import { View, Text, Modal, StyleSheet, Pressable } from 'react-native'
 import { ConfirmDialogProps } from '../../interfaces/Auth'
 
-export default function ConfirmLogoutDialog({ visible, onConfirm, onCancel }: ConfirmDialogProps) {
+export default function ConfirmDeleteDialog({ visible, onConfirm, onCancel }: ConfirmDialogProps) {
   return (
     <Modal transparent animationType="fade" visible={visible}>
       <View style={styles.overlay}>
         <View style={styles.dialog}>
-          <Text style={styles.title}>Confirm Log Out?</Text>
+          <Text style={styles.title}>Confirm Delete?</Text>
+          <Text style={styles.subtitle}>This action cannot be undone.</Text>
           <View style={styles.buttons}>
             <Pressable style={[styles.btn, styles.cancel]} onPress={onCancel}>
               <Text style={styles.text}>Cancel</Text>
             </Pressable>
             <Pressable style={[styles.btn, styles.confirm]} onPress={onConfirm}>
-              <Text style={[styles.text, { color: 'red' }]}>Log Out</Text>
+              <Text style={[styles.text, { color: 'red' }]}>Delete</Text>
             </Pressable>
           </View>
         </View>
@@ -40,7 +41,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     color: 'white',
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#ccc',
     marginBottom: 16,
+    textAlign: 'center',
   },
   buttons: {
     flexDirection: 'row',

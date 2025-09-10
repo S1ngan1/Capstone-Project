@@ -6,37 +6,25 @@ import { View, StyleSheet, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useAuth } from './hooks/useAuth';
-import { AuthContext } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import { RootStackParamList } from './types/interfaces';
 
 import Home from './screens/Home';
-import Account from './screens/Account';
 import Settings from './screens/Settings';
 import Auth from './components/Auth';
 import Onboarding from './screens/Onboarding';
 import Notification from './screens/Notification';
 import Farm from './screens/Farm';
-
-
-const SuggestionScreen = () => (
-  <View style={appStyles.placeholderScreen}>
-    <Text style={appStyles.placeholderText}>Suggestion Screen</Text>
-  </View>
-);
-
-export type RootStackParamList = {
-    Auth: undefined;
-    Onboarding: undefined;
-    Home: undefined;
-    Farm: undefined;
-    Suggestion: undefined;
-    Profile: undefined;
-    Settings: undefined;
-    Notification: undefined;
-};
+import FarmDetails from './screens/FarmDetails';
+import UserDetail from './screens/UserDetail';
+import SensorDetail from './screens/SensorDetail';
+import UserManagement from './screens/UserManagement';
+import Suggestion from './screens/Suggestion';
+import CreateFarm from './screens/CreateFarm';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-export default function App() {
+function AppNavigator() {
     const { session } = useAuth();
     const [showOnboarding, setShowOnboarding] = useState(true);
 
@@ -45,28 +33,38 @@ export default function App() {
     }
 
     return (
-        <AuthContext.Provider value={{ session }}>
+        <NavigationContainer>
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+                {!session || !session.user ? (
+                    <Stack.Group>
+                        <Stack.Screen name="Auth" component={Auth} />
+                    </Stack.Group>
+                ) : (
+                    <Stack.Group>
+                        <Stack.Screen name="Home" component={Home} />
+                        <Stack.Screen name="Farm" component={Farm} />
+                        <Stack.Screen name="FarmDetails" component={FarmDetails} />
+                        <Stack.Screen name="CreateFarm" component={CreateFarm} />
+                        <Stack.Screen name="Suggestion" component={Suggestion} />
+                        <Stack.Screen name="Settings" component={Settings} />
+                        <Stack.Screen name="Notification" component={Notification} />
+                        <Stack.Screen name="UserManagement" component={UserManagement} />
+                        <Stack.Screen name="UserDetail" component={UserDetail} />
+                        <Stack.Screen name="SensorDetail" component={SensorDetail} />
+                    </Stack.Group>
+                )}
+            </Stack.Navigator>
+        </NavigationContainer>
+    );
+}
+
+export default function App() {
+    return (
+        <AuthProvider>
             <SafeAreaProvider>
-                <NavigationContainer>
-                    <Stack.Navigator screenOptions={{ headerShown: false }}>
-                        {!session || !session.user ? (
-                            <Stack.Group>
-                                <Stack.Screen name="Auth" component={Auth} />
-                            </Stack.Group>
-                        ) : (
-                            <Stack.Group>
-                                <Stack.Screen name="Home" component={Home} />
-                                <Stack.Screen name="Farm" component={Farm} />
-                                <Stack.Screen name="Suggestion" component={SuggestionScreen} />
-                                <Stack.Screen name="Profile" component={Account} />
-                                <Stack.Screen name="Settings" component={Settings} />
-                                <Stack.Screen name="Notification" component={Notification} />
-                            </Stack.Group>
-                        )}
-                    </Stack.Navigator>
-                </NavigationContainer>
+                <AppNavigator />
             </SafeAreaProvider>
-        </AuthContext.Provider>
+        </AuthProvider>
     );
 }
 
