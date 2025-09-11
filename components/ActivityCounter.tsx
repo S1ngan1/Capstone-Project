@@ -74,11 +74,6 @@ const ActivityCounter: React.FC<ActivityCounterProps> = ({
     }
   }, [user?.id])
   const handlePress = async () => {
-    if (onPress) {
-      await onPress()
-    } else if (navigation) {
-      navigation.navigate('ActivityLogs')
-    }
     // Mark activities as viewed when user accesses them
     if (newActivityCount > 0) {
       try {
@@ -96,6 +91,11 @@ const ActivityCounter: React.FC<ActivityCounterProps> = ({
         // Refetch anyway to sync badge
         await fetchNewActivityCount()
       }
+    }
+    
+    // Call the provided onPress callback if it exists
+    if (onPress) {
+      await onPress()
     }
   }
   return (

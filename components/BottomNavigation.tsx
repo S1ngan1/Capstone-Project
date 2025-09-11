@@ -66,50 +66,51 @@ const BottomNavigation: React.FC = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#e7fbe8ff', '#cdffcfff']}
+        colors={['#4CAF50', '#66BB6A']}
         style={styles.gradient}
       >
         {/* Main Navigation Items */}
         <View style={styles.mainNavigation}>
           {/* Home Button */}
           <TouchableOpacity style={styles.navItem} onPress={navigateToHome}>
-            <Ionicons name="home" size={24} color="#2E8B57" />
+            <Ionicons name="home" size={24} color="#FFFFFF" />
             <Text style={styles.navText}>Home</Text>
           </TouchableOpacity>
           {/* User Requests Button */}
           <TouchableOpacity style={styles.navItem} onPress={navigateToRequests}>
-            <Ionicons name="document-text" size={24} color="#2E8B57" />
+            <Ionicons name="document-text" size={24} color="#FFFFFF" />
             <Text style={styles.navText}>Requests</Text>
           </TouchableOpacity>
           {/* Activity Log Button with Counter */}
-          <TouchableOpacity style={styles.navItem} onPress={handleActivityPress}>
+          <View style={styles.navItem}>
             <View style={{ alignItems: 'center', justifyContent: 'center' }}>
               <ActivityCounter
                 showIcon={true}
                 iconSize={24}
-                iconColor="#2E8B57"
+                iconColor="#FFFFFF"
+                onPress={handleActivityPress}
               />
               <Text style={styles.navText}>Activity</Text>
             </View>
-          </TouchableOpacity>
+          </View>
           {/* Notifications Button with Counter */}
           <View style={styles.navItem}>
             <NotificationCounter
               navigation={navigation}
               showIcon={true}
               iconSize={24}
-              iconColor="#2E8B57"
+              iconColor="#FFFFFF"
             />
             <Text style={styles.navText}>Alerts</Text>
           </View>
           {/* Suggestions Button */}
           <TouchableOpacity style={styles.navItem} onPress={navigateToSuggestions}>
-            <Ionicons name="bulb" size={24} color="#2E8B57" />
+            <Ionicons name="bulb" size={24} color="#FFFFFF" />
             <Text style={styles.navText}>Tips</Text>
           </TouchableOpacity>
           {/* Settings Button */}
           <TouchableOpacity style={styles.navItem} onPress={navigateToSettings}>
-            <Ionicons name="settings" size={24} color="#2E8B57" />
+            <Ionicons name="settings" size={24} color="#FFFFFF" />
             <Text style={styles.navText}>Settings</Text>
           </TouchableOpacity>
         </View>
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
   },
   navText: {
     fontSize: 12,
-    color: '#2E8B57',
+    color: '#FFFFFF',
     fontWeight: '600',
     marginTop: 4,
     textAlign: 'center',
