@@ -1,5 +1,5 @@
 // components/ImageAdjustmentModal.tsx
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import {
   Modal,
   View,
@@ -9,30 +9,35 @@ import {
   Dimensions,
   PanResponder,
   Animated,
-} from 'react-native'
-import { Image } from 'expo-image'
-import * as ImageManipulator from 'expo-image-manipulator'
-import { Ionicons } from '@expo/vector-icons'
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window')
-const CONTAINER_HEIGHT = 250 // Height of the cover photo area
+} from 'react-native';
+import { Image } from 'expo-image';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { Ionicons } from '@expo/vector-icons';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const CONTAINER_HEIGHT = 250; // Height of the cover photo area
+
 interface ImageAdjustmentModalProps {
-  visible: boolean
-  imageUri: string
-  onSave: (processedImageUri: string) => void
-  onCancel: () => void
+  visible: boolean;
+  imageUri: string;
+  onSave: (processedImageUri: string) => void;
+  onCancel: () => void;
 }
+
 const ImageAdjustmentModal: React.FC<ImageAdjustmentModalProps> = ({
   visible,
   imageUri,
   onSave,
   onCancel,
 }) => {
-  const [scale, setScale] = useState(1)
-  const [position, setPosition] = useState({ x: 0, y: 0 })
-  const [isProcessing, setIsProcessing] = useState(false)
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isProcessing, setIsProcessing] = useState(false);
+
   // Animated values
-  const pan = new Animated.ValueXY(position)
-  const scaleValue = new Animated.Value(scale)
+  const pan = new Animated.ValueXY(position);
+  const scaleValue = new Animated.Value(scale);
+
   // Pan responder for dragging
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: () => true,
@@ -43,50 +48,56 @@ const ImageAdjustmentModal: React.FC<ImageAdjustmentModalProps> = ({
       setPosition({
         x: position.x + gestureState.dx,
         y: position.y + gestureState.dy,
-      })
+      });
       pan.setOffset({
         x: position.x + gestureState.dx,
         y: position.y + gestureState.dy,
-      })
-      pan.setValue({ x: 0, y: 0 })
+      });
+      pan.setValue({ x: 0, y: 0 });
     },
-  })
+  });
+
   const zoomIn = () => {
-    const newScale = Math.min(scale * 1.2, 3)
-    setScale(newScale)
+    const newScale = Math.min(scale * 1.2, 3);
+    setScale(newScale);
     Animated.spring(scaleValue, {
       toValue: newScale,
       useNativeDriver: true,
-    }).start()
-  }
+    }).start();
+  };
+
   const zoomOut = () => {
-    const newScale = Math.max(scale / 1.2, 0.5)
-    setScale(newScale)
+    const newScale = Math.max(scale / 1.2, 0.5);
+    setScale(newScale);
     Animated.spring(scaleValue, {
       toValue: newScale,
       useNativeDriver: true,
-    }).start()
-  }
+    }).start();
+  };
+
   const resetPosition = () => {
-    setPosition({ x: 0, y: 0 })
-    setScale(1)
-    pan.setValue({ x: 0, y: 0 })
-    pan.setOffset({ x: 0, y: 0 })
+    setPosition({ x: 0, y: 0 });
+    setScale(1);
+    pan.setValue({ x: 0, y: 0 });
+    pan.setOffset({ x: 0, y: 0 });
     Animated.spring(scaleValue, {
       toValue: 1,
       useNativeDriver: true,
-    }).start()
-  }
+    }).start();
+  };
+
   const handleSave = async () => {
-    setIsProcessing(true)
+    setIsProcessing(true);
     try {
       // Calculate crop parameters based on position and scale
-      const imageWidth = screenWidth
-      const imageHeight = imageWidth // Assume square for simplicity, adjust as needed
-      const cropX = Math.max(0, -position.x / scale)
-      const cropY = Math.max(0, -position.y / scale)
-      const cropWidth = Math.min(imageWidth / scale, imageWidth - cropX)
-      const cropHeight = Math.min(CONTAINER_HEIGHT / scale, imageHeight - cropY)
+      const imageWidth = screenWidth;
+      const imageHeight = imageWidth; // Assume square for simplicity, adjust as needed
+      
+      const cropX = Math.max(0, -position.x / scale);
+      const cropY = Math.max(0, -position.y / scale);
+      const cropWidth = Math.min(imageWidth / scale, imageWidth - cropX);
+      const cropHeight = Math.min(CONTAINER_HEIGHT / scale, imageHeight - cropY);
+
       const result = await ImageManipulator.manipulateAsync(
         imageUri,
         [
@@ -106,14 +117,16 @@ const ImageAdjustmentModal: React.FC<ImageAdjustmentModalProps> = ({
           },
         ],
         { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
-      )
-      onSave(result.uri)
+      );
+
+      onSave(result.uri);
     } catch (error) {
-      console.error('Error processing image:', error)
+      console.error('Error processing image:', error);
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen">
       <View style={styles.container}>
@@ -128,6 +141,7 @@ const ImageAdjustmentModal: React.FC<ImageAdjustmentModalProps> = ({
             </Text>
           </TouchableOpacity>
         </View>
+
         <View style={styles.previewContainer}>
           <View style={styles.cropArea}>
             <Animated.View
@@ -147,20 +161,24 @@ const ImageAdjustmentModal: React.FC<ImageAdjustmentModalProps> = ({
             </Animated.View>
           </View>
         </View>
+
         <View style={styles.controls}>
           <TouchableOpacity style={styles.controlButton} onPress={zoomOut}>
             <Ionicons name="remove-circle-outline" size={40} color="#007AFF" />
             <Text style={styles.controlText}>Zoom Out</Text>
           </TouchableOpacity>
+
           <TouchableOpacity style={styles.controlButton} onPress={resetPosition}>
             <Ionicons name="refresh-outline" size={40} color="#007AFF" />
             <Text style={styles.controlText}>Reset</Text>
           </TouchableOpacity>
+
           <TouchableOpacity style={styles.controlButton} onPress={zoomIn}>
             <Ionicons name="add-circle-outline" size={40} color="#007AFF" />
             <Text style={styles.controlText}>Zoom In</Text>
           </TouchableOpacity>
         </View>
+
         <View style={styles.instructions}>
           <Text style={styles.instructionText}>
             • Drag to reposition the image
@@ -174,8 +192,9 @@ const ImageAdjustmentModal: React.FC<ImageAdjustmentModalProps> = ({
         </View>
       </View>
     </Modal>
-  )
-}
+  );
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -253,5 +272,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 5,
   },
-})
-export default ImageAdjustmentModal
+});
+
+export default ImageAdjustmentModal;

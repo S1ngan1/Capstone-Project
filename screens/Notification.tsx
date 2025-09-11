@@ -1,427 +1,299 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  ScrollView,
-  RefreshControl,
-} from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
-import { Ionicons } from '@expo/vector-icons'
-import { useAuthContext } from '../context/AuthContext'
-import { activityLogService, Notification as NotificationType } from '../utils/activityLogService'
-import { useNavigation } from '@react-navigation/native'
-import BottomNavigation from '../components/BottomNavigation'
-const Notification = () => {
-  const navigation = useNavigation()
-  const { user } = useAuthContext()
-  const [notifications, setNotifications] = useState<NotificationType[]>([])
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'unread' | 'success' | 'warning' | 'error'>('all')
-  useEffect(() => {
-    if (user?.id) {
-      fetchNotifications()
-      // Subscribe to real-time notifications
-      const subscription = activityLogService.subscribeToNotifications(
-        user.id,
-        (newNotification) => {
-          setNotifications(prev => [newNotification, ...prev])
-        }
-      )
-      return () => {
-        subscription.unsubscribe()
-      }
-    }
-  }, [user?.id])
-  const fetchNotifications = async () => {
-    try {
-      setLoading(true)
-      const { data } = await activityLogService.getNotifications({
-        page: 1,
-        limit: 50,
-        unreadOnly: selectedCategory === 'unread'
-      })
-      // Filter by category if not 'all' or 'unread'
-      let filteredData = data
-      if (selectedCategory !== 'all' && selectedCategory !== 'unread') {
-        filteredData = data.filter(notification => notification.type === selectedCategory)
-      }
-      setNotifications(filteredData)
-    } catch (error) {
-      console.error('Error fetching notifications:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-  const onRefresh = async () => {
-    setRefreshing(true)
-    await fetchNotifications()
-    setRefreshing(false)
-  }
-  const handleNotificationPress = async (notification: NotificationType) => {
-    // Mark as read if unread
-    if (!notification.is_read) {
-      await activityLogService.markNotificationAsRead(notification.id)
-      setNotifications(prev =>
-        prev.map(n => n.id === notification.id ? { ...n, is_read: true } : n)
-      )
-    }
-    // Navigate based on metadata
-    if (notification.metadata?.navigation) {
-      const { navigation: screenName, navigationParams } = notification.metadata
-      navigation.navigate(screenName as any, navigationParams)
-    }
-  }
-  const markAllAsRead = async () => {
-    try {
-      await activityLogService.markAllNotificationsAsRead()
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
-      )
-    } catch (error) {
-      console.error('Error marking all as read:', error)
-    }
-  }
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'success': return 'checkmark-circle'
-      case 'warning': return 'warning'
-      case 'error': return 'close-circle'
-      default: return 'information-circle'
-    }
-  }
-  const getNotificationColor = (type: string) => {
-    switch (type) {
-      case 'success': return '#4CAF50'
-      case 'warning': return '#FF9800'
-      case 'error': return '#f44336'
-      default: return '#2196F3'
-    }
-  }
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'all': return 'list'
-      case 'unread': return 'ellipse'
-      case 'success': return 'checkmark-circle'
-      case 'warning': return 'warning'
-      case 'error': return 'close-circle'
-      default: return 'list'
-    }
-  }
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-    if (diffInSeconds < 60) return 'Just now'
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`
-    return `${Math.floor(diffInSeconds / 604800)}w ago`
-  }
-  const getFilteredNotifications = () => {
-    if (selectedCategory === 'all') return notifications
-    if (selectedCategory === 'unread') return notifications.filter(n => !n.is_read)
-    return notifications.filter(n => n.type === selectedCategory)
-  }
-  const unreadCount = notifications.filter(n => !n.is_read).length
-  const filteredNotifications = getFilteredNotifications()
-  if (loading) {
-    return (
-      <LinearGradient colors={['#4CAF50', '#45a049']} style={styles.safeArea}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="white" />
-          <Text style={styles.loadingText}>Loading notifications...</Text>
-        </View>
-      </LinearGradient>
-    )
-  }
-  return (
-    <LinearGradient colors={['#4CAF50', '#45a049']} style={styles.safeArea}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Notifications</Text>
-          {unreadCount > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
-            </View>
-          )}
-        </View>
-        {unreadCount > 0 && (
-          <TouchableOpacity onPress={markAllAsRead} style={styles.markAllButton}>
-            <Text style={styles.markAllText}>Mark All Read</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-      <View style={styles.filterContainer}>
-        {['all', 'unread', 'success', 'warning', 'error'].map((category) => (
-          <TouchableOpacity
-            key={category}
-            style={[
-              styles.filterButton,
-              selectedCategory === category && styles.filterButtonActive
-            ]}
-            onPress={() => setSelectedCategory(category as any)}
-          >
-            <Ionicons
-              name={getCategoryIcon(category)}
-              size={16}
-              color={selectedCategory === category ? 'white' : '#666'}
-            />
-            <Text style={[
-              styles.filterButtonText,
-              selectedCategory === category && styles.filterButtonTextActive
-            ]}>
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollViewContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {filteredNotifications.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="notifications-outline" size={64} color="#ccc" />
-            <Text style={styles.emptyTitle}>No Notifications</Text>
-            <Text style={styles.emptyMessage}>
-              You're all caught up! We'll notify you when there's something new.
-            </Text>
-          </View>
-        ) : (
-          filteredNotifications.map((notification) => {
-            const isClickable = notification.metadata?.navigation
-            return (
-              <TouchableOpacity
-                key={notification.id}
-                style={[
-                  styles.notificationItem,
-                  !notification.is_read && styles.unreadItem,
-                  isClickable && styles.clickableItem
-                ]}
-                onPress={() => isClickable && handleNotificationPress(notification)}
-                disabled={!isClickable}
-              >
-                <View style={styles.notificationHeader}>
-                  <View style={styles.notificationInfo}>
-                    <Ionicons
-                      name={getNotificationIcon(notification.type)}
-                      size={24}
-                      color={getNotificationColor(notification.type)}
-                    />
-                    <View style={styles.notificationTextContainer}>
-                      <Text style={[
-                        styles.notificationTitle,
-                        !notification.is_read && styles.unreadText
-                      ]}>
-                        {notification.title}
-                      </Text>
-                      <Text style={styles.notificationMessage}>
-                        {notification.message}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.notificationMeta}>
-                    <Text style={styles.timeAgo}>
-                      {formatTimeAgo(notification.created_at)}
-                    </Text>
-                    {!notification.is_read && (
-                      <View style={styles.unreadDot} />
-                    )}
-                    {isClickable && (
-                      <Ionicons name="chevron-forward" size={16} color="#999" />
-                    )}
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )
-          })
-        )}
-      </ScrollView>
-      <BottomNavigation />
-    </LinearGradient>
-  )
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    SafeAreaView,
+    TouchableOpacity,
+    Platform,
+    Modal,
+    TouchableWithoutFeedback,
+    RefreshControl,
+} from 'react-native';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons'; 
+import NotiPiece from '../components/NotiPiece';
+import BottomNavigation from '../components/BottomNavigation';
+import { useAuthContext } from '../context/AuthContext';
+import { Notification as NotificationInterface } from '../types/interfaces';
+
+interface NotificationSection {
+    id: string;
+    fullContent: string;
+    displayTime: string;
+    section: 'Today' | 'Yesterday' | 'Earlier' | 'Other';
+    level: 'urgent' | 'warning' | 'normal';
+    isRead: boolean;
+    actionButtons?: { label: string; onClick: () => void }[];
 }
+
+const Notification: React.FC = () => {
+    const { notifications, markAsRead, refreshNotifications } = useAuthContext();
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const formatNotificationsForDisplay = (notifications: NotificationInterface[]): NotificationSection[] => {
+        return notifications.map(notification => {
+            const createdAt = new Date(notification.created_at);
+            const now = new Date();
+            const timeDiff = now.getTime() - createdAt.getTime();
+            const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+            const hoursDiff = Math.floor(timeDiff / (1000 * 3600));
+            const minutesDiff = Math.floor(timeDiff / (1000 * 60));
+
+            let displayTime: string;
+            let section: 'Today' | 'Yesterday' | 'Earlier' | 'Other';
+
+            if (daysDiff === 0) {
+                if (hoursDiff === 0) {
+                    displayTime = minutesDiff <= 0 ? 'now' : `${minutesDiff}m`;
+                } else {
+                    displayTime = `${hoursDiff}h`;
+                }
+                section = 'Today';
+            } else if (daysDiff === 1) {
+                displayTime = '1d';
+                section = 'Yesterday';
+            } else if (daysDiff < 7) {
+                displayTime = `${daysDiff}d`;
+                section = 'Earlier';
+            } else {
+                displayTime = `${Math.floor(daysDiff / 7)}w`;
+                section = 'Earlier';
+            }
+
+            return {
+                id: notification.id,
+                fullContent: notification.message || notification.content || 'No message',
+                displayTime,
+                section,
+                level: notification.level,
+                isRead: notification.is_read,
+            };
+        });
+    };
+
+    const displayNotifications = formatNotificationsForDisplay(notifications);
+    const sections = [...new Set(displayNotifications.map(n => n.section))];
+
+    const handleNotiPress = (id: string) => {
+        console.log(`Notification ${id} pressed!`);
+        markAsRead(id);
+    };
+
+    const handleMorePress = (id: string) => {
+        setSelectedNotificationId(id);
+        setModalVisible(true);
+    };
+
+    const handleDeleteNotification = () => {
+        if (selectedNotificationId) {
+            console.log(`Deleting notification with ID: ${selectedNotificationId}`);
+        }
+        setModalVisible(false);
+        setSelectedNotificationId(null);
+    };
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        refreshNotifications();
+        setRefreshing(false);
+    };
+
+    return (
+        <SafeAreaView style={styles.safeArea}>
+            <View style={styles.header}>
+                <Text style={styles.headerTitle}>Notifications</Text>
+                <TouchableOpacity style={styles.searchIcon}>
+                    <Ionicons name="search" size={24} color="#555" />
+                </TouchableOpacity>
+            </View>
+
+            <ScrollView 
+                contentContainerStyle={styles.scrollViewContent}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#00A388']}
+                        tintColor={'#00A388'}
+                    />
+                }
+            >
+                {sections.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <Ionicons name="notifications-outline" size={64} color="#ccc" />
+                        <Text style={styles.emptyTitle}>No Notifications</Text>
+                        <Text style={styles.emptyText}>You're all caught up! No new notifications to show.</Text>
+                    </View>
+                ) : (
+                    sections.map(section => (
+                        <View key={section} style={styles.sectionContainer}>
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>{section}</Text>
+                                {section === 'Today' && displayNotifications.filter(n => n.section === section).length > 3 && (
+                                    <TouchableOpacity>
+                                        <Text style={styles.seeAllText}>See all</Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                            {displayNotifications
+                                .filter(n => n.section === section)
+                                .map((notification, index, arr) => (
+                                    <View key={notification.id}>
+                                        <NotiPiece
+                                            content={notification.fullContent}
+                                            time={notification.displayTime}
+                                            level={notification.level}
+                                            isRead={notification.isRead}
+                                            onPress={() => handleNotiPress(notification.id)}
+                                            onMorePress={() => handleMorePress(notification.id)}
+                                        />
+                                        {index < arr.length - 1 && <View style={styles.separator} />}
+                                    </View>
+                                ))}
+                        </View>
+                    ))
+                )}
+            </ScrollView>
+
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={isModalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+                    <View style={styles.modalBackground}>
+                        <TouchableWithoutFeedback onPress={() => {}}>
+                            <View style={styles.modalContainer}>
+                                <View style={styles.modalHeader}>
+                                    <Text style={styles.modalTitle}>Notification Options</Text>
+                                </View>
+                                <TouchableOpacity style={styles.modalOption} onPress={handleDeleteNotification}>
+                                    <MaterialIcons name="delete" size={24} color="#ff4444" />
+                                    <Text style={styles.modalOptionText}>Delete</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.modalOption} onPress={() => setModalVisible(false)}>
+                                    <MaterialIcons name="close" size={24} color="#666" />
+                                    <Text style={styles.modalOptionText}>Cancel</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </View>
+                </TouchableWithoutFeedback>
+            </Modal>
+
+            <BottomNavigation />
+        </SafeAreaView>
+    );
+};
+
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  unreadBadge: {
-    backgroundColor: '#f44336',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-    position: 'absolute',
-    top: -5,
-    right: -30,
-  },
-  unreadBadgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  markAllButton: {
-    padding: 8,
-  },
-  markAllText: {
-    color: 'white',
-    fontWeight: '600',
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    marginHorizontal: 10,
-    marginVertical: 10,
-    borderRadius: 15,
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: 'transparent',
-  },
-  filterButtonActive: {
-    backgroundColor: '#4CAF50',
-  },
-  filterButtonText: {
-    marginLeft: 6,
-    fontSize: 12,
-    color: '#666',
-  },
-  filterButtonTextActive: {
-    color: 'white',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: 'white',
-  },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  scrollViewContent: {
-    paddingBottom: 120, // Increased padding to accommodate bottom navigation
-  },
-  notificationItem: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  unreadItem: {
-    backgroundColor: '#F0F8FF',
-    borderLeftWidth: 4,
-    borderLeftColor: '#4CAF50',
-  },
-  clickableItem: {
-    borderColor: '#007BFF',
-    borderWidth: 1,
-  },
-  notificationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  notificationInfo: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    flex: 1,
-  },
-  notificationTextContainer: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  notificationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  unreadText: {
-    fontWeight: 'bold',
-  },
-  notificationMessage: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  notificationMeta: {
-    alignItems: 'flex-end',
-    marginLeft: 8,
-  },
-  timeAgo: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 4,
-  },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#4CAF50',
-    marginBottom: 4,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 60,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#666',
-    marginTop: 16,
-  },
-  emptyMessage: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 20,
-  },
-})
-export default Notification
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#F5F7FA',
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 15,
+        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E0E0E0',
+    },
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    searchIcon: {
+        padding: 5,
+    },
+    scrollViewContent: {
+        paddingBottom: 100,
+        flexGrow: 1,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 60,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+        marginTop: 16,
+        marginBottom: 8,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        paddingHorizontal: 40,
+    },
+    sectionContainer: {
+        marginTop: 20,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        marginBottom: 10,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    seeAllText: {
+        fontSize: 14,
+        color: '#00A388',
+        fontWeight: '600',
+    },
+    separator: {
+        height: 1,
+        backgroundColor: '#f0f0f0',
+        marginHorizontal: 20,
+    },
+    modalBackground: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContainer: {
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        paddingBottom: Platform.OS === 'ios' ? 35 : 20,
+    },
+    modalHeader: {
+        alignItems: 'center',
+        paddingVertical: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E0E0E0',
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    modalOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 15,
+    },
+    modalOptionText: {
+        fontSize: 16,
+        marginLeft: 15,
+        color: '#333',
+    },
+});
+
+export default Notification;

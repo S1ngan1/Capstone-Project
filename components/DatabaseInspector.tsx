@@ -1,63 +1,77 @@
-import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
-import { supabase } from '../lib/supabase'
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { supabase } from '../lib/supabase';
+
 const DatabaseInspector = ({ farmId }: { farmId: string }) => {
-  const [inspectionResults, setInspectionResults] = useState<any>({})
-  const [loading, setLoading] = useState(true)
+  const [inspectionResults, setInspectionResults] = useState<any>({});
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    inspectDatabase()
-  }, [farmId])
+    inspectDatabase();
+  }, [farmId]);
+
   const inspectDatabase = async () => {
-    setLoading(true)
-    const results: any = { farmId }
+    setLoading(true);
+    const results: any = { farmId };
+
     try {
-      console.log('🔍 DEEP INSPECTION FOR FARM:', farmId)
+      console.log('🔍 DEEP INSPECTION FOR FARM:', farmId);
+
       // 1. Test different query approaches for sensors
-      console.log('Testing sensor queries...')
+      console.log('Testing sensor queries...');
+
       // Try with explicit column selection
       const { data: sensorsExplicit, error: sensorsExplicitError } = await supabase
         .from('sensor')
         .select('sensor_id, sensor_name, sensor_type, farm_id')
-        .eq('farm_id', farmId)
+        .eq('farm_id', farmId);
+
       results.sensorsExplicit = {
         count: sensorsExplicit?.length || 0,
         data: sensorsExplicit,
         error: sensorsExplicitError?.message
-      }
+      };
+
       // Try without farm_id filter to see all sensors
       const { data: allSensorsRaw, error: allSensorsRawError } = await supabase
         .from('sensor')
-        .select('sensor_id, sensor_name, sensor_type, farm_id')
+        .select('sensor_id, sensor_name, sensor_type, farm_id');
+
       results.allSensorsRaw = {
         count: allSensorsRaw?.length || 0,
         data: allSensorsRaw,
         error: allSensorsRawError?.message
-      }
+      };
+
       // Try with string comparison
       const { data: sensorsString, error: sensorsStringError } = await supabase
         .from('sensor')
         .select('*')
-        .eq('farm_id', farmId.toString())
+        .eq('farm_id', farmId.toString());
+
       results.sensorsString = {
         count: sensorsString?.length || 0,
         data: sensorsString,
         error: sensorsStringError?.message
-      }
+      };
+
       // 2. Check current user and session
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       results.currentUser = {
         id: user?.id,
         email: user?.email,
         error: userError?.message
-      }
+      };
+
       // 3. Test farm_id exact matching
-      console.log('Testing farm_id matching...')
+      console.log('Testing farm_id matching...');
       if (allSensorsRaw && allSensorsRaw.length > 0) {
         const farmIdMatches = allSensorsRaw.filter(sensor => {
-          console.log(`Comparing: "${sensor.farm_id}" === "${farmId}"`)
-          console.log(`Types: ${typeof sensor.farm_id} vs ${typeof farmId}`)
-          return sensor.farm_id === farmId
-        })
+          console.log(`Comparing: "${sensor.farm_id}" === "${farmId}"`);
+          console.log(`Types: ${typeof sensor.farm_id} vs ${typeof farmId}`);
+          return sensor.farm_id === farmId;
+        });
+
         results.farmIdMatches = {
           count: farmIdMatches.length,
           data: farmIdMatches,
@@ -69,44 +83,54 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
             values_equal: sensor.farm_id === farmId,
             string_equal: sensor.farm_id?.toString() === farmId?.toString()
           }))
-        }
+        };
       }
+
       // 4. Test sensor_data table
       const { data: sensorDataSample, error: sensorDataError } = await supabase
         .from('sensor_data')
         .select('*')
-        .limit(5)
+        .limit(5);
+
       results.sensorDataSample = {
         count: sensorDataSample?.length || 0,
         data: sensorDataSample,
         error: sensorDataError?.message
-      }
+      };
+
     } catch (error) {
-      console.error('🚨 Inspection error:', error)
-      results.inspectionError = error.toString()
+      console.error('🚨 Inspection error:', error);
+      results.inspectionError = error.toString();
     }
-    setInspectionResults(results)
-    setLoading(false)
-    console.log('🔍 === COMPLETE INSPECTION RESULTS ===')
-    console.log(JSON.stringify(results, null, 2))
-  }
+
+    setInspectionResults(results);
+    setLoading(false);
+
+    console.log('🔍 === COMPLETE INSPECTION RESULTS ===');
+    console.log(JSON.stringify(results, null, 2));
+  };
+
   const retestQueries = () => {
-    inspectDatabase()
-  }
+    inspectDatabase();
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>🔍 Deep Database Inspection...</Text>
       </View>
-    )
+    );
   }
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>🔍 Database Deep Inspection</Text>
       <Text style={styles.farmId}>Target Farm ID: {farmId}</Text>
+
       <TouchableOpacity style={styles.refreshButton} onPress={retestQueries}>
         <Text style={styles.refreshText}>🔄 Re-run Tests</Text>
       </TouchableOpacity>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>🎯 Explicit Column Query:</Text>
         <Text style={styles.text}>Count: {inspectionResults.sensorsExplicit?.count || 0}</Text>
@@ -114,6 +138,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
           <Text style={styles.error}>Error: {inspectionResults.sensorsExplicit.error}</Text>
         )}
       </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>📊 All Sensors (No Filter):</Text>
         <Text style={styles.text}>Count: {inspectionResults.allSensorsRaw?.count || 0}</Text>
@@ -126,6 +151,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
           <Text style={styles.error}>Error: {inspectionResults.allSensorsRaw.error}</Text>
         )}
       </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>🔗 Farm ID Matching Analysis:</Text>
         <Text style={styles.text}>Matches Found: {inspectionResults.farmIdMatches?.count || 0}</Text>
@@ -137,6 +163,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
           </ScrollView>
         )}
       </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>📈 Sensor Data Sample:</Text>
         <Text style={styles.text}>Count: {inspectionResults.sensorDataSample?.count || 0}</Text>
@@ -149,6 +176,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
           <Text style={styles.error}>Error: {inspectionResults.sensorDataSample.error}</Text>
         )}
       </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>👤 Current User:</Text>
         <Text style={styles.text}>
@@ -158,6 +186,7 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
           Email: {inspectionResults.currentUser?.email || 'None'}
         </Text>
       </View>
+
       {inspectionResults.inspectionError && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🚨 Inspection Error:</Text>
@@ -165,8 +194,9 @@ const DatabaseInspector = ({ farmId }: { farmId: string }) => {
         </View>
       )}
     </ScrollView>
-  )
-}
+  );
+};
+
 const styles = StyleSheet.create({
   container: {
     padding: 15,
@@ -234,5 +264,6 @@ const styles = StyleSheet.create({
   comparisonsContainer: {
     maxHeight: 100,
   },
-})
-export default DatabaseInspector
+});
+
+export default DatabaseInspector;

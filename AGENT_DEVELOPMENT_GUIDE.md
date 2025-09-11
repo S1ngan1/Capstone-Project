@@ -1,64 +1,25 @@
-// Example comprehensive test configuration
-const testConfig = {
-  notifications: [{
-    componentName: 'NotificationCounter',
-    hasRedBadge: true,
-    counterPosition: 'top-right',
-    maxDisplayCount: 99,
-    shouldResetOnClick: true
-  }],
-  panels: [{
-    componentName: 'FarmCard',
-    weatherPanel: { height: 140, hasFixedHeight: true },
-    sensorPanels: { count: 4, individualHeight: 60, spacing: 6, hasFixedHeight: true },
-    layoutType: 'horizontal'
-  }],
-  syntax: {
-    filePaths: ['screens/Home.tsx', 'components/NotificationCounter.tsx'],
-    checkMissingSemicolons: true,
-    checkUnmatchedBraces: true,
-    checkUnexpectedTokens: true,
-    checkImportExportErrors: true
-  }
+# Agent Development Guide - Smart Farm Monitoring System
+
+## 📱 Project Overview
+
+### Purpose & Mission
+This is a **Smart Farm Monitoring System** designed specifically for Vietnamese farmers with **zero experience** in mobile applications for agricultural analysis. The primary goal is to provide an intuitive, user-friendly interface that makes complex sensor data and farm management accessible to non-technical users.
+
+### Target Audience
+- Vietnamese farmers (primary users)
+- Farm managers with limited technical background
+- Agricultural cooperatives
+- Users who are more familiar with popular social media apps than technical applications
+
+### Core Functionality
+- Real-time sensor data monitoring (pH, EC, soil moisture, temperature)
+- Multi-farm management with role-based access
+- Weather integration for location-specific conditions
+- Farm member management and collaboration
+- Automated suggestions for crop improvement
+- Simple, visual data representation
 
 ---
-
----
-
-## 🔧 Development Workflow
-
-### **Step-by-Step Process**
-
-1. **Pre-Development Analysis**
-   - Read requirements carefully
-   - Identify all files that need modification
-   - Run syntax validation on existing files
-   - Document expected changes
-
-2. **Implementation Phase**
-   - Make incremental changes
-   - Test each change individually
-   - Run get_errors tool after each file modification
-   - Fix syntax errors immediately
-
-3. **UI Validation Phase**
-   - Run uiTestingBot with appropriate configurations
-   - Validate all affected components
-   - Check notification counters, panel alignments, form UI
-   - Ensure accessibility compliance
-
-4. **Final Verification**
-   - Run comprehensive syntax validation
-   - Test user workflows end-to-end
-   - Verify database integration
-   - Check for memory leaks in subscriptions
-
-### **Quality Gates**
-- ✅ Zero syntax errors (critical)
-- ✅ All notification counters functional (critical)
-- ✅ Panel alignments correct (warning)
-- ✅ Form UI accessible and usable (warning)
-- ✅ Filter distributions equal (info)
 
 ## 🎯 Design Philosophy & UI/UX Principles
 
@@ -86,319 +47,264 @@ const testConfig = {
 
 ---
 
-## 🧪 UI Testing & Quality Assurance
+## 🏗️ Technical Architecture Guidelines
 
-### **MANDATORY TESTING PROTOCOL**
-**⚠️ CRITICAL REQUIREMENT: Always run uiTestingBot before and after adding new functionality**
+### Database Schema (Supabase)
+```
+Users (profiles table)
+├── id (UUID)
+├── username (text)
+├── email (text)
+├── role (text) - app-level role (admin, user, data_manager)
+└── farm_creation_status (text)
 
-#### Pre-Development Testing
-```typescript
-// Before making any UI changes, run:
-import { uiTestingBot } from './utils/uiTestingBot';
+Farms
+├── id (UUID)
+├── name (text)
+├── location (text) - Vietnamese province
+├── farm_image (text)
+└── created_at (timestamp)
 
-const preTestResults = await uiTestingBot.runComprehensiveTests({
-  syntax: {
-    filePaths: ['path/to/files/being/modified'],
-    checkMissingSemicolons: true,
-    checkUnmatchedBraces: true,
-    checkUnexpectedTokens: true,
-    checkImportExportErrors: true
-  }
-});
+Farm_Users (Junction Table)
+├── farm_id (UUID) → Farms
+├── user_id (UUID) → Users
+└── farm_role (text) - farm-specific role (owner, manager, viewer)
 
-console.log('PRE-DEVELOPMENT REPORT:', uiTestingBot.generateReport());
+Sensors
+├── sensor_id (text)
+├── sensor_name (text)
+├── sensor_type (text)
+├── farm_id (UUID) → Farms
+├── model (text)
+├── units (text)
+├── status (text)
+└── notes (text)
+
+Sensor_Data
+├── id (text)
+├── created_at (timestamp)
+├── value (float)
+└── sensor_id (text) → Sensors
 ```
 
-#### Post-Development Testing
-```typescript
-// After completing changes, run full validation:
-const postTestResults = await uiTestingBot.runComprehensiveTests({
-  panels: [/* panel alignment configs */],
-  lists: [/* list component configs */],
-  components: [/* component structure configs */],
-  notifications: [/* notification counter configs */],
-  syntax: {
-    filePaths: ['all/modified/files'],
-    checkMissingSemicolons: true,
-    checkUnmatchedBraces: true,
-    checkUnexpectedTokens: true,
-    checkImportExportErrors: true
-  }
-});
+### Navigation Structure
+```
+Bottom Navigation:
+├── Home - Farm overview, quick stats
+├── Farm - Detailed farm management
+├── Notification - System alerts
+└── Suggestion - AI-powered recommendations
 
-console.log('POST-DEVELOPMENT REPORT:', uiTestingBot.generateReport());
+Modal/Screens:
+├── FarmDetails - Individual farm analysis
+├── SensorDetail - Specific sensor information
+├── UserDetail - User management
+├── Settings - App configuration
+└── Auth - Login/Signup
 ```
 
-### **Testing Requirements by Component Type**
+---
 
-#### 1. Notification Systems
-- **Red badge styling**: Background #FF3B30, white text, proper positioning
-- **Counter reset**: Must reset to 0 when user views notifications
-- **Real-time updates**: Subscribe to database changes
-- **99+ display**: Show "99+" when count exceeds 99
+## 🔧 Development Rules & Validation Checklist
 
-#### 2. Panel Alignments (Farm Cards)
-- **Weather panel height**: Must equal total sensor grid height including spacing
-- **Fixed heights**: All panels must have consistent, fixed heights
-- **Responsive layout**: Proper alignment across different screen sizes
+### Before Adding New Features/Files
 
-#### 3. Filter Bars & Lists
-- **Equal distribution**: Filter buttons must be equally spaced
-- **Count badges**: Show accurate counts for each filter state
-- **Active state styling**: Clear visual indication of selected filter
+#### 1. **Compatibility Check**
+- [ ] Does this feature integrate with existing navigation?
+- [ ] Are all imports and dependencies correctly resolved?
+- [ ] Does it follow the established color scheme and styling?
+- [ ] Is it consistent with existing UI components?
 
-#### 4. Form UI Elements
-- **Required field indicators**: Red asterisk (*) before required fields
-- **Edit button visibility**: Must be clearly visible and accessible
-- **Gradient styling**: Use LinearGradient for primary action buttons
-- **Delete confirmations**: Require text input for destructive actions
+#### 2. **User Experience Validation**
+- [ ] Can a non-technical farmer understand this feature in 5 seconds?
+- [ ] Does it follow the "one primary action per screen" rule?
+- [ ] Are error messages clear and actionable in simple language?
+- [ ] Is the touch target size adequate (minimum 44px)?
 
-#### 5. Syntax Validation
-- **Import statements**: Must be at top of file, proper syntax
-- **Brace matching**: All opening braces must have closing braces
-- **Export statements**: Proper TypeScript export syntax
-- **Missing semicolons**: Critical syntax errors must be caught
+#### 3. **Data Integration Check**
+- [ ] Does it properly fetch real data from Supabase?
+- [ ] Are all database queries optimized and error-handled?
+- [ ] Does it gracefully handle loading states?
+- [ ] Are mock data completely replaced with real data?
 
-### **Error Prevention Strategy**
+#### 4. **Code Quality Standards**
+- [ ] All TypeScript types properly defined
+- [ ] Error boundaries implemented for crash prevention
+- [ ] Loading states and error states handled
+- [ ] No console.log statements in production code
+- [ ] Proper component organization and reusability
 
-#### Common Issues to Test For:
-1. **Duplicate keys in FlatList components**
-2. **Missing loading states for async operations**
-3. **Unmatched JSX braces or parentheses**
-4. **Import/export statement placement errors**
-5. **Missing accessibility labels**
-6. **Inconsistent panel heights in farm cards**
-7. **Filter button sizing and distribution**
-8. **Notification counter reset functionality**
+### Mandatory Testing Checklist
 
-- **Test Coverage:** All interactive components must have UI tests
+#### Before Each Commit:
+1. **Functionality Test**
+   - [ ] Feature works as intended
+   - [ ] No runtime errors or crashes
+   - [ ] All user interactions respond correctly
 
-### **Integration with Development Workflow**
+2. **Integration Test**
+   - [ ] Navigation flows work seamlessly
+   - [ ] Data displays correctly across different screens
+   - [ ] User roles and permissions respected
 
+3. **UI/UX Test**
+   - [ ] Responsive design on different screen sizes
+   - [ ] Colors and typography consistent
+   - [ ] Accessibility considerations met
+
+---
+
+## 📋 Component Guidelines
+
+### 1. **Reusable Components**
+Always check if similar functionality exists before creating new components:
+- `WeatherWidget` - for weather displays
+- `SensorDataTable` - for sensor data visualization
+- `BottomNavigation` - consistent navigation
+- `LinearGradient` - for visual appeal
+
+### 2. **Styling Standards**
 ```typescript
-// Example: Adding UITestingBot to your component development
-export const YourNewComponent = () => {
-  // Your component implementation
-  
-  // Development-time testing (remove in production)
-  useEffect(() => {
-    if (__DEV__) {
-      const testResults = uiTestingBot.testFormUI({
-        componentName: 'YourNewComponent',
-        requiredFields: ['name', 'email'],
-        hasRequiredIndicators: true,
-        hasEditMode: true,
-        hasVisibleEditButton: true,
-        editButtonSize: 24,
-        hasGradientButtons: true
-      });
-      
-      if (testResults.some(r => r.severity === 'critical')) {
-        console.warn('🔴 Critical UI issues detected:', testResults);
-      }
-    }
-  }, []);
-  
-  return (
-    // Your JSX
-  );
+// Use consistent color palette
+const colors = {
+  primary: '#4CAF50',      // Green for primary actions
+  secondary: '#2196F3',    // Blue for secondary elements
+  warning: '#FF9800',      // Orange for warnings
+  danger: '#F44336',       // Red for critical states
+  success: '#4CAF50',      // Green for success states
+  background: '#F5F5F5',   // Light gray background
+  white: '#FFFFFF',
+  text: '#333333'
+};
+
+// Consistent spacing
+const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32
 };
 ```
 
----
-
-## 📝 Farm Notes Display Requirements
-
-### **Farm Notes Feature Specification**
-The FarmDetails screen MUST display farm notes prominently to provide context for both users and AI suggestions.
-
-#### **Positioning Requirements**
-- **Location**: Top of FarmDetails screen, immediately after header
-- **Priority**: Display BEFORE weather widget for maximum visibility
-- **Visibility**: Only show when farm has notes (hide section if notes are null/empty)
-
-#### **Styling Requirements**
-- **Container**: White card with shadow and rounded corners
-- **Visual Accent**: Green left border (4px width) to match app theme
-- **Header**: Document icon + "🌱 About This Farm" title
-- **Text Style**: Italicized notes text for better readability
-- **Typography**: 15px font size, 22px line height, #333 color
-
-#### **AI Integration Indicator**
-- **Purpose**: Explain how farm notes help AI provide better suggestions
-- **Design**: Brain icon + explanatory text in highlighted box
-- **Background**: Light red/pink background with border
-- **Text**: "This information helps AI provide better suggestions for your farm"
-
-#### **Database Integration**
-- **Table**: `farms` table
-- **Column**: `notes` field (text type)
-- **Fetching**: Include in farm details query: `SELECT id, name, location, notes FROM farms`
-
-#### **Implementation Example**
+### 3. **Error Handling Standards**
 ```typescript
-// Farm Notes Section in FarmDetails.tsx
-{farm?.notes && (
-  <View style={styles.farmNotesSection}>
-    <View style={styles.farmNotesHeader}>
-      <Ionicons name="document-text" size={20} color="#4CAF50" />
-      <Text style={styles.farmNotesTitle}>🌱 About This Farm</Text>
-    </View>
-    <View style={styles.farmNotesCard}>
-      <Text style={styles.farmNotesText}>{farm.notes}</Text>
-      <View style={styles.aiIndicator}>
-        <Ionicons name="brain" size={16} color="#FF6B6B" />
-        <Text style={styles.aiIndicatorText}>
-          This information helps AI provide better suggestions for your farm
-        </Text>
-      </View>
-    </View>
-  </View>
-)}
-```
-
-#### **Validation Testing**
-- **Test Script**: Use `scripts/validateFarmNotes.ts` for comprehensive validation
-- **UI Bot Test**: Run `uiTestingBot.testFarmNotesDisplay()` to verify implementation
-- **Requirements Check**: Positioning, styling, AI indicator, empty state handling
-
----
-
-## 🔧 Component Structure Requirements
-```
-#### Automated Checks:
-│   ├── "🌱 About This Farm" title
-
-### File Organization
-```
-src/
-├── components/
-│   ├── FarmCard.tsx
-│   ├── WeatherWidget.tsx
-│   ├── SensorGrid.tsx
-│   └── FarmNotes.tsx
-├── screens/
-│   ├── HomeScreen.tsx
-│   ├── FarmDetails.tsx
-│   └── UserProfile.tsx
-├── styles/
-│   ├── colors.ts
-│   ├── typography.ts
-│   └── globalStyles.ts
-└── utils/
-    ├── api.ts
-    ├── helpers.ts
-    └── uiTestingBot.ts
-```
-
----
-
-## 📋 Specific Implementation Guidelines
-
-### Farm Request System Implementation
-The app now uses a **farm request system** instead of direct farm creation:
-
-1. **User Flow**: Request → Admin Approval → Farm Access
-2. **Role Management**: App-level roles (admin, user) + Farm-level roles (owner, manager, viewer)
-3. **Components Required**:
-   - `CreateFarmRequest.tsx` - Request form
-   - `UserFarmRequests.tsx` - User's request history
-   - `AdminFarmRequests.tsx` - Admin approval panel
-
-### Data Fetching Patterns
-```typescript
-// Always include error handling and loading states
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState<string | null>(null);
-
-const fetchData = async () => {
-  try {
-    setLoading(true);
-    setError(null);
-    const { data, error } = await supabase.from('table').select('*');
-    if (error) throw error;
-    setData(data);
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-```
-
-### Sensor Data Handling
-```typescript
-// Differentiate between "no sensor" vs "no data"
-interface SensorData {
-  hasSensor: boolean; // Sensor exists in database
-  hasData: boolean;   // Recent data available
-  value: number;
-  status: 'normal' | 'warning' | 'critical';
+// Always implement proper error handling
+try {
+  const data = await fetchData();
+  setData(data);
+} catch (error) {
+  console.error('Descriptive error message:', error);
+  // Show user-friendly error message
+  Alert.alert('Lỗi', 'Không thể tải dữ liệu. Vui lòng thử lại.');
 }
-
-// Display logic:
-// hasSensor = false → "No sensor"
-// hasSensor = true, hasData = false → "No data"
-// hasSensor = true, hasData = true → Show actual value
 ```
 
 ---
 
-## 🚀 Deployment & Quality Assurance
+## 🌐 Localization & Content Guidelines
 
-### Pre-Deployment Checklist
-- [ ] All UITestingBot tests pass
-- [ ] No TypeScript errors or warnings
-- [ ] All forms validate user input properly
-- [ ] Error boundaries catch and display errors gracefully
-- [ ] Loading states present for all async operations
-- [ ] Vietnamese text and UI patterns followed
-- [ ] Farm request system fully functional
-- [ ] Role-based access control working
-- [ ] Weather widget responsive and accurate
-- [ ] Sensor data displays correctly across all states
+### Language Considerations
+- **Primary**: Vietnamese (farmer-friendly language)
+- **Secondary**: English (for technical terms when necessary)
+- **Rule**: Always use simple, conversational Vietnamese
+- **Avoid**: Technical jargon, complex terminology
 
-### Performance Standards
-- [ ] App starts in under 3 seconds
-- [ ] Navigation transitions smooth (no lag)
-- [ ] Image loading optimized with placeholders
-- [ ] Database queries cached where appropriate
-- [ ] Minimal re-renders on state changes
+### Content Writing Rules
+1. **Brevity**: Maximum 2 lines of text per instruction
+2. **Clarity**: Use everyday Vietnamese words
+3. **Action-Oriented**: Tell users what to do, not what something is
+4. **Positive Tone**: Encouraging and helpful, never intimidating
 
 ---
 
-## 📞 Emergency Debugging Guide
+## 🔒 Security & Data Privacy
 
-### Common Issues & Solutions
+### User Data Protection
+- All sensitive operations require authentication
+- Farm data only accessible to authorized users
+- Row-Level Security (RLS) implemented in Supabase
+- No sensitive data stored in device logs
 
-1. **"Unable to resolve module" errors**
-   - Check import paths are correct
-   - Ensure all dependencies installed
-   - Restart Metro bundler
-
-2. **Supabase connection issues**
-   - Verify API keys in lib/supabase.ts
-   - Check network connectivity
-   - Validate database permissions
-
-3. **Navigation crashes**
-   - Verify all screen names in App.tsx match navigation calls
-   - Check for missing screen parameters
-   - Ensure proper TypeScript types for navigation
-
-4. **UI layout issues**
-   - Run UITestingBot for automated detection
-   - Check StyleSheet consistency
-   - Validate responsive design breakpoints
-
-### UITestingBot Error Resolution
-When UITestingBot reports issues:
-1. **Critical Issues**: Fix immediately, block deployment
-2. **Warning Issues**: Fix before next release
-3. **Info Issues**: Address during next refactoring cycle
-
-Remember: **Every UI fix should be validated with UITestingBot to prevent regression.**
+### API Security
+- Weather API keys properly secured
+- Supabase credentials managed through environment variables
+- All database queries use parameterized statements
 
 ---
 
-This guide ensures consistent, user-friendly development that serves Vietnamese farmers effectively while maintaining high code quality and preventing UI regressions.
+## 🚀 Performance Guidelines
+
+### Optimization Rules
+1. **Lazy Loading**: Implement for large datasets
+2. **Caching**: Cache frequently accessed data (weather, sensor readings)
+3. **Image Optimization**: Compress farm images appropriately
+4. **Network Efficiency**: Batch API calls when possible
+
+### Memory Management
+- Properly cleanup useEffect hooks
+- Avoid memory leaks in navigation
+- Optimize large lists with FlatList
+- Implement proper error boundaries
+
+---
+
+## 📞 Integration Points
+
+### External Services
+1. **Supabase Database**
+   - Authentication
+   - Data storage
+   - Real-time subscriptions
+
+2. **Weather API (OpenWeather)**
+   - Current conditions
+   - Forecast data
+   - Location-based weather
+
+3. **Navigation (React Navigation)**
+   - Bottom tabs
+   - Stack navigation
+   - Modal presentations
+
+### Key Integration Rules
+- Always handle offline scenarios
+- Implement proper loading states
+- Graceful degradation when services unavailable
+- User feedback for all async operations
+
+---
+
+## 🎯 Success Metrics
+
+### User Experience Goals
+- **Onboarding**: New user should complete first farm setup in under 3 minutes
+- **Daily Usage**: Quick sensor check should take less than 30 seconds
+- **Error Rate**: Less than 1% of user actions should result in errors
+- **Accessibility**: App should be usable by users 50+ years old
+
+### Technical Performance Goals
+- **Load Time**: Initial app load under 3 seconds
+- **Response Time**: Database queries under 1 second
+- **Crash Rate**: Less than 0.1% session crash rate
+- **Battery Usage**: Minimal background processing
+
+---
+
+## 🔄 Continuous Improvement Process
+
+### Regular Review Points
+1. **Weekly**: UI/UX consistency check
+2. **Bi-weekly**: Performance monitoring
+3. **Monthly**: User feedback integration
+4. **Quarterly**: Feature usage analysis
+
+### Feedback Integration
+- Monitor user interaction patterns
+- A/B test new features with small user groups
+- Regular accessibility audits
+- Performance benchmarking
+
+---
+
+**Remember**: This application serves farmers who trust it with their livelihood. Every feature should be reliable, intuitive, and respectful of their time and expertise in agriculture, even if they're new to technology.

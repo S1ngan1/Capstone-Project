@@ -1,41 +1,47 @@
 // Weather service using Open Meteo API
-import { getProvinceCoordinates } from './vietnameseProvinces'
 export interface WeatherData {
   current: {
-    temperature: number
-    weatherCode: number
-    windSpeed: number
-    humidity: number
-    feelsLike?: number
-  }
+    temperature: number;
+    weatherCode: number;
+    windSpeed: number;
+    humidity: number;
+    feelsLike?: number;
+  };
   daily: {
-    date: string
+    date: string;
     temperature: {
-      max: number
-      min: number
-    }
-    weatherCode: number
-    precipitation?: number
-  }[]
-  location?: string
+      max: number;
+      min: number;
+    };
+    weatherCode: number;
+    precipitation?: number;
+  }[];
+  location?: string;
 }
+
 export interface LocationCoordinates {
-  latitude: number
-  longitude: number
-  name?: string
+  latitude: number;
+  longitude: number;
+  name?: string;
 }
+
 class WeatherService {
-  private readonly baseUrl = 'https://api.open-meteo.com/v1'
+  private readonly baseUrl = 'https://api.open-meteo.com/v1';
+
   async getCurrentWeather(coordinates: LocationCoordinates): Promise<WeatherData> {
     try {
-      const { latitude, longitude } = coordinates
+      const { latitude, longitude } = coordinates;
+
       const response = await fetch(
         `${this.baseUrl}/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum&timezone=auto&forecast_days=7`
-      )
+      );
+
       if (!response.ok) {
-        throw new Error(`Weather API error: ${response.status}`)
+        throw new Error(`Weather API error: ${response.status}`);
       }
-      const data = await response.json()
+
+      const data = await response.json();
+
       return {
         current: {
           temperature: Math.round(data.current.temperature_2m || 0),
@@ -44,7 +50,7 @@ class WeatherService {
           humidity: Math.round(data.current.relative_humidity_2m || 0),
           feelsLike: Math.round(data.current.apparent_temperature || data.current.temperature_2m || 0),
         },
-        daily: data.daily.time.map((date: string, index: number) => ({
+        daily: data.daily.time.slice(0, 7).map((date: string, index: number) => ({
           date,
           temperature: {
             max: Math.round(data.daily.temperature_2m_max[index] || 0),
@@ -54,108 +60,122 @@ class WeatherService {
           precipitation: Math.round((data.daily.precipitation_sum[index] || 0) * 10) / 10,
         })),
         location: coordinates.name,
-      }
+      };
     } catch (error) {
-      console.error('Weather API error:', error)
-      throw error
+      console.error('Error fetching weather data:', error);
+      throw error;
     }
   }
-  async getWeatherByLocation(locationName: string): Promise<WeatherData> {
-    try {
-      const coordinates = await this.getLocationCoordinates(locationName)
-      return await this.getCurrentWeather({
-        ...coordinates,
-        name: locationName,
-      })
-    } catch (error) {
-      console.error(`Error getting weather for location "${locationName}":`, error)
-      throw error
-    }
-  }
+
   async getLocationCoordinates(locationName: string): Promise<LocationCoordinates> {
     try {
-      // First, try to get coordinates from Vietnamese provinces data
-      const provinceCoords = getProvinceCoordinates(locationName)
-      if (provinceCoords) {
-        return {
-          latitude: provinceCoords.lat,
-          longitude: provinceCoords.lon,
-          name: locationName,
-        }
+      // Add validation for locationName
+      if (!locationName || typeof locationName !== 'string' || locationName.trim() === '') {
+        throw new Error('Invalid location name provided');
       }
-      // If not found in provinces, try geocoding API
-      const geocodeResponse = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locationName)}&count=1&language=en&format=json`
-      )
-      if (!geocodeResponse.ok) {
-        throw new Error(`Geocoding API error: ${geocodeResponse.status}`)
+
+      // First try to get coordinates from Vietnamese provinces
+      const vietnameseCoords = this.getVietnameseProvinceCoordinates(locationName.trim());
+      if (vietnameseCoords) {
+        return vietnameseCoords;
       }
-      const geocodeData = await geocodeResponse.json()
-      if (!geocodeData.results || geocodeData.results.length === 0) {
-        // If geocoding fails, try with English name if it's a Vietnamese province
-        const englishName = this.getEnglishLocationName(locationName)
-        if (englishName && englishName !== locationName) {
-          const englishResponse = await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(englishName)}&count=1&language=en&format=json`
-          )
-          if (englishResponse.ok) {
-            const englishData = await englishResponse.json()
-            if (englishData.results && englishData.results.length > 0) {
-              const result = englishData.results[0]
-              return {
-                latitude: result.latitude,
-                longitude: result.longitude,
-                name: locationName,
-              }
-            }
-          }
-        }
-        throw new Error(`Location not found: ${locationName}`)
+
+      // Fallback to geocoding API
+      const response = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locationName.trim())}&count=1&language=en&format=json`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Geocoding API error: ${response.status}`);
       }
-      const result = geocodeData.results[0]
+
+      const data = await response.json();
+
+      if (!data.results || data.results.length === 0) {
+        throw new Error(`Location not found: ${locationName}`);
+      }
+
+      const location = data.results[0];
       return {
-        latitude: result.latitude,
-        longitude: result.longitude,
-        name: locationName,
-      }
+        latitude: location.latitude,
+        longitude: location.longitude,
+        name: location.name,
+      };
     } catch (error) {
-      console.error('Error fetching location coordinates:', error)
-      throw error
+      console.error('Error fetching location coordinates:', error);
+      throw error;
     }
   }
-  private getEnglishLocationName(vietnameseName: string): string | null {
-    // Map common Vietnamese location names to English
-    const nameMap: { [key: string]: string } = {
-      'Thành phố Hồ Chí Minh': 'Ho Chi Minh City',
-      'Hà Nội': 'Hanoi',
-      'Đà Nẵng': 'Da Nang',
-      'Hải Phòng': 'Hai Phong',
-      'Cần Thơ': 'Can Tho',
-      'Biên Hòa': 'Bien Hoa',
-      'Huế': 'Hue',
-      'Nha Trang': 'Nha Trang',
-      'Buôn Ma Thuột': 'Buon Ma Thuot',
-      'Quy Nhon': 'Quy Nhon',
-      'Vũng Tàu': 'Vung Tau',
-      'Nam Định': 'Nam Dinh',
-      'Phan Thiết': 'Phan Thiet',
-      'Long Xuyên': 'Long Xuyen',
-      'Hạ Long': 'Ha Long',
-      'Thái Nguyên': 'Thai Nguyen',
-      'Thanh Hóa': 'Thanh Hoa',
-      'Rạch Giá': 'Rach Gia',
-      'Cà Mau': 'Ca Mau',
-      'Vinh': 'Vinh',
+
+  private getVietnameseProvinceCoordinates(locationName: string): LocationCoordinates | null {
+    try {
+      // Add validation for locationName
+      if (!locationName || typeof locationName !== 'string') {
+        return null;
+      }
+
+      // Import provinces data and coordinates function
+      const { getProvinceCoordinates } = require('./vietnameseProvinces');
+      const coords = getProvinceCoordinates(locationName);
+
+      if (coords) {
+        return {
+          latitude: coords.lat,
+          longitude: coords.lon,
+          name: locationName,
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting Vietnamese province coordinates:', error);
+      return null;
     }
-    return nameMap[vietnameseName] || null
   }
+
+  getWeatherIcon(weatherCode: number, isDay: boolean = true): string {
+    // Weather code mappings for Ionicons
+    const weatherCodeMap: { [key: number]: { day: string; night: string } } = {
+      0: { day: 'sunny', night: 'moon' }, // Clear sky
+      1: { day: 'partly-sunny', night: 'cloudy-night' }, // Mainly clear
+      2: { day: 'partly-sunny', night: 'cloudy-night' }, // Partly cloudy
+      3: { day: 'cloudy', night: 'cloudy' }, // Overcast
+      45: { day: 'cloudy', night: 'cloudy' }, // Fog
+      48: { day: 'cloudy', night: 'cloudy' }, // Depositing rime fog
+      51: { day: 'rainy', night: 'rainy' }, // Light drizzle
+      53: { day: 'rainy', night: 'rainy' }, // Moderate drizzle
+      55: { day: 'rainy', night: 'rainy' }, // Dense drizzle
+      56: { day: 'rainy', night: 'rainy' }, // Light freezing drizzle
+      57: { day: 'rainy', night: 'rainy' }, // Dense freezing drizzle
+      61: { day: 'rainy', night: 'rainy' }, // Slight rain
+      63: { day: 'rainy', night: 'rainy' }, // Moderate rain
+      65: { day: 'rainy', night: 'rainy' }, // Heavy rain
+      66: { day: 'rainy', night: 'rainy' }, // Light freezing rain
+      67: { day: 'rainy', night: 'rainy' }, // Heavy freezing rain
+      71: { day: 'snow', night: 'snow' }, // Slight snow fall
+      73: { day: 'snow', night: 'snow' }, // Moderate snow fall
+      75: { day: 'snow', night: 'snow' }, // Heavy snow fall
+      77: { day: 'snow', night: 'snow' }, // Snow grains
+      80: { day: 'rainy', night: 'rainy' }, // Slight rain showers
+      81: { day: 'rainy', night: 'rainy' }, // Moderate rain showers
+      82: { day: 'rainy', night: 'rainy' }, // Violent rain showers
+      85: { day: 'snow', night: 'snow' }, // Slight snow showers
+      86: { day: 'snow', night: 'snow' }, // Heavy snow showers
+      95: { day: 'thunderstorm', night: 'thunderstorm' }, // Thunderstorm
+      96: { day: 'thunderstorm', night: 'thunderstorm' }, // Thunderstorm with slight hail
+      99: { day: 'thunderstorm', night: 'thunderstorm' }, // Thunderstorm with heavy hail
+    };
+
+    const mapping = weatherCodeMap[weatherCode] || { day: 'partly-sunny', night: 'cloudy-night' };
+    return isDay ? mapping.day : mapping.night;
+  }
+
   getWeatherDescription(weatherCode: number): string {
-    const weatherCodes: { [key: number]: string } = {
+    const descriptions: { [key: number]: string } = {
       0: 'Clear sky',
       1: 'Mainly clear',
       2: 'Partly cloudy',
       3: 'Overcast',
-      45: 'Fog',
+      45: 'Foggy',
       48: 'Depositing rime fog',
       51: 'Light drizzle',
       53: 'Moderate drizzle',
@@ -177,59 +197,23 @@ class WeatherService {
       85: 'Slight snow showers',
       86: 'Heavy snow showers',
       95: 'Thunderstorm',
-      96: 'Thunderstorm with slight hail',
+      96: 'Thunderstorm with hail',
       99: 'Thunderstorm with heavy hail',
-    }
-    return weatherCodes[weatherCode] || 'Unknown'
+    };
+
+    return descriptions[weatherCode] || 'Unknown weather';
   }
-  getWeatherIcon(weatherCode: number, isDay: boolean = true): string {
-    // Map weather codes to valid Ionicons
-    const iconMap: { [key: number]: { day: string; night: string } } = {
-      0: { day: 'sunny-outline', night: 'moon-outline' },
-      1: { day: 'sunny-outline', night: 'moon-outline' },
-      2: { day: 'partly-sunny-outline', night: 'cloudy-night-outline' },
-      3: { day: 'cloudy-outline', night: 'cloudy-outline' },
-      45: { day: 'eye-off-outline', night: 'eye-off-outline' },
-      48: { day: 'eye-off-outline', night: 'eye-off-outline' },
-      51: { day: 'rainy-outline', night: 'rainy-outline' },
-      53: { day: 'rainy-outline', night: 'rainy-outline' },
-      55: { day: 'rainy-outline', night: 'rainy-outline' },
-      56: { day: 'rainy-outline', night: 'rainy-outline' },
-      57: { day: 'rainy-outline', night: 'rainy-outline' },
-      61: { day: 'rainy-outline', night: 'rainy-outline' },
-      63: { day: 'rainy-outline', night: 'rainy-outline' },
-      65: { day: 'rainy-outline', night: 'rainy-outline' },
-      66: { day: 'rainy-outline', night: 'rainy-outline' },
-      67: { day: 'rainy-outline', night: 'rainy-outline' },
-      71: { day: 'snow-outline', night: 'snow-outline' },
-      73: { day: 'snow-outline', night: 'snow-outline' },
-      75: { day: 'snow-outline', night: 'snow-outline' },
-      77: { day: 'snow-outline', night: 'snow-outline' },
-      80: { day: 'rainy-outline', night: 'rainy-outline' },
-      81: { day: 'rainy-outline', night: 'rainy-outline' },
-      82: { day: 'rainy-outline', night: 'rainy-outline' },
-      85: { day: 'snow-outline', night: 'snow-outline' },
-      86: { day: 'snow-outline', night: 'snow-outline' },
-      95: { day: 'thunderstorm-outline', night: 'thunderstorm-outline' },
-      96: { day: 'thunderstorm-outline', night: 'thunderstorm-outline' },
-      99: { day: 'thunderstorm-outline', night: 'thunderstorm-outline' },
-    }
-    const icons = iconMap[weatherCode] || { day: 'sunny-outline', night: 'moon-outline' }
-    return isDay ? icons.day : icons.night
-  }
-  // Add the missing getWeatherForFarm function
-  async getWeatherForFarm(farmLocation: string): Promise<WeatherData | null> {
+
+  async getWeatherForFarm(farmLocation: string): Promise<WeatherData> {
     try {
-      if (!farmLocation) {
-        console.warn('No farm location provided')
-        return null
-      }
-      return await this.getWeatherByLocation(farmLocation)
+      const coordinates = await this.getLocationCoordinates(farmLocation);
+      return await this.getCurrentWeather(coordinates);
     } catch (error) {
-      console.error(`Error getting weather for farm location "${farmLocation}":`, error)
-      return null
+      console.error(`Error getting weather for farm location "${farmLocation}":`, error);
+      throw error;
     }
   }
 }
-export const weatherService = new WeatherService()
-export default weatherService
+
+export const weatherService = new WeatherService();
+export default weatherService;

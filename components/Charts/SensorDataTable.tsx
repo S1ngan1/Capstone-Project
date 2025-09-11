@@ -1,53 +1,61 @@
-import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, ScrollView } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
-import { supabase } from '../../lib/supabase'
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { supabase } from '../../lib/supabase';
+
 interface SensorReading {
-  id: string
-  value: number
-  timestamp: string
+  id: string;
+  value: number;
+  timestamp: string;
   sensor: {
-    name: string
-    type: string
-    unit: string
-  }
+    name: string;
+    type: string;
+    unit: string;
+  };
 }
+
 interface SensorDataTableProps {
-  farmId: string
+  farmId: string;
 }
+
 const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
   const [sensorData, setSensorData] = useState<{
-    ec: SensorReading[]
-    ph: SensorReading[]
-    soilMoisture: SensorReading[]
-    temperature: SensorReading[]
+    ec: SensorReading[];
+    ph: SensorReading[];
+    soilMoisture: SensorReading[];
+    temperature: SensorReading[];
   }>({
     ec: [],
     ph: [],
     soilMoisture: [],
     temperature: []
-  })
-  const [loading, setLoading] = useState(true)
+  });
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    fetchAllSensorData()
-  }, [farmId])
+    fetchAllSensorData();
+  }, [farmId]);
+
   const fetchAllSensorData = async () => {
     try {
-      setLoading(true)
-      console.log(`Fetching all sensor data for farm ${farmId}...`)
+      setLoading(true);
+      console.log(`Fetching all sensor data for farm ${farmId}...`);
+
       // Map sensor type names to match database values
       const sensorTypeMap: { [key: string]: string } = {
         'ec': 'Electrical Conductivity',
         'ph': 'Analog pH Sensor',
         'soilMoisture': 'Capacitive Soil Moisture',
         'temperature': 'Digital Temperature'
-      }
+      };
+
       const allData: any = {
         ec: [],
         ph: [],
         soilMoisture: [],
         temperature: []
-      }
+      };
+
       // Fetch data for each sensor type
       for (const [key, dbType] of Object.entries(sensorTypeMap)) {
         try {
@@ -56,20 +64,23 @@ const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
             .from('sensor')
             .select('sensor_id, sensor_name, sensor_type, units')
             .eq('sensor_type', dbType)
-            .eq('farm_id', farmId)
+            .eq('farm_id', farmId);
+
           if (!sensorError && sensors && sensors.length > 0) {
-            const sensorIds = sensors.map(s => s.sensor_id)
+            const sensorIds = sensors.map(s => s.sensor_id);
+
             // Get recent readings for these sensors
             const { data: readings, error: readingError } = await supabase
               .from('sensor_data')
               .select('id, value, created_at, sensor_id')
               .in('sensor_id', sensorIds)
               .order('created_at', { ascending: false })
-              .limit(10)
+              .limit(10);
+
             if (!readingError && readings && readings.length > 0) {
               // Transform readings to match expected format
               const transformedReadings = readings.map(reading => {
-                const sensor = sensors.find(s => s.sensor_id === reading.sensor_id)
+                const sensor = sensors.find(s => s.sensor_id === reading.sensor_id);
                 return {
                   id: reading.id,
                   value: reading.value,
@@ -79,57 +90,64 @@ const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
                     type: sensor?.sensor_type || 'Unknown Type',
                     unit: sensor?.units || ''
                   }
-                }
-              })
-              allData[key] = transformedReadings
+                };
+              });
+
+              allData[key] = transformedReadings;
             }
           }
         } catch (error) {
-          console.error(`Error fetching ${key} data:`, error)
+          console.error(`Error fetching ${key} data:`, error);
         }
       }
-      setSensorData(allData)
+
+      setSensorData(allData);
     } catch (error) {
-      console.error('Error fetching sensor data:', error)
+      console.error('Error fetching sensor data:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
   const getStatusColor = (value: number, type: string): string => {
     switch (type) {
       case 'ec':
-        if (value < 1.0) return '#2196F3'
-        if (value > 1.8) return '#FF9800'
-        return '#4CAF50'
+        if (value < 1.0) return '#2196F3';
+        if (value > 1.8) return '#FF9800';
+        return '#4CAF50';
       case 'ph':
-        if (value < 6.5) return '#2196F3'
-        if (value > 7.5) return '#FF9800'
-        return '#4CAF50'
+        if (value < 6.5) return '#2196F3';
+        if (value > 7.5) return '#FF9800';
+        return '#4CAF50';
       case 'soilMoisture':
-        if (value < 40) return '#2196F3'
-        if (value > 70) return '#FF9800'
-        return '#4CAF50'
+        if (value < 40) return '#2196F3';
+        if (value > 70) return '#FF9800';
+        return '#4CAF50';
       case 'temperature':
-        if (value < 20) return '#2196F3'
-        if (value > 28) return '#FF9800'
-        return '#4CAF50'
+        if (value < 20) return '#2196F3';
+        if (value > 28) return '#FF9800';
+        return '#4CAF50';
       default:
-        return '#666'
+        return '#666';
     }
-  }
+  };
+
   const formatValue = (value: number, unit: string): string => {
-    return `${value.toFixed(2)} ${unit}`
-  }
+    return `${value.toFixed(2)} ${unit}`;
+  };
+
   const getStatusText = (value: number, type: string): string => {
-    const color = getStatusColor(value, type)
-    if (color === '#4CAF50') return 'Normal'
-    if (color === '#FF9800') return 'High'
-    return 'Low'
-  }
+    const color = getStatusColor(value, type);
+    if (color === '#4CAF50') return 'Normal';
+    if (color === '#FF9800') return 'High';
+    return 'Low';
+  };
+
   const renderSensorPanel = (data: SensorReading[], title: string, type: string, icon: string) => {
-    const latestReading = data.length > 0 ? data[0] : null
-    const statusColor = latestReading ? getStatusColor(latestReading.value, type) : '#666'
-    const statusText = latestReading ? getStatusText(latestReading.value, type) : 'No Data'
+    const latestReading = data.length > 0 ? data[0] : null;
+    const statusColor = latestReading ? getStatusColor(latestReading.value, type) : '#666';
+    const statusText = latestReading ? getStatusText(latestReading.value, type) : 'No Data';
+
     return (
       <View style={styles.sensorPanel} key={title}>
         <LinearGradient
@@ -140,6 +158,7 @@ const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
             <Text style={styles.panelIcon}>{icon}</Text>
             <Text style={styles.panelTitle}>{title}</Text>
           </View>
+
           {latestReading ? (
             <>
               <View style={styles.currentValue}>
@@ -150,9 +169,11 @@ const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
                   <Text style={styles.statusBadgeText}>{statusText}</Text>
                 </View>
               </View>
+
               <Text style={styles.lastUpdate}>
                 Updated: {new Date(latestReading.timestamp).toLocaleTimeString()}
               </Text>
+
               {data.length > 1 && (
                 <View style={styles.trendContainer}>
                   <Text style={styles.trendTitle}>Recent Readings:</Text>
@@ -176,15 +197,17 @@ const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
           )}
         </LinearGradient>
       </View>
-    )
-  }
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.loadingText}>Loading sensor data...</Text>
       </View>
-    )
+    );
   }
+
   return (
     <View style={styles.container}>
       <View style={styles.gridContainer}>
@@ -198,8 +221,9 @@ const SensorDataTable: React.FC<SensorDataTableProps> = ({ farmId }) => {
         </View>
       </View>
     </View>
-  )
-}
+  );
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -312,5 +336,6 @@ const styles = StyleSheet.create({
     color: '#666',
     fontStyle: 'italic',
   },
-})
-export default SensorDataTable
+});
+
+export default SensorDataTable;

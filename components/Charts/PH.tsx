@@ -1,126 +1,152 @@
-import * as React from "react"
-import { View, StyleSheet, Text} from "react-native"
-import { LinearGradient } from "expo-linear-gradient"
-import { useEffect, useState } from "react"
-import { supabase } from "../../lib/supabase"
+import * as React from "react";
+import { View, StyleSheet, Text} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabase";
+
 interface PHReading {
-  value: number
-  timestamp: string
+  value: number;
+  timestamp: string;
 }
+
 interface PHChartProps {
-  farmId: string
+  farmId: string;
 }
+
 export const PH: React.FC<PHChartProps> = ({ farmId }) => {
-  const [phData, setPhData] = useState<PHReading[]>([])
-  const [loading, setLoading] = useState(true)
-  const [currentValue, setCurrentValue] = useState<number>(0)
+  const [phData, setPhData] = useState<PHReading[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentValue, setCurrentValue] = useState<number>(0);
+
   useEffect(() => {
-    fetchPhData()
-  }, [farmId])
+    fetchPhData();
+  }, [farmId]);
+
   const fetchPhData = async () => {
     try {
-      setLoading(true)
-      console.log('Fetching pH data for farm:', farmId)
+      setLoading(true);
+      console.log('Fetching pH data for farm:', farmId);
+
       // Get pH sensors for this farm
       const { data: phSensors, error: sensorError } = await supabase
         .from('sensor')
         .select('sensor_id, sensor_name, sensor_type, units')
         .eq('sensor_type', 'Analog pH Sensor')
-        .eq('farm_id', farmId)
+        .eq('farm_id', farmId);
+
       if (!sensorError && phSensors && phSensors.length > 0) {
-        const sensorIds = phSensors.map(s => s.sensor_id)
+        const sensorIds = phSensors.map(s => s.sensor_id);
+
         // Get last 24 hours of readings
-        const twentyFourHoursAgo = new Date()
-        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24)
+        const twentyFourHoursAgo = new Date();
+        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
         const { data: readings, error: readingsError } = await supabase
           .from('sensor_data')
           .select('value, created_at')
           .in('sensor_id', sensorIds)
           .gte('created_at', twentyFourHoursAgo.toISOString())
-          .order('created_at', { ascending: true })
+          .order('created_at', { ascending: true });
+
         if (!readingsError && readings && readings.length > 0) {
           const processedData = readings.map(reading => ({
             value: reading.value,
             timestamp: reading.created_at
-          }))
-          setPhData(processedData)
-          setCurrentValue(readings[readings.length - 1].value)
-          console.log(`Found ${readings.length} pH readings`)
+          }));
+
+          setPhData(processedData);
+          setCurrentValue(readings[readings.length - 1].value);
+          console.log(`Found ${readings.length} pH readings`);
         } else {
-          console.log('No pH readings found')
-          generateMockData()
+          console.log('No pH readings found');
+          generateMockData();
         }
       } else {
-        console.log('No pH sensors found for farm')
-        generateMockData()
+        console.log('No pH sensors found for farm');
+        generateMockData();
       }
     } catch (error) {
-      console.error('Error fetching pH data:', error)
-      generateMockData()
+      console.error('Error fetching pH data:', error);
+      generateMockData();
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
   const generateMockData = () => {
     const mockData = Array.from({ length: 24 }, (_, i) => ({
       value: 6.0 + Math.random() * 2, // 6.0-8.0 pH
       timestamp: new Date(Date.now() - (23 - i) * 3600000).toISOString()
-    }))
-    setPhData(mockData)
-    setCurrentValue(mockData[mockData.length - 1].value)
-  }
+    }));
+    setPhData(mockData);
+    setCurrentValue(mockData[mockData.length - 1].value);
+  };
+
   const getStatusColor = (value: number) => {
-    if (value < 6.0 || value > 7.5) return '#ffc107' // Suboptimal - yellow
-    return '#28a745' // Optimal - green
-  }
+    if (value < 6.0 || value > 7.5) return '#ffc107'; // Suboptimal - yellow
+    return '#28a745'; // Optimal - green
+  };
+
   const getStatusText = (value: number) => {
-    if (value < 6.0 || value > 7.5) return 'Suboptimal'
-    return 'Optimal'
-  }
+    if (value < 6.0 || value > 7.5) return 'Suboptimal';
+    return 'Optimal';
+  };
+
   const renderChart = () => {
-    if (phData.length === 0) return null
-    const maxValue = Math.max(...phData.map(d => d.value))
-    const minValue = Math.min(...phData.map(d => d.value))
-    const range = maxValue - minValue || 1
+    if (phData.length === 0) return null;
+
+    const maxValue = Math.max(...phData.map(d => d.value));
+    const minValue = Math.min(...phData.map(d => d.value));
+    const range = maxValue - minValue || 1;
+
     // Calculate time range for proper time series display
-    const now = new Date()
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-    const timeRange = now.getTime() - twentyFourHoursAgo.getTime()
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const timeRange = now.getTime() - twentyFourHoursAgo.getTime();
+
     // Calculate positions for all points
     const points = phData.map((point) => {
-      const pointTime = new Date(point.timestamp).getTime()
-      const timePosition = ((pointTime - twentyFourHoursAgo.getTime()) / timeRange) * 200
-      const height = ((point.value - minValue) / range) * 120
+      const pointTime = new Date(point.timestamp).getTime();
+      const timePosition = ((pointTime - twentyFourHoursAgo.getTime()) / timeRange) * 200;
+      const height = ((point.value - minValue) / range) * 120;
+
       return {
         x: Math.max(0, Math.min(200, timePosition)),
         y: height,
         value: point.value
-      }
-    })
+      };
+    });
+
     // Create SVG-like path for continuous line
     const createLinePath = () => {
-      if (points.length < 2) return []
-      const lines = []
+      if (points.length < 2) return [];
+
+      const lines = [];
       for (let i = 0; i < points.length - 1; i++) {
-        const currentPoint = points[i]
-        const nextPoint = points[i + 1]
-        const x1 = currentPoint.x
-        const y1 = currentPoint.y
-        const x2 = nextPoint.x
-        const y2 = nextPoint.y
-        const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
-        const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI
+        const currentPoint = points[i];
+        const nextPoint = points[i + 1];
+
+        const x1 = currentPoint.x;
+        const y1 = currentPoint.y;
+        const x2 = nextPoint.x;
+        const y2 = nextPoint.y;
+
+        const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+
         lines.push({
           left: x1,
           bottom: y1,
           width: length,
           angle: angle,
           key: i
-        })
+        });
       }
-      return lines
-    }
-    const lineSegments = createLinePath()
+      return lines;
+    };
+
+    const lineSegments = createLinePath();
+
     return (
       <View style={styles.chartArea}>
         <View style={styles.yAxis}>
@@ -141,6 +167,7 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
               />
             ))}
           </View>
+
           {/* Continuous line connecting all points */}
           {lineSegments.map((segment) => (
             <View
@@ -156,6 +183,7 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
               ]}
             />
           ))}
+
           {/* Data points (smaller, less prominent) */}
           {points.map((point, index) => (
             <View
@@ -172,8 +200,9 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
           ))}
         </View>
       </View>
-    )
-  }
+    );
+  };
+
   if (loading) {
     return (
       <LinearGradient
@@ -187,8 +216,9 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
           <Text style={styles.loadingText}>Loading pH data...</Text>
         </View>
       </LinearGradient>
-    )
+    );
   }
+
   return (
     <LinearGradient
       colors={['#e7fbe8ff', '#cdffcfff']}
@@ -197,6 +227,7 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
       style={styles.container}
     >
       <Text style={styles.title}>pH Index</Text>
+
       {/* Current Value Display */}
       <View style={styles.currentValueContainer}>
         <Text style={[styles.currentValue, { color: getStatusColor(currentValue) }]}>
@@ -206,8 +237,10 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
           {getStatusText(currentValue)}
         </Text>
       </View>
+
       {/* Chart */}
       {renderChart()}
+
       {/* Time Labels */}
       <View style={styles.timeLabels}>
         <Text style={styles.timeLabel}>24h ago</Text>
@@ -215,8 +248,9 @@ export const PH: React.FC<PHChartProps> = ({ farmId }) => {
         <Text style={styles.timeLabel}>Now</Text>
       </View>
     </LinearGradient>
-  )
-}
+  );
+};
+
 const styles = StyleSheet.create({
   container: {
     borderRadius: 15,
@@ -327,4 +361,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-})
+});
