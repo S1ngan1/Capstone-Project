@@ -1,152 +1,126 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { supabase } from '../../lib/supabase';
-
+import React, { useEffect, useState } from 'react'
+import { View, Text, StyleSheet } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { supabase } from '../../lib/supabase'
 interface TemperatureReading {
-  value: number;
-  timestamp: string;
+  value: number
+  timestamp: string
 }
-
 interface TemperatureChartProps {
-  farmId: string;
+  farmId: string
 }
-
 const TemperatureChart: React.FC<TemperatureChartProps> = ({ farmId }) => {
-  const [temperatureData, setTemperatureData] = useState<TemperatureReading[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentValue, setCurrentValue] = useState<number>(0);
-
+  const [temperatureData, setTemperatureData] = useState<TemperatureReading[]>([])
+  const [loading, setLoading] = useState(true)
+  const [currentValue, setCurrentValue] = useState<number>(0)
   useEffect(() => {
-    fetchTemperatureData();
-  }, [farmId]);
-
+    fetchTemperatureData()
+  }, [farmId])
   const fetchTemperatureData = async () => {
     try {
-      setLoading(true);
-      console.log('Fetching Temperature data for farm:', farmId);
-
+      setLoading(true)
+      console.log('Fetching Temperature data for farm:', farmId)
       // Get temperature sensors for this farm
       const { data: tempSensors, error: sensorError } = await supabase
         .from('sensor')
         .select('sensor_id, sensor_name, sensor_type, units')
         .eq('sensor_type', 'Digital Temperature')
-        .eq('farm_id', farmId);
-
+        .eq('farm_id', farmId)
       if (!sensorError && tempSensors && tempSensors.length > 0) {
-        const sensorIds = tempSensors.map(s => s.sensor_id);
-
+        const sensorIds = tempSensors.map(s => s.sensor_id)
         // Get last 24 hours of readings
-        const twentyFourHoursAgo = new Date();
-        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-
+        const twentyFourHoursAgo = new Date()
+        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24)
         const { data: readings, error: readingsError } = await supabase
           .from('sensor_data')
           .select('value, created_at')
           .in('sensor_id', sensorIds)
           .gte('created_at', twentyFourHoursAgo.toISOString())
-          .order('created_at', { ascending: true });
-
+          .order('created_at', { ascending: true })
         if (!readingsError && readings && readings.length > 0) {
           const processedData = readings.map(reading => ({
             value: reading.value,
             timestamp: reading.created_at
-          }));
-
-          setTemperatureData(processedData);
-          setCurrentValue(readings[readings.length - 1].value);
-          console.log(`Found ${readings.length} temperature readings`);
+          }))
+          setTemperatureData(processedData)
+          setCurrentValue(readings[readings.length - 1].value)
+          console.log(`Found ${readings.length} temperature readings`)
         } else {
-          console.log('No temperature readings found');
-          generateMockData();
+          console.log('No temperature readings found')
+          generateMockData()
         }
       } else {
-        console.log('No temperature sensors found for farm');
-        generateMockData();
+        console.log('No temperature sensors found for farm')
+        generateMockData()
       }
     } catch (error) {
-      console.error('Error fetching temperature data:', error);
-      generateMockData();
+      console.error('Error fetching temperature data:', error)
+      generateMockData()
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
+  }
   const generateMockData = () => {
     const mockData = Array.from({ length: 24 }, (_, i) => ({
       value: 20 + Math.random() * 10, // 20-30°C
       timestamp: new Date(Date.now() - (23 - i) * 3600000).toISOString()
-    }));
-    setTemperatureData(mockData);
-    setCurrentValue(mockData[mockData.length - 1].value);
-  };
-
+    }))
+    setTemperatureData(mockData)
+    setCurrentValue(mockData[mockData.length - 1].value)
+  }
   const getStatusColor = (value: number) => {
-    if (value < 18 || value > 28) return '#ffc107'; // Suboptimal - yellow
-    return '#28a745'; // Optimal - green
-  };
-
+    if (value < 18 || value > 28) return '#ffc107' // Suboptimal - yellow
+    return '#28a745' // Optimal - green
+  }
   const getStatusText = (value: number) => {
-    if (value < 18) return 'Too Cold';
-    if (value > 28) return 'Too Hot';
-    return 'Optimal';
-  };
-
+    if (value < 18) return 'Too Cold'
+    if (value > 28) return 'Too Hot'
+    return 'Optimal'
+  }
   const renderSimpleChart = () => {
-    if (temperatureData.length === 0) return null;
-
-    const maxValue = Math.max(...temperatureData.map(d => d.value));
-    const minValue = Math.min(...temperatureData.map(d => d.value));
-    const range = maxValue - minValue || 1;
-
+    if (temperatureData.length === 0) return null
+    const maxValue = Math.max(...temperatureData.map(d => d.value))
+    const minValue = Math.min(...temperatureData.map(d => d.value))
+    const range = maxValue - minValue || 1
     // Calculate time range for proper time series display
-    const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const timeRange = now.getTime() - twentyFourHoursAgo.getTime();
-
+    const now = new Date()
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    const timeRange = now.getTime() - twentyFourHoursAgo.getTime()
     // Calculate positions for all points
     const points = temperatureData.map((point) => {
-      const pointTime = new Date(point.timestamp).getTime();
-      const timePosition = ((pointTime - twentyFourHoursAgo.getTime()) / timeRange) * 200;
-      const height = ((point.value - minValue) / range) * 120;
-
+      const pointTime = new Date(point.timestamp).getTime()
+      const timePosition = ((pointTime - twentyFourHoursAgo.getTime()) / timeRange) * 200
+      const height = ((point.value - minValue) / range) * 120
       return {
         x: Math.max(0, Math.min(200, timePosition)),
         y: height,
         value: point.value
-      };
-    });
-
+      }
+    })
     // Create SVG-like path for continuous line
     const createLinePath = () => {
-      if (points.length < 2) return [];
-
-      const lines = [];
+      if (points.length < 2) return []
+      const lines = []
       for (let i = 0; i < points.length - 1; i++) {
-        const currentPoint = points[i];
-        const nextPoint = points[i + 1];
-
-        const x1 = currentPoint.x;
-        const y1 = currentPoint.y;
-        const x2 = nextPoint.x;
-        const y2 = nextPoint.y;
-
-        const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-        const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
-
+        const currentPoint = points[i]
+        const nextPoint = points[i + 1]
+        const x1 = currentPoint.x
+        const y1 = currentPoint.y
+        const x2 = nextPoint.x
+        const y2 = nextPoint.y
+        const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
+        const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI
         lines.push({
           left: x1,
           bottom: y1,
           width: length,
           angle: angle,
           key: i
-        });
+        })
       }
-      return lines;
-    };
-
-    const lineSegments = createLinePath();
-
+      return lines
+    }
+    const lineSegments = createLinePath()
     return (
       <View style={styles.chartArea}>
         <View style={styles.yAxis}>
@@ -167,7 +141,6 @@ const TemperatureChart: React.FC<TemperatureChartProps> = ({ farmId }) => {
               />
             ))}
           </View>
-
           {/* Continuous line connecting all points */}
           {lineSegments.map((segment) => (
             <View
@@ -183,7 +156,6 @@ const TemperatureChart: React.FC<TemperatureChartProps> = ({ farmId }) => {
               ]}
             />
           ))}
-
           {/* Data points (smaller, less prominent) */}
           {points.map((point, index) => (
             <View
@@ -200,26 +172,22 @@ const TemperatureChart: React.FC<TemperatureChartProps> = ({ farmId }) => {
           ))}
         </View>
       </View>
-    );
-  };
-
+    )
+  }
   const getTimeLabels = () => {
-    const now = new Date();
-    const labels = [];
-
+    const now = new Date()
+    const labels = []
     // Create labels for 0h, 6h, 12h, 18h, 24h ago
     for (let i = 0; i <= 24; i += 6) {
-      const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+      const time = new Date(now.getTime() - i * 60 * 60 * 1000)
       if (i === 0) {
-        labels.unshift('Now');
+        labels.unshift('Now')
       } else {
-        labels.unshift(`${i}h ago`);
+        labels.unshift(`${i}h ago`)
       }
     }
-
-    return labels;
-  };
-
+    return labels
+  }
   if (loading) {
     return (
       <LinearGradient
@@ -233,9 +201,8 @@ const TemperatureChart: React.FC<TemperatureChartProps> = ({ farmId }) => {
           <Text style={styles.loadingText}>Loading temperature data...</Text>
         </View>
       </LinearGradient>
-    );
+    )
   }
-
   return (
     <LinearGradient
       colors={['#e7fbe8ff', '#cdffcfff']}
@@ -244,7 +211,6 @@ const TemperatureChart: React.FC<TemperatureChartProps> = ({ farmId }) => {
       style={styles.container}
     >
       <Text style={styles.title}>Temperature</Text>
-
       {/* Current Value Display */}
       <View style={styles.currentValueContainer}>
         <Text style={[styles.currentValue, { color: getStatusColor(currentValue) }]}>
@@ -254,10 +220,8 @@ const TemperatureChart: React.FC<TemperatureChartProps> = ({ farmId }) => {
           {getStatusText(currentValue)}
         </Text>
       </View>
-
       {/* Chart */}
       {renderSimpleChart()}
-
       {/* Time Labels */}
       <View style={styles.timeLabels}>
         {getTimeLabels().map((label, index) => (
@@ -265,9 +229,8 @@ const TemperatureChart: React.FC<TemperatureChartProps> = ({ farmId }) => {
         ))}
       </View>
     </LinearGradient>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
   container: {
     borderRadius: 15,
@@ -386,6 +349,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#ddd',
     width: '100%',
   },
-});
-
-export default TemperatureChart;
+})
+export default TemperatureChart

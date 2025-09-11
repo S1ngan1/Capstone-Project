@@ -1,28 +1,21 @@
-import { StyleSheet, Text, View, ImageBackground, useWindowDimensions } from 'react-native';
-import React from 'react';
-import { OnboardingItemProps } from '../interfaces/OnBoarding';
-
-
+import { StyleSheet, Text, View, ImageBackground, useWindowDimensions } from 'react-native'
+import React from 'react'
+import { OnboardingItemProps } from '../interfaces/OnBoarding'
 const OnboardingItem = ({ item }: OnboardingItemProps) => {
-  const { width, height } = useWindowDimensions();
-
+  const { width, height } = useWindowDimensions()
   return (
     <View style={[styles.container, { width, height }]}>
       <ImageBackground source={item.image} style={[styles.image, { width, height}]} resizeMode="cover">
-        
       <View style={styles.overlay} />
-
       <View style={styles.textContainer}>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.description}>{item.description}</Text>
       </View>
       </ImageBackground>
     </View>
-  );
-};
-
-export default OnboardingItem;
-
+  )
+}
+export default OnboardingItem
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -54,4 +47,4 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
   },
-});
+})

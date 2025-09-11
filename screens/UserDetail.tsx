@@ -1,73 +1,62 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { useAuthContext } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
-import BottomNavigation from '../components/BottomNavigation';
-
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'
+import { useAuthContext } from '../context/AuthContext'
+import { useDialog } from '../context/DialogContext'
+import { supabase } from '../lib/supabase'
+import BottomNavigation from '../components/BottomNavigation'
 // Types
 interface UserProfile {
-  id: string;
-  username: string;
-  email: string;
-  role: 'admin' | 'normal_user' | 'data_manager';
-  created_at: string;
+  id: string
+  username: string
+  email: string
+  role: 'admin' | 'normal_user' | 'data_manager'
+  created_at: string
 }
-
 interface UserFarmRole {
-  id: string;
-  farm_id: string;
-  farm_role: string;
+  id: string
+  farm_id: string
+  farm_role: string
   farms: {
-    name: string;
-    location: string;
-  };
+    name: string
+    location: string
+  }
 }
-
 type RootStackParamList = {
-  UserDetail: { userId: string };
-};
-
-type UserDetailRouteProp = RouteProp<RootStackParamList, 'UserDetail'>;
-
+  UserDetail: { userId: string }
+}
+type UserDetailRouteProp = RouteProp<RootStackParamList, 'UserDetail'>
 const UserDetail = () => {
-  const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
-  const route = useRoute<UserDetailRouteProp>();
-  const { session } = useAuthContext();
-  const { userId } = route.params;
-
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [userFarms, setUserFarms] = useState<UserFarmRole[]>([]);
-  const [loading, setLoading] = useState(true);
-
+  const insets = useSafeAreaInsets()
+  const navigation = useNavigation()
+  const route = useRoute<UserDetailRouteProp>()
+  const { session } = useAuthContext()
+  const { userId } = route.params
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [userFarms, setUserFarms] = useState<UserFarmRole[]>([])
+  const [loading, setLoading] = useState(true)
   useEffect(() => {
-    fetchUserDetails();
-  }, [userId]);
-
+    fetchUserDetails()
+  }, [userId])
   const fetchUserDetails = async () => {
     if (!userId) {
-      setLoading(false);
-      return;
+      setLoading(false)
+      return
     }
-
     try {
-      setLoading(true);
-
+      setLoading(true)
       // Fetch user profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, username, email, role, created_at')
         .eq('id', userId)
-        .single();
-
+        .single()
       if (!profileError && profileData) {
-        setUserProfile(profileData);
+        setUserProfile(profileData)
       }
-
       // Fetch user's farm roles
       const { data: farmsData, error: farmsError } = await supabase
         .from('farm_users')
@@ -80,48 +69,43 @@ const UserDetail = () => {
             location
           )
         `)
-        .eq('user_id', userId);
-
+        .eq('user_id', userId)
       if (!farmsError && farmsData) {
-        setUserFarms(farmsData);
+        setUserFarms(farmsData)
       }
     } catch (error) {
-      console.error('Error fetching user details:', error);
+      console.error('Error fetching user details:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
+  }
   const getApplicationRoleStyle = (role: string) => {
     switch (role) {
       case 'admin':
-        return { backgroundColor: '#dc3545', color: 'white' };
+        return { backgroundColor: '#dc3545', color: 'white' }
       case 'data_manager':
-        return { backgroundColor: '#007bff', color: 'white' };
+        return { backgroundColor: '#007bff', color: 'white' }
       default:
-        return { backgroundColor: '#28a745', color: 'white' };
+        return { backgroundColor: '#28a745', color: 'white' }
     }
-  };
-
+  }
   const getFarmRoleStyle = (farmRole: string) => {
     switch (farmRole) {
       case 'owner':
-        return { backgroundColor: '#ffd700', color: '#333' };
+        return { backgroundColor: '#ffd700', color: '#333' }
       case 'manager':
-        return { backgroundColor: '#4CAF50', color: 'white' };
+        return { backgroundColor: '#4CAF50', color: 'white' }
       default:
-        return { backgroundColor: '#ddd', color: '#333' };
+        return { backgroundColor: '#ddd', color: '#333' }
     }
-  };
-
+  }
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
-    });
-  };
-
+      day: 'numeric',
+    })
+  }
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -136,9 +120,8 @@ const UserDetail = () => {
           </View>
         </LinearGradient>
       </View>
-    );
+    )
   }
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
@@ -158,7 +141,6 @@ const UserDetail = () => {
           <Text style={styles.headerTitle}>User Details</Text>
           <View style={styles.placeholder} />
         </View>
-
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* User Profile Section */}
           <View style={styles.section}>
@@ -177,7 +159,6 @@ const UserDetail = () => {
               </View>
             </View>
           </View>
-
           {/* User Information */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>User Information</Text>
@@ -189,7 +170,6 @@ const UserDetail = () => {
                   <Text style={styles.infoValue}>{userProfile?.username}</Text>
                 </View>
               </View>
-
               <View style={styles.infoRow}>
                 <Ionicons name="mail-outline" size={20} color="#666" />
                 <View style={styles.infoContent}>
@@ -197,7 +177,6 @@ const UserDetail = () => {
                   <Text style={styles.infoValue}>{userProfile?.email}</Text>
                 </View>
               </View>
-
               <View style={styles.infoRow}>
                 <Ionicons name="shield-outline" size={20} color="#666" />
                 <View style={styles.infoContent}>
@@ -207,7 +186,6 @@ const UserDetail = () => {
                   </Text>
                 </View>
               </View>
-
               <View style={styles.infoRow}>
                 <Ionicons name="calendar-outline" size={20} color="#666" />
                 <View style={styles.infoContent}>
@@ -219,7 +197,6 @@ const UserDetail = () => {
               </View>
             </View>
           </View>
-
           {/* Farm Roles Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
@@ -234,7 +211,7 @@ const UserDetail = () => {
                   </View>
                   <View style={[styles.farmRoleContainer, getFarmRoleStyle(farmRole.farm_role)]}>
                     <Text style={[styles.farmRoleText, { color: getFarmRoleStyle(farmRole.farm_role).color }]}>
-                      {farmRole.farm_role?.charAt(0).toUpperCase() + farmRole.farm_role?.slice(1) || 'Unknown'}
+                      {farmRole.farm_role.charAt(0).toUpperCase() + farmRole.farm_role.slice(1)}
                     </Text>
                   </View>
                 </View>
@@ -246,17 +223,14 @@ const UserDetail = () => {
               </View>
             )}
           </View>
-
           {/* Bottom spacer */}
           <View style={styles.bottomSpacer} />
         </ScrollView>
-
         <BottomNavigation />
       </LinearGradient>
     </View>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -434,6 +408,5 @@ const styles = StyleSheet.create({
   bottomSpacer: {
     height: 70,
   },
-});
-
-export default UserDetail;
+})
+export default UserDetail

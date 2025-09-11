@@ -2,7 +2,6 @@
 import React from 'react'
 import { View, Text, Modal, StyleSheet, Pressable } from 'react-native'
 import { ConfirmDialogProps } from '../../interfaces/Auth'
-
 export default function ConfirmLogoutDialog({ visible, onConfirm, onCancel }: ConfirmDialogProps) {
   return (
     <Modal transparent animationType="fade" visible={visible}>
@@ -22,7 +21,6 @@ export default function ConfirmLogoutDialog({ visible, onConfirm, onCancel }: Co
     </Modal>
   )
 }
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,

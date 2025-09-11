@@ -1,32 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../lib/supabase';
-import BottomNavigation from '../components/BottomNavigation';
-import { User } from '../interfaces/User';
-import ConfirmDeleteDialog from '../components/Users/ConfirmDeleteDialog';
-
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { supabase } from '../lib/supabase'
+import BottomNavigation from '../components/BottomNavigation'
+import { User } from '../interfaces/User'
+import ConfirmDeleteDialog from '../components/Users/ConfirmDeleteDialog'
 const UserManagement = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [dialogVisible, setDialogVisible] = useState(false);
-
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [dialogVisible, setDialogVisible] = useState(false)
 const fetchUsers = async () => {
   try {
     const { data, error } = await supabase
       .from("profiles")
       .select("id, username, email, phonenum, role")
-
     if (error) {
       return
     }
-
     // Then filter in JavaScript
     const users = data?.filter(u => u.role?.trim().toLowerCase() === "user") ?? []
-    
     setUsers(users)
   } catch (err) {
   } finally {
@@ -34,48 +29,38 @@ const fetchUsers = async () => {
     setRefreshing(false)
   }
 }
-
-
   const handleDeleteUser = async (userId: string) => {
     try {
-      setLoading(true);
-
+      setLoading(true)
       // Xoá profile
       const { error: profileError } = await supabase
         .from('profiles')
         .delete()
-        .eq('id', userId);
-
+        .eq('id', userId)
       if (profileError) {
-        console.error('Error deleting profile:', profileError);
+        console.error('Error deleting profile:', profileError)
       }
-
       // Xoá khỏi auth
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId)
       if (authError) {
-        console.error('Error deleting from auth:', authError);
-        return;
+        console.error('Error deleting from auth:', authError)
+        return
       }
-
       // Refresh
-      fetchUsers();
+      fetchUsers()
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error('Error deleting user:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
+  }
   const onRefresh = () => {
-    setRefreshing(true);
-    fetchUsers();
-  };
-
+    setRefreshing(true)
+    fetchUsers()
+  }
   useEffect(() => {
-    fetchUsers();
-  }, []);
-
+    fetchUsers()
+  }, [])
   const renderUserItem = ({ item }: { item: User }) => (
     <View style={styles.userItem}>
       <View style={styles.userInfo}>
@@ -84,23 +69,20 @@ const fetchUsers = async () => {
         </View>
         <Text style={styles.userDetail}>{item.email}</Text>
       </View>
-
       <TouchableOpacity
         style={styles.deleteButton}
         onPress={() => {
-          setSelectedUser(item);
-          setDialogVisible(true);
+          setSelectedUser(item)
+          setDialogVisible(true)
         }}
       >
         <Ionicons name="trash-outline" size={20} color="#ff4444" />
       </TouchableOpacity>
     </View>
-  );
-
+  )
   return (
     <View style={styles.container}>
       <Text style={styles.title}>User Management</Text>
-
       <LinearGradient
         colors={['#e7fbe8ff', '#cdffcfff']}
         start={{ x: 0.5, y: 0 }}
@@ -113,7 +95,6 @@ const fetchUsers = async () => {
             <Ionicons name="refresh-outline" size={20} color="#00A388" />
           </TouchableOpacity>
         </View>
-
         <FlatList
           data={users}
           renderItem={renderUserItem}
@@ -131,24 +112,21 @@ const fetchUsers = async () => {
           }
         />
       </LinearGradient>
-
       {/* Confirm Delete Dialog */}
       {selectedUser && (
         <ConfirmDeleteDialog
           visible={dialogVisible}
           onCancel={() => setDialogVisible(false)}
           onConfirm={() => {
-            handleDeleteUser(selectedUser.id);
-            setDialogVisible(false);
+            handleDeleteUser(selectedUser.id)
+            setDialogVisible(false)
           }}
         />
       )}
-
       <BottomNavigation />
     </View>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#e7fbe8ff' },
   title: {
@@ -223,6 +201,5 @@ const styles = StyleSheet.create({
   },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 50 },
   emptyText: { fontSize: 16, color: '#999', marginTop: 10 },
-});
-
-export default UserManagement;
+})
+export default UserManagement
