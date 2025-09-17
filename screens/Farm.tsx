@@ -1,66 +1,57 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, FlatList, Modal } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, NavigationProp, RouteProp, useRoute } from '@react-navigation/native';
-import { useAuthContext } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
-import BottomNavigation from '../components/BottomNavigation';
-import { RootStackParamList } from '../App';
-import { vietnameseProvinces, Province, getProvincesByRegion } from '../lib/vietnameseProvinces';
-
+import React, { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, FlatList, Modal } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useNavigation, NavigationProp } from "@react-navigation/native"
+import BottomNavigation from '../components/BottomNavigation'
+import { useAuthContext } from '../context/AuthContext'
+import { useDialog } from '../context/DialogContext'
+import { supabase } from '../lib/supabase'
+import { vietnameseProvinces, Province, getProvincesByRegion } from '../lib/vietnameseProvinces'
+import { RootStackParamList } from '../App'
 interface Farm {
-  id: string;
-  name: string;
-  location?: string;
+  id: string
+  name: string
+  location?: string
 }
-
 interface FarmWithRole {
-  id: string;
-  farm_id: string;
-  user_id: string;
-  farm_role: string;
-  farms: Farm;
+  id: string
+  farm_id: string
+  user_id: string
+  farm_role: string
+  farms: Farm
 }
-
-type FarmRouteProp = RouteProp<RootStackParamList, 'Farm'>;
-
+type FarmRouteProp = RouteProp<RootStackParamList, 'Farm'>
 const Farm = () => {
-  const insets = useSafeAreaInsets();
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const route = useRoute<FarmRouteProp>();
-  const { session, unreadCount } = useAuthContext();
-
-  const [farmsWithRoles, setFarmsWithRoles] = useState<FarmWithRole[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newFarmName, setNewFarmName] = useState('');
-  const [newFarmLocation, setNewFarmLocation] = useState('');
-  const [addingFarm, setAddingFarm] = useState(false);
-  const [showProvinceModal, setShowProvinceModal] = useState(false);
-  const [selectedProvince, setSelectedProvince] = useState<Province | null>(null);
-
+  const insets = useSafeAreaInsets()
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>()
+  const route = useRoute<FarmRouteProp>()
+  const { session } = useAuthContext()
+  const { showDialog } = useDialog()
+  const [farmsWithRoles, setFarmsWithRoles] = useState<FarmWithRole[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newFarmName, setNewFarmName] = useState('')
+  const [newFarmLocation, setNewFarmLocation] = useState('')
+  const [addingFarm, setAddingFarm] = useState(false)
+  const [showProvinceModal, setShowProvinceModal] = useState(false)
+  const [selectedProvince, setSelectedProvince] = useState<Province | null>(null)
   useEffect(() => {
     // Check if we should show the add form based on navigation params
     if (route.params?.showAddForm) {
-      setShowAddForm(true);
+      setShowAddForm(true)
     }
-  }, [route.params]);
-
+  }, [route.params])
   useEffect(() => {
-    fetchFarms();
-  }, [session]);
-
+    fetchFarms()
+  }, [session])
   const fetchFarms = async () => {
     if (!session?.user?.id) {
-      setLoading(false);
-      return;
+      setLoading(false)
+      return
     }
-
     try {
-      setLoading(true);
-
+      setLoading(true)
       // Fetch farms through the farm_users junction table with updated schema
       const { data, error } = await supabase
         .from('farm_users')
@@ -76,36 +67,39 @@ const Farm = () => {
           )
         `)
         .eq('user_id', session.user.id)
-        .order('id', { ascending: false });
-
+        .order('id', { ascending: false })
       if (error) {
         // Silently handle errors without showing alerts or logging
-        setFarmsWithRoles([]);
+        setFarmsWithRoles([])
       } else {
-        setFarmsWithRoles(data || []);
+        setFarmsWithRoles(data || [])
       }
     } catch (error) {
       // Silently handle errors without logging
-      setFarmsWithRoles([]);
+      setFarmsWithRoles([])
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
+  }
   const addFarm = async () => {
     if (!newFarmName.trim() || !selectedProvince) {
-      Alert.alert('Missing Information', 'Please enter farm name and select a province');
-      return;
+      showDialog({
+        title: 'Missing Information',
+        message: 'Please enter farm name and select a province',
+        buttonText: 'OK',
+      })
+      return
     }
-
     if (!session?.user?.id) {
-      Alert.alert('Error', 'User not authenticated');
-      return;
+      showDialog({
+        title: 'Error',
+        message: 'User not authenticated',
+        buttonText: 'OK',
+      })
+      return
     }
-
     try {
-      setAddingFarm(true);
-
+      setAddingFarm(true)
       // First, create the farm
       const { data: farmData, error: farmError } = await supabase
         .from('farms')
@@ -116,14 +110,16 @@ const Farm = () => {
           }
         ])
         .select()
-        .single();
-
+        .single()
       if (farmError) {
-        console.error('Error adding farm:', farmError);
-        Alert.alert('Error', `Failed to add farm: ${farmError.message}`);
-        return;
+        console.error('Error adding farm:', farmError)
+        showDialog({
+          title: 'Error',
+          message: `Failed to add farm: ${farmError.message}`,
+          buttonText: 'OK',
+        })
+        return
       }
-
       // Then, create the relationship in farm_users table with owner farm_role
       const { error: relationError } = await supabase
         .from('farm_users')
@@ -133,32 +129,41 @@ const Farm = () => {
             user_id: session.user.id,
             farm_role: 'owner'
           }
-        ]);
-
+        ])
       if (relationError) {
-        console.error('Error creating farm relationship:', relationError);
-        Alert.alert('Error', 'Farm created but failed to assign ownership');
+        console.error('Error creating farm relationship:', relationError)
+        showDialog({
+          title: 'Error',
+          message: 'Farm created but failed to assign ownership',
+          buttonText: 'OK',
+        })
       } else {
-        Alert.alert('Success', 'Farm added successfully!');
-        setNewFarmName('');
-        setSelectedProvince(null);
-        setShowAddForm(false);
-        fetchFarms(); // Refresh the list
+        showDialog({
+          title: 'Success',
+          message: 'Farm added successfully!',
+          buttonText: 'OK',
+        })
+        setNewFarmName('')
+        setSelectedProvince(null)
+        setShowAddForm(false)
+        fetchFarms() // Refresh the list
       }
     } catch (error) {
-      console.error('Error:', error);
-      Alert.alert('Error', 'An unexpected error occurred');
+      console.error('Error:', error)
+      showDialog({
+        title: 'Error',
+        message: 'An unexpected error occurred',
+        buttonText: 'OK',
+      })
     } finally {
-      setAddingFarm(false);
+      setAddingFarm(false)
     }
-  };
-
+  }
   const handleProvinceSelect = (province: Province) => {
-    setSelectedProvince(province);
-    setNewFarmLocation(province.name);
-    setShowProvinceModal(false);
-  };
-
+    setSelectedProvince(province)
+    setNewFarmLocation(province.name)
+    setShowProvinceModal(false)
+  }
   const renderProvinceItem = ({ item }: { item: Province }) => (
     <TouchableOpacity
       style={styles.provinceItem}
@@ -172,10 +177,8 @@ const Farm = () => {
         <Text style={styles.regionText}>{item.region}</Text>
       </View>
     </TouchableOpacity>
-  );
-
-  const { northern, central, southern } = getProvincesByRegion();
-
+  )
+  const { northern, central, southern } = getProvincesByRegion()
   const renderFarmItem = ({ item }: { item: FarmWithRole }) => (
     <TouchableOpacity
       style={styles.farmCard}
@@ -193,7 +196,7 @@ const Farm = () => {
           <Text style={styles.farmLocation}>📍 {item.farms.location || 'No location'}</Text>
           <View style={styles.farmMeta}>
             <View style={styles.roleContainer}>
-              <Text style={styles.farmRole}>Role: {item.farm_role?.charAt(0).toUpperCase() + item.farm_role?.slice(1) || 'Unknown'}</Text>
+              <Text style={styles.farmRole}>Role: {item.farm_role.charAt(0).toUpperCase() + item.farm_role.slice(1)}</Text>
             </View>
             <Text style={styles.farmId}>ID: {item.farm_id.slice(0, 8)}...</Text>
           </View>
@@ -203,8 +206,7 @@ const Farm = () => {
         </View>
       </LinearGradient>
     </TouchableOpacity>
-  );
-
+  )
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
@@ -221,14 +223,12 @@ const Farm = () => {
           >
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
-
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>Farm Management</Text>
             <Text style={styles.headerSubtitle}>
               {farmsWithRoles.length} farm{farmsWithRoles.length !== 1 ? 's' : ''} available
             </Text>
           </View>
-
           <View style={styles.headerRightActions}>
             <TouchableOpacity
               style={styles.notificationButton}
@@ -236,15 +236,10 @@ const Farm = () => {
               activeOpacity={0.7}
             >
               <Ionicons name="notifications" size={24} color="#2e7d32" />
-              {unreadCount > 0 && (
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationBadgeText}>
-                    {unreadCount > 99 ? '99+' : unreadCount.toString()}
-                  </Text>
-                </View>
-              )}
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>3</Text>
+              </View>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={[styles.headerAddButton, showAddForm && styles.headerAddButtonActive]}
               onPress={() => setShowAddForm(!showAddForm)}
@@ -257,7 +252,6 @@ const Farm = () => {
             </TouchableOpacity>
           </View>
         </View>
-
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Enhanced Add Farm Form - Always Visible at Top */}
           <View style={[styles.addFormContainer, showAddForm && styles.addFormContainerExpanded]}>
@@ -298,7 +292,6 @@ const Farm = () => {
                 </View>
               </LinearGradient>
             </TouchableOpacity>
-
             {showAddForm && (
               <View style={styles.addFormContent}>
                 <LinearGradient
@@ -311,7 +304,6 @@ const Farm = () => {
                   <Text style={styles.addFormDescription}>
                     Fill in the details below to start monitoring your new farm
                   </Text>
-
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
                       <Ionicons name="leaf" size={16} color="#4CAF50" /> Farm Name
@@ -324,7 +316,6 @@ const Farm = () => {
                       placeholderTextColor="#999"
                     />
                   </View>
-
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
                       <Ionicons name="location" size={16} color="#4CAF50" /> Location (Province)
@@ -339,19 +330,17 @@ const Farm = () => {
                       <Ionicons name="chevron-down" size={20} color="#666" />
                     </TouchableOpacity>
                   </View>
-
                   <View style={styles.formButtons}>
                     <TouchableOpacity
                       style={styles.cancelButton}
                       onPress={() => {
-                        setShowAddForm(false);
-                        setNewFarmName('');
-                        setSelectedProvince(null);
+                        setShowAddForm(false)
+                        setNewFarmName('')
+                        setSelectedProvince(null)
                       }}
                     >
                       <Text style={styles.cancelButtonText}>Cancel</Text>
                     </TouchableOpacity>
-
                     <TouchableOpacity
                       style={[styles.submitButton, addingFarm && styles.disabledButton]}
                       onPress={addFarm}
@@ -371,7 +360,6 @@ const Farm = () => {
               </View>
             )}
           </View>
-
           {/* Farms List Section */}
           <View style={styles.farmsSection}>
             <View style={styles.sectionHeaderInline}>
@@ -384,7 +372,6 @@ const Farm = () => {
                 </View>
               )}
             </View>
-
             {loading ? (
               <View style={styles.loadingContainer}>
                 <Ionicons name="leaf" size={48} color="#4CAF50" />
@@ -424,7 +411,6 @@ const Farm = () => {
             )}
           </View>
         </ScrollView>
-
         {/* Province Selection Modal */}
         <Modal
           visible={showProvinceModal}
@@ -443,7 +429,6 @@ const Farm = () => {
                   <Ionicons name="close" size={20} color="#4CAF50" />
                 </TouchableOpacity>
               </View>
-
               <ScrollView style={styles.provincesList} showsVerticalScrollIndicator={false}>
                 <View style={styles.regionSection}>
                   <Text style={styles.regionTitle}>🏔️ Northern Region</Text>
@@ -463,7 +448,6 @@ const Farm = () => {
                     </TouchableOpacity>
                   ))}
                 </View>
-
                 <View style={styles.regionSection}>
                   <Text style={styles.regionTitle}>🏖️ Central Region</Text>
                   {central.map((province) => (
@@ -482,7 +466,6 @@ const Farm = () => {
                     </TouchableOpacity>
                   ))}
                 </View>
-
                 <View style={styles.regionSection}>
                   <Text style={styles.regionTitle}>🌴 Southern Region</Text>
                   {southern.map((province) => (
@@ -505,13 +488,11 @@ const Farm = () => {
             </View>
           </View>
         </Modal>
-
       </LinearGradient>
       <BottomNavigation />
     </View>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -978,6 +959,5 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
     fontWeight: 'bold',
   },
-});
-
-export default Farm;
+})
+export default Farm

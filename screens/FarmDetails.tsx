@@ -1,135 +1,107 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, FlatList, Switch, Modal } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { useAuthContext } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
-import SensorDataTable from '../components/Charts/SensorDataTable';
-import WeatherWidget from '../components/WeatherWidget';
-import BottomNavigation from '../components/BottomNavigation';
-import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Farm, FarmUser, Sensor, SensorData, SectionItem, RootStackParamList } from '../types/interfaces';
-
-type FarmDetailsRouteProp = RouteProp<RootStackParamList, 'FarmDetails'>;
-
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, FlatList } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'
+import { useAuthContext } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
+import SensorDataTable from '../components/Charts/SensorDataTable'
+import WeatherWidget from '../components/WeatherWidget'
+import { AISuggestionBox } from '../components/AISuggestionBox'
+import BottomNavigation from '../components/BottomNavigation'
+import FarmSettingsModal from '../components/FarmSettingsModal'
+import CreateSensorRequest from '../components/CreateSensorRequest'
+// Types
+interface Farm {
+  id: string
+  name: string
+  location: string
+  address?: string // Add address field for detailed location
+  notes?: string // Add notes field for farm description
+}
+interface FarmUser {
+  id: string
+  user_id: string
+  farm_role: string // Changed from 'role' to 'farm_role'
+  profiles: {
+    username: string
+    email: string
+    role: string // Add application-level role
+  }
+}
+interface Sensor {
+  id: string
+  name: string
+  type: string
+  status: 'active' | 'inactive' | 'maintenance'
+  last_reading: number
+  unit: string
+  updated_at: string
+  farm_id: string
+  location?: string
+}
+interface SensorData {
+  id: string
+  sensor_id: string
+  value: number
+  timestamp: string
+  sensors: {
+    id: string
+    name: string
+    type: string
+    status: string
+    unit: string
+    farm_id: string
+    location?: string
+  }
+}
+type RootStackParamList = {
+  FarmDetails: { farmId: string }
+}
+type FarmDetailsRouteProp = RouteProp<RootStackParamList, 'FarmDetails'>
 const FarmDetails = () => {
-  const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
-  const route = useRoute<FarmDetailsRouteProp>();
-  const { session } = useAuthContext();
-  const { farmId } = route.params;
-
-  const [farm, setFarm] = useState<Farm | null>(null);
-  const [farmUsers, setFarmUsers] = useState<FarmUser[]>([]);
-  const [sensors, setSensors] = useState<Sensor[]>([]);
-  const [userRole, setUserRole] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [sections, setSections] = useState<SectionItem[]>([
-    { id: '1', title: '🌤️ Weather Overview', type: 'weather', enabled: true, icon: 'partly-sunny' },
-    { id: '2', title: '📊 Sensor Data & Analytics', type: 'sensorData', enabled: true, icon: 'analytics' },
-    { id: '3', title: '🔧 Farm Sensors', type: 'sensors', enabled: true, icon: 'hardware-chip' },
-    { id: '4', title: '👥 Farm Members', type: 'members', enabled: true, icon: 'people' },
-  ]);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [showHelpModal, setShowHelpModal] = useState(false);
-
+  const insets = useSafeAreaInsets()
+  const navigation = useNavigation()
+  const route = useRoute<FarmDetailsRouteProp>()
+  const { session } = useAuthContext()
+  const { farmId } = route.params
+  const [farm, setFarm] = useState<Farm | null>(null)
+  const [farmUsers, setFarmUsers] = useState<FarmUser[]>([])
+  const [sensors, setSensors] = useState<Sensor[]>([])
+  const [userRole, setUserRole] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [showCreateSensorModal, setShowCreateSensorModal] = useState(false)
   useEffect(() => {
-    fetchFarmDetails();
-    loadSectionPreferences();
-    checkFirstVisit();
-  }, [farmId, session]);
-
-  const checkFirstVisit = async () => {
-    try {
-      const hasSeenHelp = await AsyncStorage.getItem('hasSeenSectionHelp');
-      if (!hasSeenHelp) {
-        setTimeout(() => {
-          setShowHelpModal(true);
-        }, 1000);
-      }
-    } catch (error) {
-      console.error('Error checking first visit:', error);
-    }
-  };
-
-  const markHelpAsSeen = async () => {
-    try {
-      await AsyncStorage.setItem('hasSeenSectionHelp', 'true');
-      setShowHelpModal(false);
-    } catch (error) {
-      console.error('Error marking help as seen:', error);
-    }
-  };
-
-  const loadSectionPreferences = async () => {
-    try {
-      const storedSections = await AsyncStorage.getItem(`farmSections_${farmId}`);
-      if (storedSections) {
-        setSections(JSON.parse(storedSections));
-      }
-    } catch (error) {
-      console.error('Error loading section preferences:', error);
-    }
-  };
-
-  const saveSectionPreferences = async (newSections: SectionItem[]) => {
-    try {
-      await AsyncStorage.setItem(`farmSections_${farmId}`, JSON.stringify(newSections));
-    } catch (error) {
-      console.error('Error saving section preferences:', error);
-    }
-  };
-
-  const toggleSection = (sectionId: string) => {
-    const newSections = sections.map(section =>
-      section.id === sectionId
-        ? { ...section, enabled: !section.enabled }
-        : section
-    );
-    setSections(newSections);
-    saveSectionPreferences(newSections);
-  };
-
-  const onDragEnd = ({ data }: { data: SectionItem[] }) => {
-    setSections(data);
-    saveSectionPreferences(data);
-  };
-
+    fetchFarmDetails()
+  }, [farmId, session])
   const fetchFarmDetails = async () => {
     if (!session?.user?.id || !farmId) {
-      setLoading(false);
-      return;
+      setLoading(false)
+      return
     }
-
     try {
-      setLoading(true);
-
-      // Fetch farm details
+      setLoading(true)
+      // Fetch farm details including notes and address
       const { data: farmData, error: farmError } = await supabase
         .from('farms')
-        .select('id, name, location')
+        .select('id, name, location, address, notes')
         .eq('id', farmId)
-        .single();
-
+        .single()
       if (!farmError && farmData) {
-        setFarm(farmData);
+        setFarm(farmData)
       }
-
       // Fetch current user's farm role for this farm
       const { data: userRoleData, error: roleError } = await supabase
         .from('farm_users')
         .select('farm_role')
         .eq('farm_id', farmId)
         .eq('user_id', session.user.id)
-        .single();
-
+        .single()
       if (!roleError && userRoleData) {
-        setUserRole(userRoleData.farm_role);
+        setUserRole(userRoleData.farm_role)
       }
-
       // Fetch all users for this farm with updated schema
       const { data: usersData, error: usersError } = await supabase
         .from('farm_users')
@@ -143,20 +115,12 @@ const FarmDetails = () => {
             role
           )
         `)
-        .eq('farm_id', farmId);
-
+        .eq('farm_id', farmId)
       if (!usersError && usersData) {
-        // Fix the profiles structure
-        const formattedUsers = usersData.map(user => ({
-          ...user,
-          profiles: Array.isArray(user.profiles) ? user.profiles[0] : user.profiles
-        }));
-        setFarmUsers(formattedUsers as FarmUser[]);
+        setFarmUsers(usersData)
       }
-
       // Fetch real sensors from sensor table with correct column names
-      console.log('Fetching sensors for farm:', farmId);
-
+      console.log('Fetching sensors for farm:', farmId)
       const { data: sensorTableData, error: sensorTableError } = await supabase
         .from('sensor')
         .select(`
@@ -170,14 +134,11 @@ const FarmDetails = () => {
           calibration_date,
           notes
         `)
-        .eq('farm_id', farmId);
-
+        .eq('farm_id', farmId)
       if (!sensorTableError && sensorTableData && sensorTableData.length > 0) {
-        console.log('Found real sensors:', sensorTableData);
-
+        console.log('Found real sensors:', sensorTableData)
         // Get latest readings for each sensor from sensor_data table
-        const sensorsWithReadings: Sensor[] = [];
-
+        const sensorsWithReadings: Sensor[] = []
         for (const sensor of sensorTableData) {
           // Fetch latest reading for this sensor
           const { data: latestReading, error: readingError } = await supabase
@@ -186,8 +147,7 @@ const FarmDetails = () => {
             .eq('sensor_id', sensor.sensor_id)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
-
+            .single()
           sensorsWithReadings.push({
             id: sensor.sensor_id,
             name: sensor.sensor_name || 'Unknown Sensor',
@@ -198,27 +158,25 @@ const FarmDetails = () => {
             updated_at: latestReading?.created_at || sensor.calibration_date || new Date().toISOString(),
             farm_id: sensor.farm_id,
             location: sensor.notes || 'Farm Location',
-          });
+          })
         }
-
-        setSensors(sensorsWithReadings);
-        console.log('Processed sensors with readings:', sensorsWithReadings);
+        setSensors(sensorsWithReadings)
+        console.log('Processed sensors with readings:', sensorsWithReadings)
       } else {
-        console.error('Error fetching sensors or no sensors found:', sensorTableError);
-        setSensors([]);
+        console.error('Error fetching sensors or no sensors found:', sensorTableError)
+        setSensors([])
       }
     } catch (error) {
-      console.error('Error fetching farm details:', error);
-      setSensors([]);
+      console.error('Error fetching farm details:', error)
+      setSensors([])
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
+  }
   const renderUserItem = ({ item }: { item: FarmUser }) => (
     <TouchableOpacity
       style={styles.userCard}
-      onPress={() => (navigation as any).navigate('UserDetail', { userId: item.user_id })}
+      onPress={() => navigation.navigate('UserDetail', { userId: item.user_id })}
       activeOpacity={0.8}
     >
       <View style={styles.userInfo}>
@@ -235,22 +193,21 @@ const FarmDetails = () => {
       </View>
       <View style={styles.roleContainer}>
         <Text style={[styles.roleText, getFarmRoleStyle(item.farm_role)]}>
-          {item.farm_role?.charAt(0).toUpperCase() + item.farm_role?.slice(1) || 'Unknown'}
+          {item.farm_role.charAt(0).toUpperCase() + item.farm_role.slice(1)}
         </Text>
       </View>
     </TouchableOpacity>
-  );
-
+  )
   const renderSensorItem = ({ item }: { item: Sensor }) => (
     <TouchableOpacity
       style={styles.sensorCard}
-      onPress={() => (navigation as any).navigate('SensorDetail', { sensorId: item.id })}
+      onPress={() => navigation.navigate('SensorDetail', { sensorId: item.id })}
       activeOpacity={0.8}
     >
       <View style={styles.sensorHeader}>
         <View style={styles.sensorInfo}>
           <Text style={styles.sensorName}>{item.name}</Text>
-          <Text style={styles.sensorType}>{item.type?.toUpperCase() || 'UNKNOWN'}</Text>
+          <Text style={styles.sensorType}>{item.type.toUpperCase()}</Text>
         </View>
         <View style={[styles.statusIndicator, item.status === 'active' ? styles.activeStatus : styles.inactiveStatus]}>
           <Text style={styles.statusText}>{item.status}</Text>
@@ -265,125 +222,17 @@ const FarmDetails = () => {
         </Text>
       </View>
     </TouchableOpacity>
-  );
-
+  )
   const getFarmRoleStyle = (farmRole: string) => {
     switch (farmRole) {
       case 'owner':
-        return styles.ownerRole;
+        return styles.ownerRole
       case 'manager':
-        return styles.managerRole;
+        return styles.managerRole
       default:
-        return styles.viewerRole;
+        return styles.viewerRole
     }
-  };
-
-  const renderSectionContent = (section: SectionItem) => {
-    if (!section.enabled) return null;
-
-    switch (section.type) {
-      case 'weather':
-        return farm?.location ? (
-          <View style={styles.sectionContent}>
-            <WeatherWidget location={farm.location} compact={false} />
-          </View>
-        ) : null;
-
-      case 'sensorData':
-        return (
-          <View style={styles.sectionContent}>
-            <SensorDataTable farmId={farmId} />
-          </View>
-        );
-
-      case 'sensors':
-        return (
-          <View style={styles.sectionContent}>
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Loading sensors...</Text>
-              </View>
-            ) : sensors.length > 0 ? (
-              <FlatList
-                data={sensors}
-                renderItem={renderSensorItem}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-              />
-            ) : (
-              <View style={styles.emptyContainer}>
-                <Ionicons name="hardware-chip-outline" size={48} color="#666" />
-                <Text style={styles.emptyText}>No sensors configured for this farm</Text>
-              </View>
-            )}
-          </View>
-        );
-
-      case 'members':
-        return (
-          <View style={styles.sectionContent}>
-            {farmUsers.length > 0 ? (
-              <FlatList
-                data={farmUsers}
-                renderItem={renderUserItem}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-              />
-            ) : (
-              <View style={styles.emptyContainer}>
-                <Ionicons name="people-outline" size={48} color="#666" />
-                <Text style={styles.emptyText}>No members found</Text>
-              </View>
-            )}
-          </View>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  const renderDraggableItem = ({ item, drag, isActive }: RenderItemParams<SectionItem>) => {
-    const count = item.type === 'sensors' ? sensors.length : 
-                 item.type === 'members' ? farmUsers.length : 0;
-
-    return (
-      <View style={[styles.draggableSection, isActive && styles.activeDraggableSection]}>
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleRow}>
-            <TouchableOpacity
-              onLongPress={drag}
-              disabled={isActive}
-              style={styles.dragHandle}
-            >
-              <Ionicons name="reorder-three" size={24} color="#666" />
-            </TouchableOpacity>
-            
-            <View style={styles.titleWithCount}>
-              <Text style={styles.sectionTitle}>{item.title}</Text>
-              {(item.type === 'sensors' || item.type === 'members') && (
-                <View style={[styles.countBadge, item.type === 'sensors' ? styles.sensorCount : styles.memberCount]}>
-                  <Text style={styles.countText}>{count}</Text>
-                </View>
-              )}
-            </View>
-            
-            <Switch
-              value={item.enabled}
-              onValueChange={() => toggleSection(item.id)}
-              trackColor={{ false: '#ddd', true: '#4CAF50' }}
-              thumbColor={item.enabled ? '#fff' : '#fff'}
-            />
-          </View>
-        </View>
-        
-        {renderSectionContent(item)}
-      </View>
-    );
-  };
-
+  }
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -398,9 +247,8 @@ const FarmDetails = () => {
           </View>
         </LinearGradient>
       </View>
-    );
+    )
   }
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
@@ -420,93 +268,157 @@ const FarmDetails = () => {
           <View style={styles.headerContent}>
             <Text style={styles.farmName}>{farm?.name || 'Loading...'}</Text>
             <Text style={styles.farmLocation}>📍 {farm?.location || ''}</Text>
+            {farm?.address && (
+              <Text style={styles.farmAddress}>🏠 {farm.address}</Text>
+            )}
             <Text style={styles.userRole}>Your role: {userRole}</Text>
           </View>
-          {/* Settings button removed as requested */}
           <TouchableOpacity
-            style={styles.helpButton}
-            onPress={() => setShowHelpModal(true)}
+            style={styles.settingsButton}
+            onPress={() => setShowSettingsModal(true)}
           >
-            <Ionicons name="help-circle-outline" size={24} color="#333" />
+            <Ionicons name="settings" size={24} color="#333" />
           </TouchableOpacity>
         </View>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Farm Notes Section - New addition for farm description */}
+          {farm?.notes && (
+            <View style={styles.farmNotesSection}>
+              <View style={styles.farmNotesHeader}>
+                <Ionicons name="document-text" size={20} color="#4CAF50" />
+                <Text style={styles.farmNotesTitle}>🌱 About This Farm</Text>
+              </View>
+              <View style={styles.farmNotesCard}>
+                <Text style={styles.farmNotesText}>{farm.notes}</Text>
+                <View style={styles.aiIndicator}>
+                  <Ionicons name="bulb" size={16} color="#FF6B6B" />
+                  <Text style={styles.aiIndicatorText}>
+                    This information helps AI provide better suggestions for your farm
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+          {/* Weather Section */}
+          {farm?.location && (
+            <View style={styles.weatherSection}>
+              <Text style={styles.sectionTitle}>🌤️ Weather Overview</Text>
+              <WeatherWidget
+                location={farm.location}
+                compact={false}
+              />
+            </View>
+          )}
+          {/* Sensor Data Section */}
+          <View style={styles.sensorSection}>
+            <Text style={styles.sectionTitle}>📊 Sensor Data & Analytics</Text>
+            <SensorDataTable farmId={farmId} />
+          </View>
 
-        {/* Draggable Sections */}
-        <View style={styles.content}>
-          <DraggableFlatList
-            data={sections}
-            onDragEnd={onDragEnd}
-            keyExtractor={(item) => item.id}
-            renderItem={renderDraggableItem}
-            contentContainerStyle={styles.sectionsContainer}
-            showsVerticalScrollIndicator={false}
-          />
-        </View>
-      </LinearGradient>
-      <BottomNavigation />
+          {/* AI Suggestions Section */}
+          {farm && (
+            <AISuggestionBox
+              farmId={farmId}
+              farmName={farm.name}
+              farmLocation={farm.location}
+              farmNotes={farm.notes}
+              sensorData={sensors.map(sensor => ({
+                id: sensor.id,
+                name: sensor.name,
+                type: sensor.type,
+                value: sensor.last_reading,
+                unit: sensor.unit,
+                timestamp: sensor.updated_at
+              }))}
+              onChatWithAI={() => navigation.navigate('Suggestion')}
+            />
+          )}
 
-      {/* Help Modal */}
-      <Modal
-        visible={showHelpModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowHelpModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.helpModalContent}>
-            <View style={styles.helpModalHeader}>
-              <Text style={styles.helpModalTitle}>📱 Customize Your Dashboard</Text>
+          {/* Sensors List */}
+          <View style={styles.sensorsSection}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.titleWithCount}>
+                <Text style={styles.sectionTitle}>🔧 Farm Sensors</Text>
+                <View style={styles.sensorCount}>
+                  <Text style={styles.sensorCountText}>{sensors.length}</Text>
+                </View>
+              </View>
               <TouchableOpacity
-                onPress={() => setShowHelpModal(false)}
-                style={styles.helpModalClose}
+                style={styles.addSensorButton}
+                onPress={() => setShowCreateSensorModal(true)}
               >
-                <Ionicons name="close" size={24} color="#666" />
+                <Ionicons name="hardware-chip" size={20} color="#4CAF50" />
               </TouchableOpacity>
             </View>
-            
-            <View style={styles.helpModalBody}>
-              <View style={styles.helpItem}>
-                <Ionicons name="reorder-three" size={24} color="#4CAF50" />
-                <Text style={styles.helpItemText}>
-                  <Text style={styles.helpItemTitle}>Drag to Reorder:</Text>{'\n'}
-                  Hold and drag the three-line icon to rearrange sections in your preferred order.
-                </Text>
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Loading sensors...</Text>
               </View>
-              
-              <View style={styles.helpItem}>
-                <View style={styles.helpToggle}>
-                  <Switch value={true} trackColor={{ false: '#ddd', true: '#4CAF50' }} />
+            ) : sensors.length > 0 ? (
+              <FlatList
+                data={sensors}
+                renderItem={renderSensorItem}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+              />
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="hardware-chip-outline" size={48} color="#666" />
+                <Text style={styles.emptyText}>No sensors configured for this farm</Text>
+              </View>
+            )}
+          </View>
+          {/* Farm Members Section */}
+          <View style={styles.membersSection}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.titleWithCount}>
+                <Text style={styles.sectionTitle}>👥 Farm Members</Text>
+                <View style={styles.memberCount}>
+                  <Text style={styles.memberCountText}>{farmUsers.length}</Text>
                 </View>
-                <Text style={styles.helpItemText}>
-                  <Text style={styles.helpItemTitle}>Toggle Visibility:</Text>{'\n'}
-                  Use the switches to show or hide sections you don't need.
-                </Text>
-              </View>
-              
-              <View style={styles.helpItem}>
-                <Ionicons name="save" size={24} color="#2196F3" />
-                <Text style={styles.helpItemText}>
-                  <Text style={styles.helpItemTitle}>Auto-Save:</Text>{'\n'}
-                  Your preferences are automatically saved and will persist across app sessions.
-                </Text>
               </View>
             </View>
-            
-            <TouchableOpacity
-              style={styles.helpModalButton}
-              onPress={markHelpAsSeen}
-            >
-              <Text style={styles.helpModalButtonText}>Got it!</Text>
-            </TouchableOpacity>
+            {farmUsers.length > 0 ? (
+              <FlatList
+                data={farmUsers}
+                renderItem={renderUserItem}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+              />
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="people-outline" size={48} color="#666" />
+                <Text style={styles.emptyText}>No members found</Text>
+              </View>
+            )}
           </View>
-        </View>
-      </Modal>
-
-  {/* Settings modal removed as requested */}
+        </ScrollView>
+      </LinearGradient>
+      <BottomNavigation />
+      {showSettingsModal && farm && (
+        <FarmSettingsModal
+          visible={showSettingsModal}
+          onClose={() => setShowSettingsModal(false)}
+          farm={farm}
+          userRole={userRole}
+          farmUsers={farmUsers}
+          onRefresh={fetchFarmDetails}
+          navigation={navigation}
+        />
+      )}
+      {showCreateSensorModal && (
+        <CreateSensorRequest
+          visible={showCreateSensorModal}
+          onClose={() => setShowCreateSensorModal(false)}
+          farmId={farmId}
+          onRefresh={fetchFarmDetails}
+        />
+      )}
     </View>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -542,11 +454,19 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 2,
   },
+  farmAddress: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
   userRole: {
     fontSize: 12,
     color: '#4CAF50',
     fontWeight: '600',
     marginTop: 2,
+  },
+  settingsButton: {
+    padding: 5,
   },
   content: {
     flex: 1,
@@ -556,7 +476,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 15,
   },
   weatherSection: {
     marginBottom: 20,
@@ -581,17 +500,17 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   titleWithCount: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  flexDirection: 'row',
+  alignItems: 'center',
   },
   sensorCount: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 12,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    minWidth: 24,
-    alignItems: 'center',
-    marginLeft: 8,
+  backgroundColor: '#4CAF50',
+  borderRadius: 12,
+  paddingVertical: 4,
+  paddingHorizontal: 10,
+  minWidth: 24,
+  alignItems: 'center',
+  marginLeft: 8,
   },
   sensorCountText: {
     color: 'white',
@@ -599,13 +518,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   memberCount: {
-    backgroundColor: '#2196F3',
-    borderRadius: 12,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    minWidth: 24,
-    alignItems: 'center',
-    marginLeft: 8,
+  backgroundColor: '#2196F3',
+  borderRadius: 12,
+  paddingVertical: 4,
+  paddingHorizontal: 10,
+  minWidth: 24,
+  alignItems: 'center',
+  marginLeft: 8,
   },
   memberCountText: {
     color: 'white',
@@ -780,148 +699,82 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 15,
   },
-  addSensorButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+  // Farm Notes Section Styles - New addition
+  farmNotesSection: {
+    marginBottom: 20,
   },
-  addSensorText: {
-    color: 'white',
+  farmNotesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  farmNotesTitle: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#333',
+    marginLeft: 8,
   },
-  // New styles for draggable sections
-  sectionsContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
-  draggableSection: {
+  farmNotesCard: {
     backgroundColor: 'white',
     borderRadius: 12,
-    marginBottom: 15,
+    padding: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
   },
-  activeDraggableSection: {
-    opacity: 0.8,
-    transform: [{ scale: 1.02 }],
+  farmNotesText: {
+    fontSize: 15,
+    color: '#333',
+    lineHeight: 22,
+    marginBottom: 12,
+    fontStyle: 'italic',
   },
-  sectionTitleRow: {
+  aiIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.2)',
   },
-  dragHandle: {
-    padding: 5,
-    marginRight: 10,
+  aiIndicatorText: {
+    fontSize: 12,
+    color: '#D32F2F',
+    marginLeft: 6,
+    flex: 1,
+    fontWeight: '500',
   },
-  countBadge: {
-    borderRadius: 12,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    minWidth: 24,
+  // Add Sensor Button Styles
+  addSensorButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 50,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
     alignItems: 'center',
-    marginLeft: 8,
+    justifyContent: 'center',
   },
-  countText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  sectionContent: {
-    paddingHorizontal: 15,
-    paddingBottom: 15,
-  },
+  // Empty State Styles
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 30,
   },
   emptyText: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-    marginTop: 10,
   },
-  // Help button and modal styles
-  helpButton: {
-    padding: 5,
-    marginLeft: 10,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  helpModalContent: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    margin: 20,
-    maxWidth: 400,
-    width: '90%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  helpModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  helpModalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  helpModalClose: {
-    padding: 5,
-  },
-  helpModalBody: {
-    padding: 20,
-  },
-  helpItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  helpItemText: {
-    flex: 1,
-    marginLeft: 15,
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  helpItemTitle: {
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  helpToggle: {
-    transform: [{ scale: 0.8 }],
-  },
-  helpModalButton: {
-    backgroundColor: '#4CAF50',
-    margin: 20,
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  helpModalButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});
-
-export default FarmDetails;
+})
+export default FarmDetails

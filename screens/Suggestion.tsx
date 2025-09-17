@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react'
 import {
   View,
   Text,
@@ -6,664 +6,388 @@ import {
   ScrollView,
   SafeAreaView,
   TouchableOpacity,
-  RefreshControl,
   Alert,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
-import { supabase } from '../lib/supabase';
-import BottomNavigation from '../components/BottomNavigation';
-import { useAuthContext } from '../context/AuthContext';
-import { RootStackParamList } from '../App';
-
-interface SensorReading {
-  sensor_id: string;
-  value: number;
-  created_at: string;
-  sensor: {
-    sensor_name: string;
-    sensor_type: string;
-    units: string;
-    farm_id: string;
-    farms: {
-      name: string;
-      location: string;
-    };
-  };
-}
-
-interface Suggestion {
-  id: string;
-  type: 'critical' | 'warning' | 'info' | 'success';
-  title: string;
-  description: string;
-  farmName: string;
-  sensorType: string;
-  value: number;
-  unit: string;
-  timestamp: string;
-  action?: string;
-}
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useNavigation, NavigationProp } from '@react-navigation/native'
+import BottomNavigation from '../components/BottomNavigation'
+import { ChatBubble } from '../components/ChatBubble'
+import { ChatInput } from '../components/ChatInput'
+import { useAuthContext } from '../context/AuthContext'
+import { useDialog } from '../context/DialogContext'
+import { RootStackParamList } from '../App'
+import { AIFarmingSpecialist, ChatMessage } from '../services/aiChatService'
 
 const Suggestion: React.FC = () => {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const { session, unreadCount } = useAuthContext();
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>()
+  const { session } = useAuthContext()
+  const { showDialog } = useDialog()
+  const scrollViewRef = useRef<ScrollView>(null)
 
-  const generateSuggestions = (readings: SensorReading[]): Suggestion[] => {
-    const suggestions: Suggestion[] = [];
-
-    readings.forEach((reading, index) => {
-      const { sensor, value, created_at } = reading;
-      const sensorType = sensor.sensor_type.toLowerCase();
-      const farmName = sensor.farms.name;
-
-      let suggestion: Suggestion | null = null;
-
-      // pH Sensor Analysis
-      if (sensorType.includes('ph')) {
-        if (value < 6.0) {
-          suggestion = {
-            id: `ph_low_${index}`,
-            type: 'critical',
-            title: 'Soil Too Acidic',
-            description: `pH level of ${value} is too low for most crops. Consider adding lime to raise pH levels.`,
-            farmName,
-            sensorType: 'pH',
-            value,
-            unit: sensor.units,
-            timestamp: created_at,
-            action: 'Add agricultural lime or wood ash to increase pH',
-          };
-        } else if (value > 8.0) {
-          suggestion = {
-            id: `ph_high_${index}`,
-            type: 'warning',
-            title: 'Soil Too Alkaline',
-            description: `pH level of ${value} is too high. Most plants prefer slightly acidic to neutral soil.`,
-            farmName,
-            sensorType: 'pH',
-            value,
-            unit: sensor.units,
-            timestamp: created_at,
-            action: 'Add sulfur or organic matter to lower pH',
-          };
-        } else if (value >= 6.5 && value <= 7.0) {
-          suggestion = {
-            id: `ph_optimal_${index}`,
-            type: 'success',
-            title: 'Optimal pH Level',
-            description: `pH level of ${value} is ideal for most crops. Maintain current soil management practices.`,
-            farmName,
-            sensorType: 'pH',
-            value,
-            unit: sensor.units,
-            timestamp: created_at,
-          };
-        }
-      }
-
-      // Temperature Sensor Analysis
-      else if (sensorType.includes('temperature')) {
-        if (value < 15) {
-          suggestion = {
-            id: `temp_low_${index}`,
-            type: 'warning',
-            title: 'Low Temperature Alert',
-            description: `Temperature of ${value}°C may slow plant growth. Consider protection measures.`,
-            farmName,
-            sensorType: 'Temperature',
-            value,
-            unit: sensor.units,
-            timestamp: created_at,
-            action: 'Use row covers or greenhouse protection',
-          };
-        } else if (value > 35) {
-          suggestion = {
-            id: `temp_high_${index}`,
-            type: 'critical',
-            title: 'High Temperature Warning',
-            description: `Temperature of ${value}°C can stress plants and reduce yields.`,
-            farmName,
-            sensorType: 'Temperature',
-            value,
-            unit: sensor.units,
-            timestamp: created_at,
-            action: 'Increase irrigation and provide shade',
-          };
-        } else if (value >= 20 && value <= 28) {
-          suggestion = {
-            id: `temp_optimal_${index}`,
-            type: 'success',
-            title: 'Ideal Growing Temperature',
-            description: `Temperature of ${value}°C is perfect for most crops. Great growing conditions!`,
-            farmName,
-            sensorType: 'Temperature',
-            value,
-            unit: sensor.units,
-            timestamp: created_at,
-          };
-        }
-      }
-
-      // Soil Moisture Analysis
-      else if (sensorType.includes('moisture')) {
-        if (value < 30) {
-          suggestion = {
-            id: `moisture_low_${index}`,
-            type: 'critical',
-            title: 'Soil Too Dry',
-            description: `Soil moisture at ${value}% is too low. Plants may be stressed and need immediate watering.`,
-            farmName,
-            sensorType: 'Soil Moisture',
-            value,
-            unit: sensor.units,
-            timestamp: created_at,
-            action: 'Increase irrigation frequency and check drip system',
-          };
-        } else if (value > 80) {
-          suggestion = {
-            id: `moisture_high_${index}`,
-            type: 'warning',
-            title: 'Soil Too Wet',
-            description: `Soil moisture at ${value}% is very high. Risk of root rot and fungal diseases.`,
-            farmName,
-            sensorType: 'Soil Moisture',
-            value,
-            unit: sensor.units,
-            timestamp: created_at,
-            action: 'Improve drainage and reduce watering',
-          };
-        } else if (value >= 50 && value <= 70) {
-          suggestion = {
-            id: `moisture_optimal_${index}`,
-            type: 'success',
-            title: 'Perfect Soil Moisture',
-            description: `Soil moisture at ${value}% is ideal for healthy plant growth.`,
-            farmName,
-            sensorType: 'Soil Moisture',
-            value,
-            unit: sensor.units,
-            timestamp: created_at,
-          };
-        }
-      }
-
-      // Electrical Conductivity Analysis
-      else if (sensorType.includes('conductivity') || sensorType.includes('ec')) {
-        if (value < 0.8) {
-          suggestion = {
-            id: `ec_low_${index}`,
-            type: 'info',
-            title: 'Low Nutrient Levels',
-            description: `EC level of ${value} mS/cm indicates low nutrient concentration. Consider fertilization.`,
-            farmName,
-            sensorType: 'EC',
-            value,
-            unit: sensor.units,
-            timestamp: created_at,
-            action: 'Add balanced fertilizer or compost',
-          };
-        } else if (value > 3.0) {
-          suggestion = {
-            id: `ec_high_${index}`,
-            type: 'warning',
-            title: 'High Salt Content',
-            description: `EC level of ${value} mS/cm is too high. Plants may suffer from salt stress.`,
-            farmName,
-            sensorType: 'EC',
-            value,
-            unit: sensor.units,
-            timestamp: created_at,
-            action: 'Flush soil with clean water and reduce fertilizer',
-          };
-        } else if (value >= 1.2 && value <= 2.0) {
-          suggestion = {
-            id: `ec_optimal_${index}`,
-            type: 'success',
-            title: 'Optimal Nutrient Levels',
-            description: `EC level of ${value} mS/cm shows good nutrient balance for healthy plant growth.`,
-            farmName,
-            sensorType: 'EC',
-            value,
-            unit: sensor.units,
-            timestamp: created_at,
-          };
-        }
-      }
-
-      if (suggestion) {
-        suggestions.push(suggestion);
-      }
-    });
-
-    return suggestions.sort((a, b) => {
-      const typeOrder = { critical: 0, warning: 1, info: 2, success: 3 };
-      return typeOrder[a.type] - typeOrder[b.type];
-    });
-  };
-
-  const fetchSuggestions = async () => {
-    try {
-      if (!session?.user?.id) return;
-
-      // Get user's farms
-      const { data: userFarms, error: farmsError } = await supabase
-        .from('farm_users')
-        .select('farm_id')
-        .eq('user_id', session.user.id);
-
-      if (farmsError) throw farmsError;
-
-      if (!userFarms || userFarms.length === 0) {
-        setSuggestions([]);
-        return;
-      }
-
-      const farmIds = userFarms.map(f => f.farm_id);
-
-      // Get latest sensor readings from user's farms
-      const { data: readings, error: readingsError } = await supabase
-        .from('sensor_data')
-        .select(`
-          sensor_id,
-          value,
-          created_at,
-          sensor!inner(
-            sensor_name,
-            sensor_type,
-            units,
-            farm_id,
-            farms!inner(
-              name,
-              location
-            )
-          )
-        `)
-        .in('sensor.farm_id', farmIds)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (readingsError) throw readingsError;
-
-      // Get only the latest reading for each sensor
-      const latestReadings: { [key: string]: SensorReading } = {};
-      readings?.forEach((reading: any) => {
-        if (!latestReadings[reading.sensor_id] ||
-            new Date(reading.created_at) > new Date(latestReadings[reading.sensor_id].created_at)) {
-          latestReadings[reading.sensor_id] = reading;
-        }
-      });
-
-      const suggestions = generateSuggestions(Object.values(latestReadings));
-      setSuggestions(suggestions);
-
-    } catch (error: any) {
-      console.error('Error fetching suggestions:', error);
-      Alert.alert('Error', 'Failed to load suggestions');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [aiSpecialist] = useState(() => new AIFarmingSpecialist())
+  const [isInitializing, setIsInitializing] = useState(true)
+  const [userFarms, setUserFarms] = useState<Array<{
+    id: string
+    name: string
+    location: string
+  }>>([])
 
   useEffect(() => {
-    fetchSuggestions();
-  }, [session]);
+    initializeChat()
+  }, [session])
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchSuggestions();
-  };
+  const initializeChat = async () => {
+    try {
+      setIsInitializing(true)
 
-  const getSuggestionIcon = (type: string) => {
-    switch (type) {
-      case 'critical': return 'alert-circle';
-      case 'warning': return 'warning';
-      case 'info': return 'information-circle';
-      case 'success': return 'checkmark-circle';
-      default: return 'bulb';
+      if (!session?.user?.id) {
+        showDialog('Please log in to access the AI farming specialist')
+        return
+      }
+
+      // Load user farm data
+      await aiSpecialist.loadUserFarmData(session.user.id)
+
+      // Get farm list for the input component
+      const farmData = aiSpecialist.getUserFarmData()
+      if (farmData && farmData.farms) {
+        setUserFarms(farmData.farms.map(farm => ({
+          id: farm.id,
+          name: farm.name,
+          location: farm.location
+        })))
+      }
+
+      // Add welcome message
+      const welcomeMessage: ChatMessage = {
+        id: `welcome-${Date.now()}`,
+        role: 'assistant',
+        content: `👋 Hello! I'm **Dr. AgriBot**, your personal agricultural specialist and environmental expert. I'm here to help you optimize your farming operations with science-based recommendations!
+
+🌾 **What makes me special:**
+- 30+ years of farming expertise in my knowledge base
+- Real-time access to your farm and sensor data
+- Personalized advice for your specific conditions
+- 24/7 availability to answer your questions
+
+💡 **I can help you with:**
+- Soil analysis and pH management
+- Crop selection and rotation planning
+- Pest and disease identification
+- Irrigation and water management
+- Fertilizer recommendations
+- Weather-based farming decisions
+- Sustainable farming practices
+
+🚀 **Getting started:**
+Try asking me questions like:
+- "How are my soil conditions looking?"
+- "When should I water my crops?"
+- "What's the best fertilizer for my farm?"
+- "Help me identify this plant problem"
+
+${userFarms.length > 1 ? `🏡 **Your farms:** I can see you have ${userFarms.length} farms (${userFarms.map(f => f.name).join(', ')}). You can select a specific farm in the input area below to get targeted advice!` : ''}
+
+What farming challenge would you like to tackle first?`,
+        timestamp: new Date().toISOString(),
+        metadata: {
+          suggestedActions: [
+            'Check soil conditions',
+            'Review irrigation schedule',
+            'Get fertilizer recommendations',
+            'Ask about pest management'
+          ]
+        }
+      }
+
+      setMessages([welcomeMessage])
+    } catch (error) {
+      console.error('Error initializing chat:', error)
+      showDialog('Failed to initialize AI specialist')
+    } finally {
+      setIsInitializing(false)
     }
-  };
+  }
 
-  const getSuggestionColor = (type: string) => {
-    switch (type) {
-      case 'critical': return '#f44336';
-      case 'warning': return '#ff9800';
-      case 'info': return '#2196f3';
-      case 'success': return '#4caf50';
-      default: return '#666';
+  const handleSendMessage = async (messageText: string) => {
+    if (!session?.user?.id || isLoading) return
+
+    try {
+      setIsLoading(true)
+
+      // Add user message to display immediately
+      const userMessage: ChatMessage = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: messageText,
+        timestamp: new Date().toISOString()
+      }
+
+      setMessages(prev => [...prev, userMessage])
+
+      // Scroll to bottom
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true })
+      }, 100)
+
+      // Generate AI response
+      const aiResponse = await aiSpecialist.generateResponse(messageText, session.user.id)
+
+      // Add AI response to display
+      setMessages(prev => [...prev, aiResponse])
+
+      // Scroll to bottom again for AI response
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true })
+      }, 100)
+
+    } catch (error) {
+      console.error('Error sending message:', error)
+      showDialog('Failed to get response from AI specialist')
+    } finally {
+      setIsLoading(false)
     }
-  };
+  }
 
-  const renderSuggestion = (suggestion: Suggestion) => (
-    <View key={suggestion.id} style={styles.suggestionCard}>
-      <View style={styles.suggestionHeader}>
-        <View style={styles.suggestionTitleRow}>
-          <Ionicons
-            name={getSuggestionIcon(suggestion.type) as any}
-            size={24}
-            color={getSuggestionColor(suggestion.type)}
-          />
-          <Text style={styles.suggestionTitle}>{suggestion.title}</Text>
-        </View>
-        <View style={[styles.priorityBadge, { backgroundColor: getSuggestionColor(suggestion.type) }]}>
-          <Text style={styles.priorityText}>{suggestion.type?.toUpperCase() || 'UNKNOWN'}</Text>
-        </View>
-      </View>
+  const handleActionPress = (action: string) => {
+    // Convert suggested action to a question for the AI
+    const actionQuestions: { [key: string]: string } = {
+      'Check soil conditions': 'Please analyze my current soil conditions and sensor readings',
+      'Review irrigation schedule': 'Help me optimize my irrigation schedule based on my sensor data',
+      'Get fertilizer recommendations': 'What fertilizer recommendations do you have for my farms?',
+      'Ask about pest management': 'What should I know about pest management for my crops?',
+      'Apply agricultural lime': 'How do I properly apply agricultural lime to my soil?',
+      'Add organic matter': 'What organic matter should I add to improve my soil?',
+      'Test irrigation water': 'How should I test and manage my irrigation water quality?',
+      'Increase irrigation': 'How should I adjust my irrigation schedule?',
+      'Improve drainage': 'What are the best ways to improve soil drainage?'
+    }
 
-      <View style={styles.suggestionMeta}>
-        <Text style={styles.farmName}>{suggestion.farmName}</Text>
-        <Text style={styles.timestamp}>
-          {new Date(suggestion.timestamp).toLocaleDateString()} at{' '}
-          {new Date(suggestion.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </Text>
-      </View>
+    const question = actionQuestions[action] || `Please help me with: ${action}`
+    handleSendMessage(question)
+  }
 
-      <Text style={styles.suggestionDescription}>{suggestion.description}</Text>
+  const clearConversation = () => {
+    Alert.alert(
+      'Clear Conversation',
+      'Are you sure you want to clear the entire conversation history?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () => {
+            aiSpecialist.clearConversation()
+            initializeChat()
+          }
+        }
+      ]
+    )
+  }
 
-      <View style={styles.sensorInfo}>
-        <Text style={styles.sensorType}>{suggestion.sensorType}</Text>
-        <Text style={styles.sensorValue}>
-          {suggestion.value} {suggestion.unit}
-        </Text>
-      </View>
-
-      {suggestion.action && (
-        <View style={styles.actionContainer}>
-          <Ionicons name="bulb-outline" size={16} color="#ff9800" />
-          <Text style={styles.actionText}>{suggestion.action}</Text>
-        </View>
-      )}
-    </View>
-  );
-
-  if (loading) {
+  if (isInitializing) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading suggestions...</Text>
-        </View>
+      <LinearGradient
+        colors={['#e7fbe8ff', '#cdffcfff']}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.container}
+      >
+        <SafeAreaView style={styles.safeArea}>
+          {/* Fixed Header with proper padding */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="#333" />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>AI Farming Assistant</Text>
+              <Text style={styles.headerSubtitle}>Dr. AgriBot</Text>
+            </View>
+            <TouchableOpacity onPress={clearConversation} style={styles.clearButton}>
+              <Ionicons name="refresh" size={24} color="#4CAF50" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.loadingContainer}>
+            <View style={styles.loadingContent}>
+              <Ionicons name="leaf" size={48} color="#4CAF50" />
+              <Text style={styles.loadingText}>Initializing AI Specialist...</Text>
+              <Text style={styles.loadingSubtext}>Loading your farm data</Text>
+            </View>
+          </View>
+        </SafeAreaView>
         <BottomNavigation />
-      </SafeAreaView>
-    );
+      </LinearGradient>
+    )
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#e7fbe8ff', '#ffffff']} style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.title}>Smart Farming Suggestions</Text>
-            <Text style={styles.subtitle}>AI-powered recommendations for your farm</Text>
+    <LinearGradient
+      colors={['#e7fbe8ff', '#cdffcfff']}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        {/* Fixed Header with proper status bar padding */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>AI Farming Assistant</Text>
+            <Text style={styles.headerSubtitle}>Dr. AgriBot • {userFarms.length > 0 ? `${userFarms.length} farms` : 'Environment Specialist'}</Text>
           </View>
-
-          <TouchableOpacity
-            style={styles.notificationButton}
-            onPress={() => navigation.navigate("Notification")}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="notifications" size={24} color="#2e7d32" />
-            {unreadCount > 0 && (
-              <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>
-                  {unreadCount > 99 ? '99+' : unreadCount.toString()}
-                </Text>
-              </View>
-            )}
+          <TouchableOpacity onPress={clearConversation} style={styles.clearButton}>
+            <Ionicons name="refresh" size={24} color="#4CAF50" />
           </TouchableOpacity>
         </View>
-      </LinearGradient>
 
-      <ScrollView
-        style={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
-        {suggestions.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="leaf-outline" size={64} color="#ccc" />
-            <Text style={styles.emptyTitle}>No Suggestions Available</Text>
-            <Text style={styles.emptyText}>
-              We need sensor data from your farms to provide personalized suggestions.
-            </Text>
-          </View>
-        ) : (
-          <>
-            <View style={styles.summaryContainer}>
-              <Text style={styles.summaryTitle}>Summary</Text>
-              <View style={styles.summaryStats}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>
-                    {suggestions.filter(s => s.type === 'critical').length}
-                  </Text>
-                  <Text style={styles.statLabel}>Critical</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>
-                    {suggestions.filter(s => s.type === 'warning').length}
-                  </Text>
-                  <Text style={styles.statLabel}>Warning</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>
-                    {suggestions.filter(s => s.type === 'success').length}
-                  </Text>
-                  <Text style={styles.statLabel}>Optimal</Text>
-                </View>
+        {/* Chat Messages */}
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.messagesContainer}
+          contentContainerStyle={styles.messagesContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {messages.map((message) => (
+            <ChatBubble
+              key={message.id}
+              message={message}
+              onActionPress={handleActionPress}
+            />
+          ))}
+
+          {isLoading && (
+            <View style={styles.typingIndicator}>
+              <Text style={styles.typingText}>Dr. AgriBot is thinking...</Text>
+              <View style={styles.typingDots}>
+                <View style={[styles.dot, styles.dot1]} />
+                <View style={[styles.dot, styles.dot2]} />
+                <View style={[styles.dot, styles.dot3]} />
               </View>
             </View>
+          )}
+        </ScrollView>
 
-            {suggestions.map(renderSuggestion)}
-          </>
-        )}
-      </ScrollView>
-
+        {/* Chat Input */}
+        <ChatInput
+          onSendMessage={handleSendMessage}
+          isLoading={isLoading}
+          userFarms={userFarms}
+          placeholder="Ask about farming, weather, soil conditions, or crop management..."
+        />
+      </SafeAreaView>
       <BottomNavigation />
-    </SafeAreaView>
-  );
-};
+    </LinearGradient>
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 30,
-    paddingTop: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(76, 175, 80, 0.2)',
+    // Add proper padding for status bar
+    paddingTop: Platform.OS === 'ios' ? 12 : 16,
+  },
+  backButton: {
+    padding: 8,
   },
   headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flex: 1,
     alignItems: 'center',
   },
-  title: {
-    fontSize: 28,
+  headerTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#2e7d32',
-    marginBottom: 5,
+    color: '#333',
   },
-  subtitle: {
-    fontSize: 16,
+  headerSubtitle: {
+    fontSize: 14,
     color: '#666',
+    marginTop: 2,
   },
-  notificationButton: {
-    position: 'relative',
-    padding: 10,
+  clearButton: {
+    padding: 8,
   },
-  notificationBadge: {
-    position: 'absolute',
-    right: -6,
-    top: -6,
-    backgroundColor: '#f44336',
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  notificationBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  content: {
+  messagesContainer: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
+  },
+  messagesContent: {
+    paddingTop: 16,
+    paddingBottom: 20,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingContent: {
+    alignItems: 'center',
+  },
   loadingText: {
     fontSize: 18,
-    color: '#666',
-  },
-  summaryContainer: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-  },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-  },
-  summaryStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2e7d32',
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 5,
-  },
-  suggestionCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  suggestionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 10,
-  },
-  suggestionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  suggestionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginLeft: 10,
-    flex: 1,
-  },
-  priorityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  priorityText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  suggestionMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-  },
-  farmName: {
-    fontSize: 14,
     fontWeight: '600',
-    color: '#2e7d32',
+    color: '#4CAF50',
+    marginTop: 16,
   },
-  timestamp: {
-    fontSize: 12,
-    color: '#999',
-  },
-  suggestionDescription: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
-    marginBottom: 15,
-  },
-  sensorInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  sensorType: {
+  loadingSubtext: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    color: '#666',
+    marginTop: 8,
   },
-  sensorValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2e7d32',
-  },
-  actionContainer: {
+  typingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff3e0',
-    padding: 12,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#ff9800',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 20,
+    marginVertical: 8,
+    alignSelf: 'flex-start',
   },
-  actionText: {
+  typingText: {
     fontSize: 14,
-    color: '#ef6c00',
-    marginLeft: 8,
-    fontWeight: '500',
-    flex: 1,
+    color: '#4CAF50',
+    marginRight: 8,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  typingDots: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 60,
   },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 20,
-    marginBottom: 10,
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#4CAF50',
+    marginHorizontal: 2,
   },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 24,
+  dot1: {
+    opacity: 0.4,
   },
-});
+  dot2: {
+    opacity: 0.7,
+  },
+  dot3: {
+    opacity: 1,
+  },
+})
 
-export default Suggestion;
+export default Suggestion

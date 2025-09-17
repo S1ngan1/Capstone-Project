@@ -355,7 +355,7 @@ class ActivityLogService {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return false
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('activity_logs')
         .update({ viewed: true })
         .eq('user_id', user.id)
@@ -364,7 +364,7 @@ class ActivityLogService {
         console.error('Error marking activity logs as viewed:', error)
         return false
       }
-      console.log('Activity logs marked as viewed')
+      console.log(`Activity logs marked as viewed for user_id: ${user.id}, updated rows: ${data ? data.length : 0}`)
       return true
     } catch (error) {
       console.error('Error in markActivityLogsAsViewed:', error)

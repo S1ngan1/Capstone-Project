@@ -83,8 +83,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
       case 1:
         return !!(formData.farm_id && formData.sensor_type && formData.quantity > 0)
       case 2:
-        return !!(formData.installation_location.trim() && formData.justification.trim())
-      case 3:
         return !!(formData.budget_range && formData.priority_level)
       default:
         return true
@@ -128,9 +126,9 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         farm_id: formData.farm_id,
         sensor_type: formData.sensor_type,
         quantity: formData.quantity,
-        installation_location: formData.installation_location.trim() || 'Not specified',
-        justification: formData.justification.trim() || 'No justification provided',
-        technical_requirements: formData.technical_requirements?.trim() || null,
+        installation_location: 'To be determined',
+        justification: `${formData.sensor_type} sensor request`,
+        technical_requirements: null,
         budget_range: formData.budget_range || '100_500',
         priority_level: formData.priority_level || 'medium',
         status: 'pending'
@@ -203,7 +201,7 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
   const selectedSensorType = SENSOR_TYPES[formData.sensor_type]
   const renderStepIndicator = () => (
     <View style={styles.stepIndicator}>
-      {[1, 2, 3].map((stepNumber) => (
+      {[1, 2].map((stepNumber) => (
         <View key={stepNumber} style={styles.stepItem}>
           <View style={[
             styles.stepCircle,
@@ -220,7 +218,7 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
             styles.stepLabel,
             step >= stepNumber ? styles.stepLabelActive : styles.stepLabelInactive
           ]}>
-            {stepNumber === 1 ? 'Sensor' : stepNumber === 2 ? 'Details' : 'Review'}
+            {stepNumber === 1 ? 'Sensor' : 'Review'}
           </Text>
         </View>
       ))}
@@ -317,62 +315,9 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
   )
   const renderStep2 = () => (
     <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>Installation Details</Text>
-      <Text style={styles.stepDescription}>Provide location and justification for the sensor</Text>
-      {/* Installation Location */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>
-          Installation Location <Text style={styles.required}>*</Text>
-        </Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={formData.installation_location}
-          onChangeText={(text) => updateFormData({ installation_location: text })}
-          placeholder="Describe exactly where the sensor will be installed (e.g., Greenhouse A, Section 2, North corner near irrigation line)"
-          placeholderTextColor="#999"
-          multiline
-          numberOfLines={3}
-          textAlignVertical="top"
-        />
-        <Text style={styles.helperText}>Be specific about the exact location for optimal installation</Text>
-      </View>
-      {/* Justification */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>
-          Justification <Text style={styles.required}>*</Text>
-        </Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={formData.justification}
-          onChangeText={(text) => updateFormData({ justification: text })}
-          placeholder="Explain why this sensor is needed and how it will benefit your farming operations"
-          placeholderTextColor="#999"
-          multiline
-          numberOfLines={4}
-          textAlignVertical="top"
-        />
-        <Text style={styles.helperText}>Help us understand the impact this sensor will have</Text>
-      </View>
-      {/* Technical Requirements */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Technical Requirements (Optional)</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={formData.technical_requirements}
-          onChangeText={(text) => updateFormData({ technical_requirements: text })}
-          placeholder="Any specific technical requirements, connectivity needs, or special considerations"
-          placeholderTextColor="#999"
-          multiline
-          numberOfLines={3}
-          textAlignVertical="top"
-        />
-      </View>
-    </View>
-  )
-  const renderStep3 = () => (
-    <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>Budget & Priority</Text>
-      <Text style={styles.stepDescription}>Set your budget range and priority level</Text>
+      <Text style={styles.stepTitle}>Request Summary</Text>
+      <Text style={styles.stepDescription}>Review your sensor request details</Text>
+      
       {/* Budget Range */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>
@@ -387,8 +332,9 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
           </Text>
           <Ionicons name="chevron-down" size={20} color="#666" />
         </TouchableOpacity>
-        <Text style={styles.helperText}>This helps us recommend appropriate sensors</Text>
+        <Text style={styles.helperText}>Select your available budget for this sensor</Text>
       </View>
+
       {/* Priority Level */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>
@@ -409,10 +355,9 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
           </View>
           <Ionicons name="chevron-down" size={20} color="#666" />
         </TouchableOpacity>
-        <Text style={styles.helperText}>
-          {PRIORITY_LEVELS[formData.priority_level].description}
-        </Text>
+        <Text style={styles.helperText}>How urgent is this sensor requirement?</Text>
       </View>
+      
       {/* Summary */}
       <View style={styles.summaryContainer}>
         <Text style={styles.summaryTitle}>Request Summary</Text>
@@ -466,7 +411,6 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
-          {step === 3 && renderStep3()}
         </ScrollView>
         {/* Navigation Buttons */}
         <View style={styles.navigationContainer}>
@@ -475,7 +419,7 @@ const CreateSensorRequest: React.FC<Props> = ({ visible, onClose, onRefresh, far
               <Text style={styles.previousButtonText}>Previous</Text>
             </TouchableOpacity>
           )}
-          {step < 3 ? (
+          {step < 2 ? (
             <TouchableOpacity
               style={[styles.nextButton, !validateStep(step) && styles.nextButtonDisabled]}
               onPress={handleNext}
@@ -648,8 +592,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 50,
-    paddingBottom: 20,
+    paddingTop: 40,
+    paddingBottom: 12,
     paddingHorizontal: 20,
   },
   backButton: {

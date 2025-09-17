@@ -392,10 +392,6 @@ const AdminSensorRequests = () => {
         </View>
         {/* Details */}
         <View style={styles.requestDetails}>
-          <Text style={styles.detailLabel}>Installation Location:</Text>
-          <Text style={styles.detailText}>{item.installation_location}</Text>
-          <Text style={styles.detailLabel}>Justification:</Text>
-          <Text style={styles.detailText}>{item.justification}</Text>
           <Text style={styles.detailLabel}>Budget Range:</Text>
           <Text style={styles.detailText}>{item.budget_range}</Text>
           <Text style={styles.detailLabel}>Requested:</Text>

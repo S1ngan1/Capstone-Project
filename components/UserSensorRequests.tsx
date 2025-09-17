@@ -380,20 +380,6 @@ const UserSensorRequests: React.FC<Props> = ({ onClose, onSuccess, farmId }) => 
                     <Text style={styles.detailText}>Model: {selectedRequest.sensor_model}</Text>
                   )}
                 </View>
-                {/* Installation Details */}
-                <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>Installation Details</Text>
-                  <Text style={styles.detailLabel}>Location:</Text>
-                  <Text style={styles.detailText}>{selectedRequest.installation_location}</Text>
-                  <Text style={styles.detailLabel}>Justification:</Text>
-                  <Text style={styles.detailText}>{selectedRequest.justification}</Text>
-                  {selectedRequest.technical_requirements && (
-                    <>
-                      <Text style={styles.detailLabel}>Technical Requirements:</Text>
-                      <Text style={styles.detailText}>{selectedRequest.technical_requirements}</Text>
-                    </>
-                  )}
-                </View>
                 {/* Budget & Priority */}
                 <View style={styles.detailSection}>
                   <Text style={styles.detailSectionTitle}>Budget & Priority</Text>
@@ -798,17 +784,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 4,
-  },
-  statusBadge: {
-    borderRadius: 12,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: 'white',
-    marginLeft: 4,
   },
   modalActions: {
     flexDirection: 'row',

@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native'
+import { supabase } from '../lib/supabase'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuthContext } from '../context/AuthContext'
@@ -35,8 +36,6 @@ const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) =
     try {
       if (reset) {
         setLoading(true)
-        // Mark activity logs as viewed when user opens the screen
-        await activityLogService.markActivityLogsAsViewed()
       }
       const { data, count } = await activityLogService.getActivityLogs({
         page: pageNum,
@@ -107,8 +106,24 @@ const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) =
     const date = new Date(dateString)
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
+  const handleLogPress = async (log: ActivityLog) => {
+    if (!log.viewed) {
+      // Mark this log as viewed
+      try {
+        const { error } = await supabase
+          .from('activity_logs')
+          .update({ viewed: true })
+          .eq('id', log.id)
+        if (!error) {
+          setLogs(prevLogs => prevLogs.map(l => l.id === log.id ? { ...l, viewed: true } : l))
+        }
+      } catch (err) {
+        console.error('Failed to mark log as viewed:', err)
+      }
+    }
+  }
   const renderLogItem = ({ item }: { item: ActivityLog }) => (
-    <View style={styles.logItem}>
+    <TouchableOpacity style={styles.logItem} onPress={() => handleLogPress(item)} activeOpacity={0.7}>
       <View style={styles.logHeader}>
         <View style={styles.actionInfo}>
           <Ionicons
@@ -123,7 +138,7 @@ const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) =
         </View>
         <Text style={styles.timestamp}>{formatDate(item.created_at)}</Text>
       </View>
-      <Text style={styles.description}>{item.description}</Text>
+      <Text style={[styles.description, !item.viewed && { fontWeight: 'bold', color: '#333' }]}>{item.description}</Text>
       {isAdmin && (
         <View style={styles.userInfo}>
           <Ionicons name="person" size={16} color="#666" />
@@ -135,7 +150,7 @@ const ActivityLogsScreen: React.FC<ActivityLogsScreenProps> = ({ navigation }) =
       {item.record_id && (
         <Text style={styles.recordId}>Record ID: {item.record_id}</Text>
       )}
-    </View>
+    </TouchableOpacity>
   )
   const renderFilters = () => (
     <View style={styles.filtersContainer}>

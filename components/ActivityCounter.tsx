@@ -74,27 +74,28 @@ const ActivityCounter: React.FC<ActivityCounterProps> = ({
     }
   }, [user?.id])
   const handlePress = async () => {
-    if (onPress) {
-      onPress()
-    } else if (navigation) {
-      navigation.navigate('ActivityLogs')
-    }
     // Mark activities as viewed when user accesses them
     if (newActivityCount > 0) {
       try {
         console.log('Marking activity logs as viewed...')
         const success = await activityLogService.markActivityLogsAsViewed()
         if (success) {
-          setNewActivityCount(0)
+          // Refetch count from DB to ensure badge is correct
+          await fetchNewActivityCount()
           console.log('Activity logs marked as viewed successfully')
         } else {
           console.error('Failed to mark activity logs as viewed')
         }
       } catch (error) {
         console.error('Error marking activity logs as viewed:', error)
-        // Still reset the local counter for better UX
-        setNewActivityCount(0)
+        // Refetch anyway to sync badge
+        await fetchNewActivityCount()
       }
+    }
+    
+    // Call the provided onPress callback if it exists
+    if (onPress) {
+      await onPress()
     }
   }
   return (
@@ -115,7 +116,6 @@ const ActivityCounter: React.FC<ActivityCounterProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
-    padding: 8,
   },
   badge: {
     position: 'absolute',

@@ -1,13 +1,13 @@
-import { Alert, StyleSheet, Text, TextInput, View, ImageBackground, useWindowDimensions, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, View, ImageBackground, useWindowDimensions, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 interface SignUpProps {
-  onBackToLogin: () => void;
+  onBackToLogin: () => void
 }
 
 const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useWindowDimensions()
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -53,6 +53,11 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email,
         password: password,
+        options: {
+          data: {
+            username: username,
+          }
+        }
       })
 
       if (authError) {
@@ -61,53 +66,65 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
         return
       }
 
-      // If user was created successfully, create their profile
+      // If user was created successfully, wait for auth to propagate and create profile
       if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: authData.user.id,
-              username: username,
-              email: email,
-            }
-          ])
+        // Wait for the auth user to be properly created in the database
+        await new Promise(resolve => setTimeout(resolve, 2000))
 
-        if (profileError) {
-          console.error('Profile creation error:', profileError)
+        try {
+          // Create profile with default role 'user'
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: authData.user.id,
+                username: username,
+                email: email,
+                role: 'user', // Default role for new users
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              }
+            ])
+
+          if (profileError) {
+            console.error('Profile creation error:', profileError)
+
+            // If there's still an error, try upsert approach
+            const { error: upsertError } = await supabase
+              .from('profiles')
+              .upsert([
+                {
+                  id: authData.user.id,
+                  username: username,
+                  email: email,
+                  role: 'user',
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                }
+              ], {
+                onConflict: 'id'
+              })
+
+            if (upsertError) {
+              console.error('Profile upsert error:', upsertError)
+              Alert.alert('Profile Creation Error', 'Account created but profile setup failed. Please contact support.')
+            }
+          }
+
           Alert.alert(
-            'Account Created',
-            'Your account was created but there was an issue setting up your profile. You can update it later in settings.'
+            'Success!',
+            'Account created successfully! Please check your email to verify your account before signing in.',
+            [{ text: 'OK', onPress: onBackToLogin }]
           )
-        }
-      }
 
-      if (authData.user && !authData.user.email_confirmed_at) {
-        Alert.alert(
-          'Check your email',
-          `A confirmation link has been sent to ${email}. Please check your email and click the link to confirm your account.`,
-          [
-            {
-              text: 'OK',
-              onPress: () => onBackToLogin()
-            }
-          ]
-        )
-      } else {
-        Alert.alert(
-          'Success',
-          'Account created successfully!',
-          [
-            {
-              text: 'OK',
-              onPress: () => onBackToLogin()
-            }
-          ]
-        )
+        } catch (profileErr) {
+          console.error('Profile creation failed:', profileErr)
+          Alert.alert('Profile Error', 'Account created but profile setup failed. Please try logging in.')
+        }
       }
     } catch (error) {
       console.error('Signup error:', error)
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.')
+      Alert.alert('Error', 'Something went wrong during signup. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -115,12 +132,16 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
 
   return (
     <View style={[styles.container, { width, height }]}>
-      <ImageBackground source={require('../assets/images/auth/background_login.png')} style={[styles.image, { width, height }]} resizeMode="cover">
+      <ImageBackground
+        source={require('../assets/images/auth/background_login.png')}
+        style={[styles.image, { width, height }]}
+        resizeMode="cover"
+      >
         <View style={styles.overlay} />
 
         <View style={styles.header}>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Sign up to get started</Text>
+          <Text style={styles.subtitle}>Join our farming community</Text>
         </View>
 
         <View style={[styles.verticallySpaced, styles.mt20]}>
@@ -139,7 +160,7 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
           <Text style={styles.label}>Username</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter your username"
+            placeholder="Username"
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
@@ -162,7 +183,7 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
           <Text style={styles.label}>Confirm Password</Text>
           <TextInput
             style={styles.input}
-            placeholder="Re-enter your password"
+            placeholder="Confirm Password"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
@@ -171,26 +192,29 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
         </View>
 
         <View style={[styles.verticallySpaced, styles.horizontalSpaced]}>
-           <TouchableOpacity style={styles.button} onPress={signUpWithEmail} disabled={loading}>
-                      <Text style={styles.buttonText}>
-                        {loading ? 'Creating Account...' : 'Sign Up'}
-                      </Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={signUpWithEmail}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? 'Creating Account...' : 'Sign Up'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={[styles.verticallySpaced, styles.horizontalSpaced]}>
-           <TouchableOpacity style={styles.backButton} onPress={onBackToLogin} disabled={loading}>
-                      <Text style={styles.backButtonText}>
-                        Back to Login
-                      </Text>
-            </TouchableOpacity>
+        <View style={styles.signupSection}>
+          <Text style={styles.signupText}>Already have an account?</Text>
+          <TouchableOpacity onPress={onBackToLogin}>
+            <Text style={styles.signupLink}>Sign In</Text>
+          </TouchableOpacity>
         </View>
       </ImageBackground>
     </View>
   )
-};
+}
 
-export default SignUp;
+export default SignUp
 
 const styles = StyleSheet.create({
   container: {
@@ -212,64 +236,72 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   title: {
-    color: 'white',
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 5,
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 8,
   },
   subtitle: {
-    color: 'white',
     fontSize: 16,
-    opacity: 0.8,
+    color: '#e0e0e0',
+    textAlign: 'center',
   },
   verticallySpaced: {
-    marginVertical: 10,
-  },
-  horizontalSpaced: {
-      marginTop: 20,
-      marginHorizontal: 100,
-  },
-  button: {
-    backgroundColor: '#7DDA58',
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    borderRadius: 25,
-  },
-  backButton: {
-    backgroundColor: 'transparent',
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: '#7DDA58',
-  },
-  input: {
-    backgroundColor: 'white',
-    marginHorizontal: 30,
-    padding: 10,
-    borderRadius: 8,
-    fontSize: 16,
-  },
-  label: {
-    color: 'white',
-    marginBottom: 5,
-    marginLeft: 30,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  backButtonText: {
-    color: '#7DDA58',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+    paddingTop: 4,
+    paddingBottom: 4,
+    alignSelf: 'stretch',
   },
   mt20: {
     marginTop: 20,
-  }
+  },
+  horizontalSpaced: {
+    paddingHorizontal: 16,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#333',
+  },
+  button: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  buttonDisabled: {
+    backgroundColor: '#8BC34A',
+    opacity: 0.7,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  signupSection: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  signupText: {
+    color: '#e0e0e0',
+    fontSize: 16,
+  },
+  signupLink: {
+    color: '#4CAF50',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 5,
+  },
 })

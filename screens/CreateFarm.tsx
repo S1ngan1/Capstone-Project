@@ -1,24 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Alert,
   Image,
   ScrollView,
   ActivityIndicator,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { Picker } from '@react-native-picker/picker';
-import { useNavigation } from '@react-navigation/native';
-import { supabase } from '../lib/supabase';
-import { useAuthContext } from '../context/AuthContext';
-
-
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import * as ImagePicker from 'expo-image-picker'
+import { Picker } from '@react-native-picker/picker'
+import { useNavigation } from '@react-navigation/native'
+import { supabase } from '../lib/supabase'
+import { useAuthContext } from '../context/AuthContext'
+import { useDialog } from '../context/DialogContext'
 const VIETNAM_LOCATIONS = [
   'Ho Chi Minh City',
   'Ha Noi',
@@ -83,30 +81,26 @@ const VIETNAM_LOCATIONS = [
   'Vinh Long',
   'Vinh Phuc',
   'Yen Bai'
-];
-
+]
 const CreateFarm = () => {
-  const navigation = useNavigation();
-  const { session } = useAuthContext();
-  
-  const [farmName, setFarmName] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('');
+  const navigation = useNavigation()
+  const { session } = useAuthContext()
+  const { showDialog } = useDialog()
+  const [farmName, setFarmName] = useState('')
+  const [selectedLocation, setSelectedLocation] = useState('')
   // Fix 1: Properly type the selectedImage state
-  const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [imageUploading, setImageUploading] = useState(false);
-
+  const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [imageUploading, setImageUploading] = useState(false)
   useEffect(() => {
-    requestPermissions();
-  }, []);
-
+    requestPermissions()
+  }, [])
   const requestPermissions = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Please grant permission to access your photos');
+      showDialog('Permission needed', 'Please grant permission to access your photos')
     }
-  };
-
+  }
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -114,59 +108,50 @@ const CreateFarm = () => {
         allowsEditing: true,
         aspect: [16, 9],
         quality: 0.8,
-      });
-
+      })
       if (!result.canceled && result.assets[0]) {
-        setSelectedImage(result.assets[0]);
+        setSelectedImage(result.assets[0])
       }
     } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to pick image');
+      console.error('Error picking image:', error)
+      showDialog('Error', 'Failed to pick image')
     }
-  };
-
+  }
   // Fix 2: Properly type the imageUri parameter
   const uploadImageToSupabase = async (imageUri: string): Promise<string> => {
     try {
-      setImageUploading(true);
-      
+      setImageUploading(true)
       // Create form data for image upload
-      const formData = new FormData();
-      const fileName = `farm-${Date.now()}.jpg`;
-      
+      const formData = new FormData()
+      const fileName = `farm-${Date.now()}.jpg`
       formData.append('file', {
         uri: imageUri,
         type: 'image/jpeg',
         name: fileName,
-      } as any); // Note: FormData typing can be tricky with React Native
-
+      } as any) // Note: FormData typing can be tricky with React Native
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
         .from('farm-photos')
         .upload(`photos/${fileName}`, formData, {
           cacheControl: '3600',
           upsert: false,
-        });
-
+        })
       if (error) {
-        console.error('Upload error:', error);
-        throw error;
+        console.error('Upload error:', error)
+        throw error
       }
-
       // Get public URL
       const { data: publicData } = supabase.storage
         .from('farm-photos')
-        .getPublicUrl(`photos/${fileName}`);
-
-      return publicData.publicUrl;
+        .getPublicUrl(`photos/${fileName}`)
+      return publicData.publicUrl
     } catch (error) {
-      console.error('Error uploading image:', error);
-      throw error;
+      console.error('Error uploading image:', error)
+      throw error
     } finally {
-      setImageUploading(false);
+      setImageUploading(false)
     }
-  };
-
+  }
   const createNotification = async (farmName: string): Promise<void> => {
     try {
       const { error } = await supabase
@@ -176,39 +161,32 @@ const CreateFarm = () => {
           message: `Farm "${farmName}" created, waiting for approval`,
           type: 'farm_creation',
           created_at: new Date().toISOString(),
-        });
-
+        })
       if (error) {
-        console.error('Error creating notification:', error);
+        console.error('Error creating notification:', error)
       }
     } catch (error) {
-      console.error('Error in createNotification:', error);
+      console.error('Error in createNotification:', error)
     }
-  };
-
+  }
   const handleCreateFarm = async () => {
     // Validation
     if (!farmName.trim()) {
-      Alert.alert('Error', 'Please enter a farm name');
-      return;
+      showDialog('Error', 'Please enter a farm name')
+      return
     }
-
     if (!selectedLocation) {
-      Alert.alert('Error', 'Please select a location');
-      return;
+      showDialog('Error', 'Please select a location')
+      return
     }
-
     if (!selectedImage) {
-      Alert.alert('Error', 'Please select an image for your farm');
-      return;
+      showDialog('Error', 'Please select an image for your farm')
+      return
     }
-
     try {
-      setLoading(true);
-
+      setLoading(true)
       // Fix 3: Use type assertion or null check for selectedImage.uri
-      const imageUrl = await uploadImageToSupabase(selectedImage.uri);
-
+      const imageUrl = await uploadImageToSupabase(selectedImage.uri)
       // Create farm request (pending approval)
       const { data, error } = await supabase
         .from('farm_requests') // You'll need to create this table
@@ -219,50 +197,45 @@ const CreateFarm = () => {
           farm_image: imageUrl,
           status: 'pending',
           created_at: new Date().toISOString(),
-        });
-
+        })
       if (error) {
-        console.error('Error creating farm request:', error);
-        Alert.alert('Error', 'Failed to submit farm request');
-        return;
+        console.error('Error creating farm request:', error)
+        showDialog('Error', 'Failed to submit farm request')
+        return
       }
-
       // Create notification
-      await createNotification(farmName.trim());
-
+      await createNotification(farmName.trim())
       // Success alert
-      Alert.alert(
-        'Success!', 
+      showDialog(
+        'Success!',
         'Your farm request has been submitted successfully. You will be notified once it\'s approved.',
         [
           {
             text: 'OK',
             onPress: () => {
               // Reset form
-              setFarmName('');
-              setSelectedLocation('');
-              setSelectedImage(null);
+              setFarmName('')
+              setSelectedLocation('')
+              setSelectedImage(null)
               // Navigate back
-              navigation.goBack();
+              navigation.goBack()
             }
           }
         ]
-      );
-
+      )
     } catch (error) {
-      console.error('Error in handleCreateFarm:', error);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      console.error('Error in handleCreateFarm:', error)
+      showDialog('Error', 'Something went wrong. Please try again.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
+  }
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()} 
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="#333" />
@@ -270,7 +243,6 @@ const CreateFarm = () => {
         <Text style={styles.headerTitle}>Add New Farm</Text>
         <View style={styles.placeholder} />
       </View>
-
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <LinearGradient
           colors={['#e7fbe8ff', '#cdffcfff']}
@@ -289,7 +261,6 @@ const CreateFarm = () => {
               maxLength={50}
             />
           </View>
-
           {/* Location Picker */}
           <View style={styles.inputSection}>
             <Text style={styles.label}>Location *</Text>
@@ -301,21 +272,20 @@ const CreateFarm = () => {
               >
                 <Picker.Item label="Select a location" value="" />
                 {VIETNAM_LOCATIONS.map((location) => (
-                  <Picker.Item 
-                    key={location} 
-                    label={location} 
-                    value={location} 
+                  <Picker.Item
+                    key={location}
+                    label={location}
+                    value={location}
                   />
                 ))}
               </Picker>
             </View>
           </View>
-
           {/* Image Upload */}
           <View style={styles.inputSection}>
             <Text style={styles.label}>Farm Image *</Text>
-            <TouchableOpacity 
-              style={styles.imageUploadButton} 
+            <TouchableOpacity
+              style={styles.imageUploadButton}
               onPress={pickImage}
               disabled={imageUploading}
             >
@@ -334,7 +304,6 @@ const CreateFarm = () => {
               )}
             </TouchableOpacity>
           </View>
-
           {/* Create Button */}
           <TouchableOpacity
             style={[styles.createButton, loading && styles.createButtonDisabled]}
@@ -350,16 +319,14 @@ const CreateFarm = () => {
               </>
             )}
           </TouchableOpacity>
-
           <Text style={styles.disclaimerText}>
             * Your farm request will be reviewed by administrators before approval
           </Text>
         </LinearGradient>
       </ScrollView>
     </View>
-  );
-};
-
+  )
+}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -489,6 +456,5 @@ const styles = StyleSheet.create({
     marginTop: 15,
     fontStyle: 'italic',
   },
-});
-
-export default CreateFarm;
+})
+export default CreateFarm

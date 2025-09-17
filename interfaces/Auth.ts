@@ -1,6 +1,6 @@
 
 export interface ConfirmDialogProps {
-  visible: boolean
-  onConfirm: () => void
-  onCancel: () => void
+  visible: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
 }
