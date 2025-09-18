@@ -140,6 +140,12 @@ const FarmDetails = () => {
         // Get latest readings for each sensor from sensor_data table
         const sensorsWithReadings: Sensor[] = []
         for (const sensor of sensorTableData) {
+          // Skip sensors that don't have a valid sensor_id
+          if (!sensor.sensor_id) {
+            console.warn('Skipping sensor with missing sensor_id:', sensor)
+            continue
+          }
+
           // Fetch latest reading for this sensor
           const { data: latestReading, error: readingError } = await supabase
             .from('sensor_data')
@@ -148,8 +154,9 @@ const FarmDetails = () => {
             .order('created_at', { ascending: false })
             .limit(1)
             .single()
+
           sensorsWithReadings.push({
-            id: sensor.sensor_id,
+            id: sensor.sensor_id, // This is now guaranteed to exist
             name: sensor.sensor_name || 'Unknown Sensor',
             type: sensor.sensor_type || 'unknown',
             status: (sensor.status as 'active' | 'inactive' | 'maintenance') || 'active',
@@ -201,7 +208,14 @@ const FarmDetails = () => {
   const renderSensorItem = ({ item }: { item: Sensor }) => (
     <TouchableOpacity
       style={styles.sensorCard}
-      onPress={() => navigation.navigate('SensorDetail', { sensorId: item.id })}
+      onPress={() => {
+        // Add validation to ensure sensorId exists before navigation
+        if (item.id) {
+          navigation.navigate('SensorDetail', { sensorId: item.id })
+        } else {
+          console.warn('Cannot navigate to sensor detail: sensor ID is missing')
+        }
+      }}
       activeOpacity={0.8}
     >
       <View style={styles.sensorHeader}>

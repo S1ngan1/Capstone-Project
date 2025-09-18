@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "testAppProject",
-    "slug": "testAppProject",
+    "name": "Smart Farm Assistant",
+    "slug": "smart-farm-assistant",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -20,10 +20,25 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.smartfarm.assistant",
+      "versionCode": 1,
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d7e250a0-de98-49b5-b2ef-e785cc25e276"
+      }
+    },
+    "owner": "iniguyenhai"
   }
 }

@@ -57,31 +57,37 @@ export const TutorialManager: React.FC<TutorialManagerProps> = ({ children }) =>
     try {
       if (!session?.user?.id) return false
 
-      // Check if user has any farms
-      const { data: farms, error: farmsError } = await supabase
-        .from('farms')
-        .select('id')
-        .eq('created_by', session.user.id)
-        .limit(1)
+      // Check if user has any farms through farm_users relationship
+      const { data: userFarms, error: farmsError } = await supabase
+        .from('farm_users')
+        .select('farm_id')
+        .eq('user_id', session.user.id)
 
       if (farmsError) {
         console.error('Error checking farms:', farmsError)
         return false
       }
 
-      // Check if user has any sensors
-      const { data: sensors, error: sensorsError } = await supabase
-        .from('sensors')
-        .select('id')
-        .eq('user_id', session.user.id)
-        .limit(1)
+      // If user has farms, that's enough data
+      if (userFarms && userFarms.length > 0) {
+        // Also check if any of these farms have sensors
+        const farmIds = userFarms.map(farm => farm.farm_id)
 
-      if (sensorsError) {
-        console.error('Error checking sensors:', sensorsError)
-        return false
+        const { data: sensors, error: sensorsError } = await supabase
+          .from('sensor')
+          .select('sensor_id')
+          .in('farm_id', farmIds)
+          .limit(1)
+
+        if (sensorsError) {
+          console.error('Error checking sensors:', sensorsError)
+        }
+
+        // Return true if user has farms (regardless of sensors)
+        return true
       }
 
-      return (farms && farms.length > 0) || (sensors && sensors.length > 0)
+      return false
     } catch (error) {
       console.error('Error checking user data:', error)
       return false
