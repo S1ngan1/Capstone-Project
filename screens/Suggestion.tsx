@@ -9,6 +9,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -20,6 +21,19 @@ import { useAuthContext } from '../context/AuthContext'
 import { useDialog } from '../context/DialogContext'
 import { RootStackParamList } from '../App'
 import { AIFarmingSpecialist, ChatMessage } from '../services/aiChatService'
+
+const { width, height } = Dimensions.get('window')
+
+// Responsive calculations for AI Chat
+const isSmallDevice = width < 350 || height < 600
+const isMediumDevice = width < 400 || height < 700
+const responsivePadding = isSmallDevice ? 12 : 16
+const responsiveMargin = isSmallDevice ? 8 : 12
+const responsiveFontSize = {
+  title: isSmallDevice ? 18 : isMediumDevice ? 20 : 22,
+  subtitle: isSmallDevice ? 14 : 16,
+  body: isSmallDevice ? 12 : 14,
+}
 
 const Suggestion: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>()
@@ -192,104 +206,105 @@ What farming challenge would you like to tackle first?`,
 
   if (isInitializing) {
     return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#e7fbe8ff', '#cdffcfff']}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={styles.gradientContainer}
+        >
+          <SafeAreaView style={styles.safeArea}>
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <Ionicons name="arrow-back" size={24} color="#333" />
+              </TouchableOpacity>
+              <View style={styles.headerContent}>
+                <Text style={styles.headerTitle}>AI Farming Assistant</Text>
+                <Text style={styles.headerSubtitle}>Dr. AgriBot</Text>
+              </View>
+              <TouchableOpacity onPress={clearConversation} style={styles.clearButton}>
+                <Ionicons name="refresh" size={24} color="#4CAF50" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.loadingContainer}>
+              <View style={styles.loadingContent}>
+                <Ionicons name="leaf" size={48} color="#4CAF50" />
+                <Text style={styles.loadingText}>Initializing AI Specialist...</Text>
+                <Text style={styles.loadingSubtext}>Loading your farm data</Text>
+              </View>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+        <BottomNavigation />
+      </View>
+    )
+  }
+
+  return (
+    <View style={styles.container}>
       <LinearGradient
         colors={['#e7fbe8ff', '#cdffcfff']}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
-        style={styles.container}
+        style={styles.gradientContainer}
       >
         <SafeAreaView style={styles.safeArea}>
-          {/* Fixed Header with proper padding */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
               <Ionicons name="arrow-back" size={24} color="#333" />
             </TouchableOpacity>
             <View style={styles.headerContent}>
               <Text style={styles.headerTitle}>AI Farming Assistant</Text>
-              <Text style={styles.headerSubtitle}>Dr. AgriBot</Text>
+              <Text style={styles.headerSubtitle}>Dr. AgriBot • {userFarms.length > 0 ? `${userFarms.length} farms` : 'Environment Specialist'}</Text>
             </View>
             <TouchableOpacity onPress={clearConversation} style={styles.clearButton}>
               <Ionicons name="refresh" size={24} color="#4CAF50" />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.loadingContainer}>
-            <View style={styles.loadingContent}>
-              <Ionicons name="leaf" size={48} color="#4CAF50" />
-              <Text style={styles.loadingText}>Initializing AI Specialist...</Text>
-              <Text style={styles.loadingSubtext}>Loading your farm data</Text>
-            </View>
+          <View style={styles.chatContentContainer}>
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.messagesContainer}
+              contentContainerStyle={styles.messagesContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {messages.map((message) => (
+                <ChatBubble
+                  key={message.id}
+                  message={message}
+                  onActionPress={handleActionPress}
+                />
+              ))}
+              <View style={styles.bottomSpacer} />
+            </ScrollView>
+
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={styles.inputContainer}
+            >
+              <ChatInput
+                onSendMessage={handleSendMessage}
+                isLoading={isLoading}
+                farms={userFarms}
+                placeholder="Ask me anything about farming..."
+              />
+            </KeyboardAvoidingView>
           </View>
         </SafeAreaView>
         <BottomNavigation />
       </LinearGradient>
-    )
-  }
-
-  return (
-    <LinearGradient
-      colors={['#e7fbe8ff', '#cdffcfff']}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1 }}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.safeArea}>
-        {/* Fixed Header with proper status bar padding */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>AI Farming Assistant</Text>
-            <Text style={styles.headerSubtitle}>Dr. AgriBot • {userFarms.length > 0 ? `${userFarms.length} farms` : 'Environment Specialist'}</Text>
-          </View>
-          <TouchableOpacity onPress={clearConversation} style={styles.clearButton}>
-            <Ionicons name="refresh" size={24} color="#4CAF50" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Chat Messages */}
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.messagesContainer}
-          contentContainerStyle={styles.messagesContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {messages.map((message) => (
-            <ChatBubble
-              key={message.id}
-              message={message}
-              onActionPress={handleActionPress}
-            />
-          ))}
-
-          {isLoading && (
-            <View style={styles.typingIndicator}>
-              <Text style={styles.typingText}>Dr. AgriBot is thinking...</Text>
-              <View style={styles.typingDots}>
-                <View style={[styles.dot, styles.dot1]} />
-                <View style={[styles.dot, styles.dot2]} />
-                <View style={[styles.dot, styles.dot3]} />
-              </View>
-            </View>
-          )}
-        </ScrollView>
-
-        {/* Chat Input */}
-        <ChatInput
-          onSendMessage={handleSendMessage}
-          isLoading={isLoading}
-          userFarms={userFarms}
-          placeholder="Ask about farming, weather, soil conditions, or crop management..."
-        />
-      </SafeAreaView>
-      <BottomNavigation />
-    </LinearGradient>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  gradientContainer: {
     flex: 1,
   },
   safeArea: {
@@ -298,46 +313,74 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: responsivePadding,
     paddingVertical: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(76, 175, 80, 0.2)',
-    // Add proper padding for status bar
-    paddingTop: Platform.OS === 'ios' ? 12 : 16,
+    borderBottomColor: 'rgba(76, 175, 80, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   backButton: {
     padding: 8,
+    marginRight: 12,
+    borderRadius: 20,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
   },
   headerContent: {
     flex: 1,
-    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: responsiveFontSize.title,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 2,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: responsiveFontSize.body,
     color: '#666',
-    marginTop: 2,
   },
   clearButton: {
     padding: 8,
+    marginLeft: 12,
+    borderRadius: 20,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+  },
+  chatContentContainer: {
+    flex: 1,
+    paddingBottom: isSmallDevice ? 60 : isMediumDevice ? 65 : 70, // Reduced from 85-95 to match new nav height
   },
   messagesContainer: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: responsivePadding,
   },
   messagesContent: {
-    paddingTop: 16,
+    paddingTop: responsiveMargin,
     paddingBottom: 20,
+  },
+  inputContainer: {
+    paddingHorizontal: responsivePadding,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(76, 175, 80, 0.1)',
+    position: 'absolute',
+    bottom: isSmallDevice ? 60 : isMediumDevice ? 65 : 70, // Reduced from 85-95 to match new nav height
+    left: 0,
+    right: 0,
+  },
+  bottomSpacer: {
+    height: isSmallDevice ? 95 : isMediumDevice ? 100 : 105, // Reduced from 120-140
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 40,
   },
   loadingContent: {
     alignItems: 'center',
@@ -347,46 +390,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#4CAF50',
     marginTop: 16,
+    marginBottom: 8,
   },
   loadingSubtext: {
     fontSize: 14,
     color: '#666',
-    marginTop: 8,
-  },
-  typingIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 20,
-    marginVertical: 8,
-    alignSelf: 'flex-start',
-  },
-  typingText: {
-    fontSize: 14,
-    color: '#4CAF50',
-    marginRight: 8,
-  },
-  typingDots: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#4CAF50',
-    marginHorizontal: 2,
-  },
-  dot1: {
-    opacity: 0.4,
-  },
-  dot2: {
-    opacity: 0.7,
-  },
-  dot3: {
-    opacity: 1,
+    textAlign: 'center',
   },
 })
 

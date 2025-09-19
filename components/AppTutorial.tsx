@@ -7,32 +7,28 @@ import {
   Modal,
   ScrollView,
   Dimensions,
+  SafeAreaView,
   Animated,
-  BackHandler,
+  StatusBar,
 } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Ionicons } from '@expo/vector-icons'
+import { useTutorial } from '../context/TutorialContext'
+import { useNavigation } from '@react-navigation/native'
 
 const { width, height } = Dimensions.get('window')
+const isSmallDevice = width < 350 || height < 600
+const isMediumDevice = width >= 350 && width <= 400
 
 interface TutorialStep {
   id: string
   title: string
   description: string
   icon: string
-  screen: string
   keyFeatures: string[]
-  nextAction?: string
+  screen?: string
   showSeeInApp?: boolean
-}
-
-interface AppTutorialProps {
-  visible: boolean
-  onClose: () => void
-  onNavigateToDemo?: (screen: string) => void
-  demoMode?: boolean
-  userHasData?: boolean
+  gradient: string[]
 }
 
 const tutorialSteps: TutorialStep[] = [
@@ -41,14 +37,13 @@ const tutorialSteps: TutorialStep[] = [
     title: '🌾 Welcome to Smart Farm Assistant',
     description: 'Your AI-powered farming companion! Let me show you how to get the most out of our app.',
     icon: 'leaf',
-    screen: 'Home',
+    gradient: ['#4CAF50', '#45A049', '#388E3C'],
     keyFeatures: [
       'AI-powered farming recommendations',
       'Real-time sensor monitoring',
       'Weather-based insights',
       'Farm management tools'
     ],
-    nextAction: 'Let\'s start by exploring the app!',
     showSeeInApp: false
   },
   {
@@ -57,13 +52,13 @@ const tutorialSteps: TutorialStep[] = [
     description: 'First, you\'ll want to set up your farms and add sensors to monitor your crops.',
     icon: 'home',
     screen: 'Home',
+    gradient: ['#2196F3', '#1976D2', '#1565C0'],
     keyFeatures: [
       'Create and manage multiple farms',
       'Add farm location and details',
-      'Invite team members',
-      'Set up farm-specific settings'
+      'View your farm dashboard',
+      'Monitor all your farms in one place'
     ],
-    nextAction: 'This is your main dashboard',
     showSeeInApp: true
   },
   {
@@ -72,355 +67,379 @@ const tutorialSteps: TutorialStep[] = [
     description: 'Each farm has detailed information including sensor data, weather, and AI suggestions.',
     icon: 'analytics',
     screen: 'FarmDetails',
+    gradient: ['#FF9800', '#F57C00', '#E65100'],
     keyFeatures: [
       'Real-time sensor readings',
       'Weather forecasts',
       'AI-powered suggestions',
       'Historical data charts'
     ],
-    nextAction: 'View detailed farm information',
     showSeeInApp: true
   },
   {
     id: 'ai-chat',
     title: '🤖 AI Farming Assistant',
     description: 'Chat with our AI specialist for personalized farming advice based on your farm data.',
-    icon: 'chatbubbles',
+    icon: 'chatbubble-ellipses',
     screen: 'Suggestion',
+    gradient: ['#9C27B0', '#7B1FA2', '#6A1B9A'],
     keyFeatures: [
       'Personalized farming advice',
       'Weather-based recommendations',
       'Crop management tips',
       'Problem-solving assistance'
     ],
-    nextAction: 'Get AI-powered farming advice',
-    showSeeInApp: true
-  },
-  {
-    id: 'sensors',
-    title: '📡 Sensor Monitoring',
-    description: 'Monitor your farm conditions with real-time sensor data and alerts.',
-    icon: 'hardware-chip',
-    screen: 'SensorDetail',
-    keyFeatures: [
-      'Temperature monitoring',
-      'Humidity tracking',
-      'Soil moisture levels',
-      'Custom alert thresholds'
-    ],
-    nextAction: 'Monitor your farm conditions',
     showSeeInApp: true
   },
   {
     id: 'notifications',
-    title: '🔔 Stay Informed',
-    description: 'Receive important alerts about your farms, sensors, and system updates.',
+    title: '🔔 Stay Updated',
+    description: 'Never miss important updates about your farms, sensors, and weather alerts.',
     icon: 'notifications',
     screen: 'Notification',
+    gradient: ['#F44336', '#D32F2F', '#C62828'],
     keyFeatures: [
-      'Real-time farm alerts',
-      'System notifications',
+      'Sensor alerts',
       'Weather warnings',
-      'Sensor status updates'
+      'Farm activity updates',
+      'AI suggestion notifications'
     ],
-    nextAction: 'Check your notifications',
     showSeeInApp: true
   },
   {
-    id: 'complete',
-    title: '✅ You\'re All Set!',
-    description: 'You\'re ready to start using Smart Farm Assistant. Remember, you can always access this tutorial from Settings.',
-    icon: 'checkmark-circle',
-    screen: 'Home',
+    id: 'get-started',
+    title: '🚀 You\'re All Set!',
+    description: 'You\'re ready to start your smart farming journey. Begin by adding your first farm!',
+    icon: 'rocket',
+    gradient: ['#4CAF50', '#45A049', '#388E3C'],
     keyFeatures: [
-      'Start adding your farms',
+      'Add your first farm',
       'Set up sensors',
-      'Chat with AI assistant',
-      'Monitor your crops'
+      'Start monitoring',
+      'Get AI recommendations'
     ],
-    nextAction: 'Happy farming!',
     showSeeInApp: false
   }
 ]
 
-export const AppTutorial: React.FC<AppTutorialProps> = ({
-  visible,
-  onClose,
-  onNavigateToDemo,
-  demoMode = false,
-  userHasData = true
-}) => {
-  const [currentStep, setCurrentStep] = useState(0)
-  const [slideAnimation] = useState(new Animated.Value(0))
-  const [isMinimized, setIsMinimized] = useState(false)
-  const [minimizedAnimation] = useState(new Animated.Value(0))
+const AppTutorial: React.FC = () => {
+  const navigation = useNavigation()
+  const {
+    showTutorial,
+    currentStep,
+    isMinimized,
+    closeTutorial,
+    minimizeTutorial,
+    maximizeTutorial,
+    setCurrentStep,
+    setNavigateToDemo
+  } = useTutorial()
 
+  const [fadeAnim] = useState(new Animated.Value(1))
+
+  // Set up navigation function in context
   useEffect(() => {
-    if (visible) {
-      // Prevent back button from closing tutorial
-      const backAction = () => {
-        return true // This prevents the back action
+    setNavigateToDemo((screen: string) => {
+      // Fix navigation call with proper typing
+      switch (screen) {
+        case 'Home':
+          navigation.navigate('Home' as never)
+          break
+        case 'FarmDetails':
+          // For FarmDetails, we need a farmId parameter, so navigate to Home instead
+          navigation.navigate('Home' as never)
+          break
+        case 'Suggestion':
+          navigation.navigate('Suggestion' as never)
+          break
+        case 'Notification':
+          navigation.navigate('Notification' as never)
+          break
+        default:
+          navigation.navigate('Home' as never)
+          break
       }
-
-      const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
-      return () => backHandler.remove()
-    }
-  }, [visible])
-
-  useEffect(() => {
-    // Animate slide transition
-    Animated.timing(slideAnimation, {
-      toValue: currentStep,
-      duration: 300,
-      useNativeDriver: true,
-    }).start()
-  }, [currentStep])
-
-  useEffect(() => {
-    // Animate minimized state
-    Animated.timing(minimizedAnimation, {
-      toValue: isMinimized ? 1 : 0,
-      duration: 300,
-      useNativeDriver: false,
-    }).start()
-  }, [isMinimized])
+    })
+  }, [navigation, setNavigateToDemo])
 
   const handleNext = () => {
     if (currentStep < tutorialSteps.length - 1) {
+      // Advance to next step
       setCurrentStep(currentStep + 1)
-      setIsMinimized(false) // Expand tutorial when moving to next step
-    } else {
-      onClose()
+
+      // Get the next step
+      const nextStep = tutorialSteps[currentStep + 1]
+
+      // If the next step has a screen, minimize tutorial and navigate
+      if (nextStep.screen) {
+        minimizeTutorial()
+        switch (nextStep.screen) {
+          case 'Home':
+            navigation.navigate('Home' as never)
+            break
+          case 'Suggestion':
+            navigation.navigate('Suggestion' as never)
+            break
+          case 'Notification':
+            navigation.navigate('Notification' as never)
+            break
+          case 'FarmDetails':
+            // For FarmDetails, fallback to Home since we need farmId
+            navigation.navigate('Home' as never)
+            break
+          default:
+            navigation.navigate('Home' as never)
+            break
+        }
+      } else {
+        // If no screen to show, just advance with animation
+        Animated.sequence([
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]).start()
+      }
     }
   }
 
   const handlePrevious = () => {
     if (currentStep > 0) {
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start()
       setCurrentStep(currentStep - 1)
-      setIsMinimized(false) // Expand tutorial when moving to previous step
     }
   }
 
-  const handleSeeInApp = () => {
-    const step = tutorialSteps[currentStep]
-    if (onNavigateToDemo && step.screen) {
-      // Minimize the tutorial instead of hiding it completely
-      setIsMinimized(true)
-      onNavigateToDemo(step.screen)
+  const handleMinimizedNext = () => {
+    if (currentStep < tutorialSteps.length - 1) {
+      setCurrentStep(currentStep + 1)
+
+      // Auto-navigate to the next step's screen if it has one
+      const nextStep = tutorialSteps[currentStep + 1]
+      if (nextStep.screen) {
+        switch (nextStep.screen) {
+          case 'Home':
+            navigation.navigate('Home' as never)
+            break
+          case 'Suggestion':
+            navigation.navigate('Suggestion' as never)
+            break
+          case 'Notification':
+            navigation.navigate('Notification' as never)
+            break
+          case 'FarmDetails':
+            // For FarmDetails, fallback to Home since we need farmId
+            navigation.navigate('Home' as never)
+            break
+          default:
+            break
+        }
+      }
+    } else {
+      // If it's the last step, close the tutorial
+      closeTutorial()
     }
   }
 
-  const handleMinimize = () => {
-    setIsMinimized(!isMinimized)
+  const handleMinimizedPrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1)
+    }
   }
 
   const handleSkip = () => {
-    onClose()
+    closeTutorial()
   }
 
-  if (!visible) return null
+  // Don't render anything if tutorial is not active
+  if (!showTutorial) {
+    return null
+  }
 
   const currentTutorialStep = tutorialSteps[currentStep]
-  const isFirstStep = currentStep === 0
-  const isLastStep = currentStep === tutorialSteps.length - 1
 
-  return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={visible}
-      statusBarTranslucent={true}
-    >
-      {isMinimized ? (
-        // Minimized mode - no backdrop, just floating control
-        <View style={styles.minimizedOverlay}>
-          <LinearGradient
-            colors={['#2196F3', '#42A5F5']}  // Changed from green to blue gradient
-            style={styles.minimizedContainer}
-          >
+  // Render floating minimized bar
+  if (isMinimized) {
+    return (
+      <View style={styles.floatingContainer}>
+        <LinearGradient
+          colors={['#4CAF50', '#45A049']}
+          style={styles.floatingBar}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
+          <TouchableOpacity onPress={maximizeTutorial} style={styles.floatingContent}>
+            <Ionicons name={currentTutorialStep.icon as any} size={20} color="#fff" />
+            <Text style={styles.floatingTitle}>Tutorial: {currentStep + 1}/{tutorialSteps.length}</Text>
+            <Text style={styles.floatingSubtitle} numberOfLines={1}>{currentTutorialStep.title}</Text>
+          </TouchableOpacity>
+
+          <View style={styles.floatingControls}>
             <TouchableOpacity
-              style={styles.minimizedContent}
-              onPress={handleMinimize}
-              activeOpacity={0.8}
+              onPress={handleMinimizedPrevious}
+              style={[styles.floatingButton, currentStep === 0 && styles.disabledFloatingButton]}
+              disabled={currentStep === 0}
             >
-              <Ionicons name={currentTutorialStep.icon as any} size={20} color="#fff" />
-              <Text style={styles.minimizedTitle}>
-                Tutorial Step {currentStep + 1}/{tutorialSteps.length}
-              </Text>
-              <Ionicons name="chevron-up" size={18} color="#fff" />
+              <Ionicons
+                name="chevron-back"
+                size={16}
+                color={currentStep === 0 ? "rgba(255,255,255,0.3)" : "#fff"}
+              />
             </TouchableOpacity>
 
-            <View style={styles.minimizedControls}>
-              {!isFirstStep && (
-                <TouchableOpacity
-                  style={styles.minimizedButton}
-                  onPress={handlePrevious}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="chevron-back" size={14} color="#fff" />
-                </TouchableOpacity>
-              )}
+            <TouchableOpacity onPress={handleMinimizedNext} style={styles.floatingButton}>
+              <Ionicons
+                name={currentStep < tutorialSteps.length - 1 ? "chevron-forward" : "close"}
+                size={16}
+                color="#fff"
+              />
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+      </View>
+    )
+  }
 
-              <TouchableOpacity
-                style={styles.minimizedButton}
-                onPress={handleSkip}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="close" size={14} color="#fff" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.minimizedButton}
-                onPress={handleNext}
-                activeOpacity={0.7}
-              >
-                {isLastStep ? (
-                  <Ionicons name="checkmark" size={14} color="#fff" />
-                ) : (
-                  <Ionicons name="chevron-forward" size={14} color="#fff" />
-                )}
-              </TouchableOpacity>
-            </View>
-          </LinearGradient>
-        </View>
-      ) : (
-        // Full tutorial mode - with backdrop
-        <View style={styles.overlay}>
-          <LinearGradient
-            colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0.9)']}
-            style={styles.backdrop}
-          />
-
+  // Render full tutorial modal
+  return (
+    <Modal
+      visible={showTutorial}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={closeTutorial}
+    >
+      <StatusBar backgroundColor="transparent" translucent />
+      <View style={styles.overlay}>
+        <SafeAreaView style={styles.safeArea}>
           <View style={styles.container}>
-            <ScrollView
-              contentContainerStyle={styles.content}
-              showsVerticalScrollIndicator={false}
+            <LinearGradient
+              colors={currentTutorialStep.gradient}
+              style={styles.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
             >
-              {/* Header with minimize button */}
-              <View style={styles.tutorialHeader}>
-                {/* Progress Indicator */}
+              {/* Header */}
+              <View style={styles.header}>
                 <View style={styles.progressContainer}>
-                  {tutorialSteps.map((_, index) => (
+                  <Text style={styles.stepIndicator}>
+                    {currentStep + 1} / {tutorialSteps.length}
+                  </Text>
+                  <View style={styles.progressBar}>
                     <View
-                      key={index}
                       style={[
-                        styles.progressDot,
-                        index === currentStep && styles.progressDotActive,
-                        index < currentStep && styles.progressDotCompleted
+                        styles.progressFill,
+                        { width: `${((currentStep + 1) / tutorialSteps.length) * 100}%` }
                       ]}
                     />
-                  ))}
-                </View>
-
-                <TouchableOpacity
-                  style={styles.minimizeButton}
-                  onPress={handleMinimize}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="chevron-down" size={20} color="#666" />
-                  <Text style={styles.minimizeText}>Minimize</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Step Counter */}
-              <Text style={styles.stepCounter}>
-                {currentStep + 1} of {tutorialSteps.length}
-              </Text>
-
-              {/* Icon */}
-              <View style={styles.iconContainer}>
-                <Ionicons
-                  name={currentTutorialStep.icon as any}
-                  size={60}
-                  color="#4CAF50"
-                />
-              </View>
-
-              {/* Title */}
-              <Text style={styles.title}>
-                {currentTutorialStep.title}
-              </Text>
-
-              {/* Description */}
-              <Text style={styles.description}>
-                {currentTutorialStep.description}
-              </Text>
-
-              {/* Key Features */}
-              <View style={styles.featuresContainer}>
-                {currentTutorialStep.keyFeatures.map((feature, index) => (
-                  <View key={index} style={styles.featureItem}>
-                    <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-                    <Text style={styles.featureText}>{feature}</Text>
                   </View>
-                ))}
+                </View>
+                <TouchableOpacity onPress={closeTutorial} style={styles.closeButton}>
+                  <Ionicons name="close" size={28} color="#fff" />
+                </TouchableOpacity>
               </View>
 
-              {/* Next Action */}
-              {currentTutorialStep.nextAction && (
-                <Text style={styles.nextAction}>
-                  {currentTutorialStep.nextAction}
-                </Text>
-              )}
-            </ScrollView>
-
-            {/* Action Buttons */}
-            <View style={styles.buttonContainer}>
-              {/* See in App Button */}
-              {currentTutorialStep.showSeeInApp && !isFirstStep && (userHasData || demoMode) && (
-                <TouchableOpacity
-                  style={styles.seeInAppButton}
-                  onPress={handleSeeInApp}
-                  activeOpacity={0.8}
+              {/* Content */}
+              <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
+                <ScrollView
+                  style={styles.content}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.scrollContent}
                 >
-                  <Ionicons name="eye-outline" size={20} color="#2196F3" />
-                  <Text style={styles.seeInAppText}>Explore in App</Text>
-                  <Text style={styles.seeInAppSubtext}>(Tutorial will minimize)</Text>
-                </TouchableOpacity>
-              )}
+                  <View style={styles.iconContainer}>
+                    <View style={styles.iconBackground}>
+                      <Ionicons
+                        name={currentTutorialStep.icon as any}
+                        size={isSmallDevice ? 60 : 70}
+                        color="#fff"
+                      />
+                    </View>
+                  </View>
 
-              <View style={styles.navigationButtons}>
-                {/* Previous Button */}
-                {!isFirstStep && (
+                  <Text style={styles.title}>{currentTutorialStep.title}</Text>
+                  <Text style={styles.description}>{currentTutorialStep.description}</Text>
+
+                  <View style={styles.featuresContainer}>
+                    <Text style={styles.featuresTitle}>✨ Key Features</Text>
+                    <View style={styles.featuresGrid}>
+                      {currentTutorialStep.keyFeatures.map((feature, index) => (
+                        <View key={index} style={styles.featureItem}>
+                          <View style={styles.featureBullet}>
+                            <Ionicons name="checkmark" size={12} color="#fff" />
+                          </View>
+                          <Text style={styles.featureText}>{feature}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                </ScrollView>
+              </Animated.View>
+
+              {/* Navigation Buttons */}
+              <View style={styles.buttonContainer}>
+                <View style={styles.navigationRow}>
                   <TouchableOpacity
-                    style={styles.previousButton}
+                    style={[
+                      styles.navButton,
+                      styles.previousButton,
+                      currentStep === 0 && styles.disabledButton
+                    ]}
                     onPress={handlePrevious}
-                    activeOpacity={0.7}
+                    disabled={currentStep === 0}
                   >
-                    <Ionicons name="chevron-back" size={20} color="#666" />
-                    <Text style={styles.previousButtonText}>Previous</Text>
+                    <Ionicons
+                      name="chevron-back"
+                      size={16}
+                      color={currentStep === 0 ? "rgba(255,255,255,0.3)" : "#fff"}
+                    />
+                    <Text style={[
+                      styles.navButtonText,
+                      currentStep === 0 && styles.disabledText
+                    ]}>
+                      Previous
+                    </Text>
                   </TouchableOpacity>
-                )}
 
-                {/* Skip Button */}
-                {!isLastStep && (
-                  <TouchableOpacity
-                    style={styles.skipButton}
-                    onPress={handleSkip}
-                    activeOpacity={0.7}
-                  >
+                  <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
                     <Text style={styles.skipButtonText}>Skip Tutorial</Text>
                   </TouchableOpacity>
-                )}
 
-                {/* Next/Finish Button */}
-                <TouchableOpacity
-                  style={styles.nextButton}
-                  onPress={handleNext}
-                  activeOpacity={0.9}
-                >
-                  <Text style={styles.nextButtonText}>
-                    {isLastStep ? 'Get Started!' : 'Next'}
-                  </Text>
-                  {!isLastStep && (
-                    <Ionicons name="chevron-forward" size={20} color="#fff" />
+                  {currentStep < tutorialSteps.length - 1 ? (
+                    <TouchableOpacity style={[styles.navButton, styles.nextButton]} onPress={handleNext}>
+                      <Text style={styles.navButtonText}>
+                        {tutorialSteps[currentStep + 1].screen ? 'Next & See' : 'Next'}
+                      </Text>
+                      <Ionicons name="chevron-forward" size={16} color="#fff" />
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity style={[styles.navButton, styles.finishButton]} onPress={closeTutorial}>
+                      <Text style={styles.navButtonText}>Get Started</Text>
+                      <Ionicons name="rocket" size={16} color="#fff" />
+                    </TouchableOpacity>
                   )}
-                </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            </LinearGradient>
           </View>
-        </View>
-      )}
+        </SafeAreaView>
+      </View>
     </Modal>
   )
 }
@@ -428,224 +447,255 @@ export const AppTutorial: React.FC<AppTutorialProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  safeArea: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: isSmallDevice ? 20 : 24,
+    paddingVertical: 40,
   },
   container: {
-    backgroundColor: 'white',
+    maxHeight: height * 0.9,
     borderRadius: 20,
-    margin: 20,
-    maxWidth: width * 0.9,
     overflow: 'hidden',
-  },
-  // Minimized tutorial styles
-  minimizedContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 25,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
+    shadowRadius: 20,
+    elevation: 15,
   },
-  minimizedContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  minimizedTitle: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 8,
-    marginRight: 8,
+  gradient: {
     flex: 1,
   },
-  minimizedControls: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  minimizedButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-  },
-  // Full tutorial styles
-  content: {
-    padding: 24,
-    alignItems: 'center',
-  },
-  tutorialHeader: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 16,
   },
   progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flex: 1,
+    marginRight: 16,
   },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#e0e0e0',
-    marginHorizontal: 4,
-  },
-  progressDotActive: {
-    backgroundColor: '#4CAF50',
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  progressDotCompleted: {
-    backgroundColor: '#4CAF50',
-  },
-  minimizeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-    backgroundColor: '#f5f5f5',
-  },
-  minimizeText: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 4,
-  },
-  stepCounter: {
+  stepIndicator: {
+    color: 'rgba(255, 255, 255, 0.9)',
     fontSize: 14,
-    color: '#666',
-    marginBottom: 24,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 2,
+  },
+  closeButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   iconContainer: {
+    alignItems: 'center',
     marginBottom: 24,
+  },
+  iconBackground: {
+    width: isSmallDevice ? 100 : 120,
+    height: isSmallDevice ? 100 : 120,
+    borderRadius: isSmallDevice ? 50 : 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
   title: {
-    fontSize: 24,
+    fontSize: isSmallDevice ? 24 : 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
     textAlign: 'center',
     marginBottom: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   description: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: isSmallDevice ? 16 : 18,
+    color: '#fff',
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 24,
+    lineHeight: isSmallDevice ? 24 : 26,
+    marginBottom: 32,
+    opacity: 0.95,
   },
   featuresContainer: {
-    width: '100%',
     marginBottom: 24,
+  },
+  featuresTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  featuresGrid: {
+    gap: 12,
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: 12,
     paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  featureBullet: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   featureText: {
-    marginLeft: 12,
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    color: '#fff',
+    fontWeight: '500',
     flex: 1,
   },
-  nextAction: {
-    fontSize: 14,
-    color: '#4CAF50',
-    fontWeight: '600',
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
   buttonContainer: {
-    padding: 24,
-    paddingTop: 0,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    paddingTop: 16,
   },
-  seeInAppButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: '#2196F3',
-    marginBottom: 16,
-    backgroundColor: '#f3f8ff',
-  },
-  seeInAppText: {
-    color: '#2196F3',
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  seeInAppSubtext: {
-    color: '#2196F3',
-    fontSize: 12,
-    opacity: 0.7,
-    marginTop: 2,
-  },
-  navigationButtons: {
+  navigationRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 12,
   },
-  previousButton: {
+  navButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    minWidth: isSmallDevice ? 90 : 110,
+    justifyContent: 'center',
+    gap: 6,
   },
-  previousButtonText: {
-    color: '#666',
-    fontSize: 16,
-    marginLeft: 4,
+  previousButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  nextButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  finishButton: {
+    backgroundColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: 'rgba(255, 215, 0, 0.5)',
   },
   skipButton: {
     paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
+  },
+  disabledButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  navButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
   },
   skipButtonText: {
-    color: '#999',
-    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
+    fontWeight: '500',
   },
-  nextButton: {
+  disabledText: {
+    color: 'rgba(255, 255, 255, 0.3)',
+  },
+  // Floating tutorial bar styles
+  floatingContainer: {
+    position: 'absolute',
+    bottom: 100, // Above bottom navigation
+    left: 20,
+    right: 20,
+    zIndex: 1000,
+  },
+  floatingBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4CAF50',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
   },
-  nextButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginRight: 4,
-  },
-  minimizedOverlay: {
+  floatingContent: {
     flex: 1,
-    justifyContent: 'flex-end',
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+  },
+  floatingTitle: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  floatingSubtitle: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    fontWeight: '400',
+    marginLeft: 4,
+    flex: 1,
+  },
+  floatingControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  floatingButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  disabledFloatingButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
 })
+
+export default AppTutorial

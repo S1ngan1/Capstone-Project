@@ -51,83 +51,59 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
     try {
       // First, create the user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email,
+        email: email.trim(),
         password: password,
-        options: {
-          data: {
-            username: username,
-          }
-        }
       })
 
       if (authError) {
-        Alert.alert('Sign Up Error', authError.message)
+        Alert.alert('Registration Error', authError.message)
         setLoading(false)
         return
       }
 
-      // If user was created successfully, wait for auth to propagate and create profile
-      if (authData.user) {
-        // Wait for the auth user to be properly created in the database
-        await new Promise(resolve => setTimeout(resolve, 2000))
-
-        try {
-          // Create profile with default role 'user'
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([
-              {
-                id: authData.user.id,
-                username: username,
-                email: email,
-                role: 'user', // Default role for new users
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }
-            ])
-
-          if (profileError) {
-            console.error('Profile creation error:', profileError)
-
-            // If there's still an error, try upsert approach
-            const { error: upsertError } = await supabase
-              .from('profiles')
-              .upsert([
-                {
-                  id: authData.user.id,
-                  username: username,
-                  email: email,
-                  role: 'user',
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                }
-              ], {
-                onConflict: 'id'
-              })
-
-            if (upsertError) {
-              console.error('Profile upsert error:', upsertError)
-              Alert.alert('Profile Creation Error', 'Account created but profile setup failed. Please contact support.')
-            }
-          }
-
-          Alert.alert(
-            'Success!',
-            'Account created successfully! Please check your email to verify your account before signing in.',
-            [{ text: 'OK', onPress: onBackToLogin }]
-          )
-
-        } catch (profileErr) {
-          console.error('Profile creation failed:', profileErr)
-          Alert.alert('Profile Error', 'Account created but profile setup failed. Please try logging in.')
-        }
+      if (!authData.user) {
+        Alert.alert('Registration Error', 'Failed to create user account')
+        setLoading(false)
+        return
       }
+
+      // Wait a moment to ensure the user is properly created in the auth system
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      // Now create the profile with the user's ID
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id, // Use the auth user's ID
+          username: username.trim(),
+          email: email.trim(),
+          role: 'user', // Default role as requested
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError)
+        Alert.alert(
+          'Profile Creation Error',
+          'Account created but profile setup failed. Please contact support.'
+        )
+        setLoading(false)
+        return
+      }
+
+      Alert.alert(
+        'Success!',
+        'Account created successfully. Please check your email to verify your account.',
+        [{ text: 'OK', onPress: onBackToLogin }]
+      )
+
     } catch (error) {
-      console.error('Signup error:', error)
-      Alert.alert('Error', 'Something went wrong during signup. Please try again.')
-    } finally {
-      setLoading(false)
+      console.error('Registration error:', error)
+      Alert.alert('Registration Error', 'An unexpected error occurred. Please try again.')
     }
+
+    setLoading(false)
   }
 
   return (
@@ -141,7 +117,7 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
 
         <View style={styles.header}>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join our farming community</Text>
+          <Text style={styles.subtitle}>Join Smart Farm Assistant</Text>
         </View>
 
         <View style={[styles.verticallySpaced, styles.mt20]}>
@@ -160,7 +136,7 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
           <Text style={styles.label}>Username</Text>
           <TextInput
             style={styles.input}
-            placeholder="Username"
+            placeholder="Choose a username"
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
@@ -171,7 +147,7 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
           <Text style={styles.label}>Password</Text>
           <TextInput
             style={styles.input}
-            placeholder="Password (min 6 characters)"
+            placeholder="Choose a secure password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -183,7 +159,7 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
           <Text style={styles.label}>Confirm Password</Text>
           <TextInput
             style={styles.input}
-            placeholder="Confirm Password"
+            placeholder="Confirm your password"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
@@ -193,7 +169,7 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
 
         <View style={[styles.verticallySpaced, styles.horizontalSpaced]}>
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={styles.button}
             onPress={signUpWithEmail}
             disabled={loading}
           >
@@ -209,6 +185,7 @@ const SignUp: React.FC<SignUpProps> = ({ onBackToLogin }) => {
             <Text style={styles.signupLink}>Sign In</Text>
           </TouchableOpacity>
         </View>
+
       </ImageBackground>
     </View>
   )
@@ -239,49 +216,59 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     color: '#fff',
-    textAlign: 'center',
     marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#e0e0e0',
-    textAlign: 'center',
+    fontSize: 18,
+    color: '#fff',
+    opacity: 0.9,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   verticallySpaced: {
     paddingTop: 4,
     paddingBottom: 4,
     alignSelf: 'stretch',
   },
+  horizontalSpaced: {
+    paddingHorizontal: 10,
+  },
   mt20: {
     marginTop: 20,
   },
-  horizontalSpaced: {
-    paddingHorizontal: 16,
-  },
   label: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#fff',
     marginBottom: 8,
+    fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 8,
+    padding: 15,
     fontSize: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     color: '#333',
   },
   button: {
     backgroundColor: '#4CAF50',
-    paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 8,
+    paddingVertical: 15,
+    paddingHorizontal: 30,
     alignItems: 'center',
-    marginTop: 20,
-  },
-  buttonDisabled: {
-    backgroundColor: '#8BC34A',
-    opacity: 0.7,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   buttonText: {
     color: '#fff',
@@ -292,16 +279,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 30,
   },
   signupText: {
-    color: '#e0e0e0',
+    color: '#fff',
     fontSize: 16,
+    marginRight: 5,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   signupLink: {
-    color: '#4CAF50',
+    color: '#81C784',
     fontSize: 16,
     fontWeight: 'bold',
-    marginLeft: 5,
+    textDecorationLine: 'underline',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 })

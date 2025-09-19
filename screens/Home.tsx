@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, ActivityIndicator, TextInput, Alert, Modal } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, ActivityIndicator, TextInput, Alert, Modal, Dimensions } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, NavigationProp } from "@react-navigation/native"
@@ -11,12 +11,29 @@ import { useFarmRequests } from '../hooks/useFarmRequests'
 import { supabase } from '../lib/supabase'
 import { RootStackParamList } from '../App'
 import { activityLogService } from '../utils/activityLogService'
+
+const { width, height } = Dimensions.get('window')
+
+// Responsive calculations
+const isSmallDevice = width < 350 || height < 600
+const isMediumDevice = width < 400 || height < 700
+const responsivePadding = isSmallDevice ? 12 : 16
+const responsiveMargin = isSmallDevice ? 8 : 12
+const responsiveFontSize = {
+  title: isSmallDevice ? 18 : isMediumDevice ? 20 : 22,
+  farmName: isSmallDevice ? 16 : 18,
+  location: isSmallDevice ? 12 : 14,
+  sensorValue: isSmallDevice ? 12 : 14,
+  sensorName: isSmallDevice ? 10 : 12,
+}
+
 interface Farm {
     id: string
     name: string
     location?: string
-    address?: string // Add address field
+    address?: string
 }
+
 interface FarmWithRole {
     id: string
     farm_id: string
@@ -24,6 +41,7 @@ interface FarmWithRole {
     farm_role: string
     farms: Farm
 }
+
 interface SensorData {
     type: string
     value: number
@@ -31,9 +49,10 @@ interface SensorData {
     status: 'normal' | 'warning' | 'critical'
     icon: string
     name: string
-    hasSensor: boolean // New field to track if sensor exists
-    hasData: boolean   // New field to track if data exists
+    hasSensor: boolean
+    hasData: boolean
 }
+
 // Separate component for farm cards to properly handle hooks
 const FarmCard: React.FC<{
     item: FarmWithRole
@@ -42,6 +61,7 @@ const FarmCard: React.FC<{
 }> = ({ item, navigation, onFetchSensorData }) => {
     const [farmSensorData, setFarmSensorData] = useState<SensorData[]>([])
     const [sensorLoading, setSensorLoading] = useState(true)
+
     useEffect(() => {
         const loadSensorData = async () => {
             setSensorLoading(true)
@@ -57,6 +77,7 @@ const FarmCard: React.FC<{
         }
         loadSensorData()
     }, [item.farm_id, onFetchSensorData])
+
     const getStatusColor = (status: string): string => {
         switch (status) {
             case 'normal': return '#4CAF50'
@@ -65,23 +86,44 @@ const FarmCard: React.FC<{
             default: return '#666'
         }
     }
+
     const renderSensorPanel = (sensor: SensorData) => (
         <View key={sensor.type} style={styles.sensorPanel}>
             <View style={styles.sensorContent}>
                 <View style={styles.sensorIconValue}>
-                    <Ionicons name={sensor.icon as any} size={14} color={!sensor.hasSensor ? '#999' : !sensor.hasData ? '#FF9800' : getStatusColor(sensor.status)} />
-                    <Text style={[styles.sensorValue, { color: !sensor.hasSensor ? '#999' : !sensor.hasData ? '#FF9800' : getStatusColor(sensor.status) }]}>
+                    <Ionicons
+                        name={sensor.icon as any}
+                        size={isSmallDevice ? 12 : 14}
+                        color={!sensor.hasSensor ? '#999' : !sensor.hasData ? '#FF9800' : getStatusColor(sensor.status)}
+                    />
+                    <Text style={[
+                        styles.sensorValue,
+                        {
+                            color: !sensor.hasSensor ? '#999' : !sensor.hasData ? '#FF9800' : getStatusColor(sensor.status),
+                            fontSize: responsiveFontSize.sensorValue
+                        }
+                    ]}>
                         {!sensor.hasSensor ? 'No sensor' : !sensor.hasData ? 'No data' : sensor.value.toFixed(1)}
                     </Text>
                 </View>
-                <Text style={styles.sensorName} numberOfLines={1}>{sensor.name}</Text>
-                <Text style={styles.sensorUnit}>{sensor.unit}</Text>
+                <Text style={[styles.sensorName, { fontSize: responsiveFontSize.sensorName }]} numberOfLines={1}>
+                    {sensor.name}
+                </Text>
+                <Text style={[styles.sensorUnit, { fontSize: responsiveFontSize.sensorName }]}>
+                    {sensor.unit}
+                </Text>
             </View>
             {sensor.hasSensor && sensor.hasData && (
-                <View style={[styles.statusDot, { backgroundColor: getStatusColor(sensor.status) }]} />
+                <View style={[styles.statusDot, {
+                    backgroundColor: getStatusColor(sensor.status),
+                    width: isSmallDevice ? 6 : 8,
+                    height: isSmallDevice ? 6 : 8,
+                    borderRadius: isSmallDevice ? 3 : 4,
+                }]} />
             )}
         </View>
     )
+
     return (
         <TouchableOpacity
             style={styles.farmCard}
@@ -95,14 +137,23 @@ const FarmCard: React.FC<{
                 {/* Farm Header */}
                 <View style={styles.farmHeader}>
                     <View style={styles.farmInfo}>
-                        <Text style={styles.farmName}>{item.farms.name}</Text>
-                        <Text style={styles.farmLocation}>📍 {item.farms.location || 'No location set'}</Text>
+                        <Text style={[styles.farmName, { fontSize: responsiveFontSize.farmName }]}>
+                            {item.farms.name}
+                        </Text>
+                        <Text style={[styles.farmLocation, { fontSize: responsiveFontSize.location }]}>
+                            📍 {item.farms.location || 'No location set'}
+                        </Text>
                         {item.farms.address && (
-                            <Text style={styles.farmAddress}>🏠 {item.farms.address}</Text>
+                            <Text style={[styles.farmAddress, { fontSize: responsiveFontSize.location }]}>
+                                🏠 {item.farms.address}
+                            </Text>
                         )}
-                        <Text style={styles.farmRole}>Your role: {item.farm_role}</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={24} color="#666" />
+                    <View style={styles.farmRole}>
+                        <Text style={[styles.roleText, { fontSize: responsiveFontSize.location }]}>
+                            {item.farm_role}
+                        </Text>
+                    </View>
                 </View>
                 {/* Weather Widget and Sensor Data - Side by Side Layout */}
                 <View style={styles.dataContainer}>
@@ -135,6 +186,7 @@ const FarmCard: React.FC<{
         </TouchableOpacity>
     )
 }
+
 const Home = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>()
     const { user } = useAuthContext()
@@ -143,8 +195,8 @@ const Home = () => {
     const [username, setUsername] = useState<string>("")
     const [farmsWithRoles, setFarmsWithRoles] = useState<FarmWithRole[]>([])
     const [loading, setLoading] = useState(true)
-    // Only keep Farm Request Modal (remove redundant user requests modal)
     const [showFarmRequestModal, setShowFarmRequestModal] = useState(false)
+
     useEffect(() => {
         const fetchUserData = async () => {
             if (session?.user?.id) {
@@ -165,6 +217,7 @@ const Home = () => {
         }
         fetchUserData()
     }, [session])
+
     const fetchFarms = async () => {
         if (!session?.user?.id) {
             setLoading(false)
@@ -188,25 +241,37 @@ const Home = () => {
                 `)
                 .eq('user_id', session.user.id)
                 .order('id', { ascending: false })
-            if (!error && data) {
-                // Type assertion to fix the farms property structure
-                setFarmsWithRoles(data as unknown as FarmWithRole[])
-            }
+
+            if (error) throw error
+
+            // Sort by farm name on the client side
+            const sortedData = (data || []).sort((a, b) => {
+                const nameA = a.farms?.name?.toLowerCase() || ''
+                const nameB = b.farms?.name?.toLowerCase() || ''
+                return nameA.localeCompare(nameB)
+            })
+
+            setFarmsWithRoles(sortedData)
         } catch (error) {
             console.error('Error fetching farms:', error)
+            setFarmsWithRoles([])
         } finally {
             setLoading(false)
         }
     }
+
     const fetchSensorDataForFarm = async (farmId: string): Promise<SensorData[]> => {
         try {
+            // Define sensor configuration locally
             const sensorTypeMap: { [key: string]: { name: string, icon: string, unit: string } } = {
                 'Electrical Conductivity': { name: 'EC Level', icon: 'flash', unit: 'mS/cm' },
                 'Analog pH Sensor': { name: 'pH Level', icon: 'water', unit: 'pH' },
                 'Capacitive Soil Moisture': { name: 'Soil Moisture', icon: 'leaf', unit: '%' },
                 'Digital Temperature': { name: 'Temperature', icon: 'thermometer', unit: '°C' }
             }
+
             const sensorData: SensorData[] = []
+
             for (const [dbType, config] of Object.entries(sensorTypeMap)) {
                 try {
                     // Get sensors of this type for this farm
@@ -215,8 +280,10 @@ const Home = () => {
                         .select('sensor_id')
                         .eq('sensor_type', dbType)
                         .eq('farm_id', farmId)
+
                     if (!sensorError && sensors && sensors.length > 0) {
                         const sensorIds = sensors.map(s => s.sensor_id)
+
                         // Get latest reading
                         const { data: readings, error: readingError } = await supabase
                             .from('sensor_data')
@@ -224,9 +291,11 @@ const Home = () => {
                             .in('sensor_id', sensorIds)
                             .order('created_at', { ascending: false })
                             .limit(1)
+
                         if (!readingError && readings && readings.length > 0) {
                             const value = readings[0].value
                             let status: 'normal' | 'warning' | 'critical' = 'normal'
+
                             // Determine status based on sensor type and value
                             if (dbType === 'Electrical Conductivity') {
                                 if (value < 1.0 || value > 1.8) status = value < 0.5 ? 'critical' : 'warning'
@@ -237,6 +306,7 @@ const Home = () => {
                             } else if (dbType === 'Digital Temperature') {
                                 if (value < 15 || value > 35) status = value < 10 || value > 40 ? 'critical' : 'warning'
                             }
+
                             sensorData.push({
                                 type: dbType,
                                 value: value,
@@ -245,7 +315,7 @@ const Home = () => {
                                 icon: config.icon,
                                 name: config.name,
                                 hasSensor: true,
-                                hasData: true,
+                                hasData: true
                             })
                         } else {
                             // Sensor exists but no data
@@ -257,11 +327,11 @@ const Home = () => {
                                 icon: config.icon,
                                 name: config.name,
                                 hasSensor: true,
-                                hasData: false,
+                                hasData: false
                             })
                         }
                     } else {
-                        // No sensor of this type found
+                        // No sensor of this type
                         sensorData.push({
                             type: dbType,
                             value: 0,
@@ -270,413 +340,272 @@ const Home = () => {
                             icon: config.icon,
                             name: config.name,
                             hasSensor: false,
-                            hasData: false,
+                            hasData: false
                         })
                     }
                 } catch (error) {
-                    console.error(`Error fetching ${dbType} data:`, error)
+                    console.error(`Error checking sensors for ${dbType}:`, error)
+                    // Add default sensor data on error
+                    sensorData.push({
+                        type: dbType,
+                        value: 0,
+                        unit: config.unit,
+                        status: 'normal',
+                        icon: config.icon,
+                        name: config.name,
+                        hasSensor: false,
+                        hasData: false
+                    })
                 }
             }
+
             return sensorData
         } catch (error) {
             console.error('Error fetching sensor data:', error)
-            return []
+            // Return default sensor data on error
+            return [
+                { type: 'Electrical Conductivity', value: 0, unit: 'mS/cm', status: 'normal', icon: 'flash', name: 'EC Level', hasSensor: false, hasData: false },
+                { type: 'Analog pH Sensor', value: 0, unit: 'pH', status: 'normal', icon: 'water', name: 'pH Level', hasSensor: false, hasData: false },
+                { type: 'Capacitive Soil Moisture', value: 0, unit: '%', status: 'normal', icon: 'leaf', name: 'Soil Moisture', hasSensor: false, hasData: false },
+                { type: 'Digital Temperature', value: 0, unit: '°C', status: 'normal', icon: 'thermometer', name: 'Temperature', hasSensor: false, hasData: false }
+            ]
         }
     }
-    const renderFarmCard = ({ item }: { item: FarmWithRole }) => (
-        <FarmCard
-            item={item}
-            navigation={navigation}
-            onFetchSensorData={fetchSensorDataForFarm}
-        />
-    )
-    // Render end of list indicator
-    const renderListFooter = () => {
-        if (farmsWithRoles.length === 0) return null
+
+    const handleCreateFarmRequest = () => {
+        setShowFarmRequestModal(true)
+    }
+
+    const handleFarmRequestSubmit = async () => {
+        setShowFarmRequestModal(false)
+        // Refresh farms after request is submitted
+        await fetchFarms()
+    }
+
+    if (loading) {
         return (
-            <View style={styles.listEndContainer}>
-                <View style={styles.listEndIndicator}>
-                    <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-                    <Text style={styles.listEndText}>
-                        End of farms ({farmsWithRoles.length} total)
-                    </Text>
-                </View>
-            </View>
-        )
-    }
-    // Render list header with count and request farm button
-    const renderListHeader = () => {
-        if (farmsWithRoles.length === 0) return null
-        return (
-            <View style={styles.listHeaderContainer}>
-                <View style={styles.listHeaderRow}>
-                    <Text style={styles.listHeaderText}>
-                        Your Farms ({farmsWithRoles.length})
-                    </Text>
-                    <TouchableOpacity
-                        style={styles.requestFarmButton}
-                        onPress={() => setShowFarmRequestModal(true)}
-                    >
-                        <Ionicons name="add" size={18} color="#4CAF50" />
-                        <Text style={styles.requestFarmButtonText}>Request Farm</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        )
-    }
-    const handleFarmRequestSuccess = () => {
-        // Refresh farms list in case a pending request was approved
-        fetchFarms()
-    }
-    // Add activity logging for farm operations
-    const logFarmAction = async (action: string, farmData: any) => {
-        try {
-            switch (action) {
-                case 'view':
-                    await activityLogService.logActivity({
-                        actionType: 'UPDATE',
-                        tableName: 'farms',
-                        recordId: farmData.id,
-                        description: `Viewed farm "${farmData.name}"`
-                    })
-                    break
-                case 'request':
-                    // TODO: Implement logFarmRequest method
-                    // await activityLogService.logFarmRequest(farmData)
-                    break
-            }
-        } catch (error) {
-            console.error('Error logging farm action:', error)
-        }
-    }
-    // Simple greeting function
-    const getGreeting = () => {
-        const hour = new Date().getHours()
-        if (hour < 12) return 'Good morning'
-        if (hour < 18) return 'Good afternoon'
-        return 'Good evening'
-    }
-    return (
-        <LinearGradient
-            colors={['#e7fbe8ff', '#cdffcfff']}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={styles.container}
-        >
-            {/* Header with shortened welcome message */}
-            <LinearGradient
-                colors={['#4A90E2', '#357ABD', '#2E5B8A']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.header}
-            >
-                <View style={styles.headerContent}>
-                    <Text style={styles.welcomeText}>Hi, {username || "Loading..."}!</Text>
-                </View>
-            </LinearGradient>
-            {/* Farm Cards List - Remove redundant action buttons */}
-            <View style={styles.content}>
-                {farmsWithRoles.length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                        <Ionicons name="leaf-outline" size={64} color="#666" />
-                        <Text style={styles.emptyTitle}>No farms found</Text>
-                        <Text style={styles.emptySubtitle}>Request your first farm to get started</Text>
-                        <TouchableOpacity
-                            style={styles.addFarmButton}
-                            onPress={() => setShowFarmRequestModal(true)}
-                        >
-                            <LinearGradient
-                                colors={['#4CAF50', '#45a049', '#388e3c']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                                style={styles.addFarmButtonGradient}
-                            >
-                                <Ionicons name="add" size={24} color="white" />
-                                <Text style={styles.addFarmButtonText}>Request Farm</Text>
-                            </LinearGradient>
-                        </TouchableOpacity>
-                        {/* Quick tip for navigation */}
-                        <View style={styles.navigationTip}>
-                            <Text style={styles.tipText}>
-                                💡 Use the bottom navigation to access your requests and admin features
-                            </Text>
-                        </View>
+            <View style={styles.container}>
+                <LinearGradient
+                    colors={['#4CAF50', '#45A049']}
+                    style={styles.headerGradient}
+                >
+                    <View style={styles.header}>
+                        <Text style={[styles.greeting, { fontSize: responsiveFontSize.title }]}>
+                            Welcome back!
+                        </Text>
+                        <Text style={styles.subGreeting}>Loading your farms...</Text>
                     </View>
-                ) : (
-                    <>
-                        {/* Farms List - Remove action buttons container */}
-                        {loading ? (
-                            <View style={styles.loadingContainer}>
-                                <ActivityIndicator size="large" color="#4CAF50" />
-                                <Text style={styles.loadingText}>Loading your farms...</Text>
+                </LinearGradient>
+
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#4CAF50" />
+                    <Text style={styles.loadingText}>Loading farms...</Text>
+                </View>
+
+                <BottomNavigation />
+            </View>
+        )
+    }
+
+    return (
+        <View style={styles.container}>
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                <LinearGradient
+                    colors={['#4CAF50', '#45A049']}
+                    style={styles.headerGradient}
+                >
+                    <View style={styles.header}>
+                        <Text style={[styles.greeting, { fontSize: responsiveFontSize.title }]}>
+                            Hello, {username || 'Farmer'}! 👋
+                        </Text>
+                        <Text style={styles.subGreeting}>
+                            {farmsWithRoles.length === 0
+                                ? "Ready to add your first farm?"
+                                : `Managing ${farmsWithRoles.length} farm${farmsWithRoles.length !== 1 ? 's' : ''}`
+                            }
+                        </Text>
+                    </View>
+                </LinearGradient>
+
+                <View style={styles.content}>
+                    {farmsWithRoles.length === 0 ? (
+                        <View style={styles.emptyState}>
+                            <Ionicons name="leaf-outline" size={80} color="#4CAF50" />
+                            <Text style={styles.emptyTitle}>No Farms Yet</Text>
+                            <Text style={styles.emptyDescription}>
+                                Start your smart farming journey by adding your first farm!
+                            </Text>
+                            <TouchableOpacity
+                                style={styles.addFirstFarmButton}
+                                onPress={handleCreateFarmRequest}
+                            >
+                                <LinearGradient
+                                    colors={['#4CAF50', '#45A049']}
+                                    style={styles.addButtonGradient}
+                                >
+                                    <Ionicons name="add-circle-outline" size={24} color="#fff" />
+                                    <Text style={styles.addButtonText}>Add Your First Farm</Text>
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <>
+                            <View style={styles.sectionHeader}>
+                                <Text style={[styles.sectionTitle, { fontSize: responsiveFontSize.title }]}>
+                                    Your Farms
+                                </Text>
+                                <TouchableOpacity
+                                    style={styles.addFarmButton}
+                                    onPress={handleCreateFarmRequest}
+                                >
+                                    <Ionicons name="add-circle-outline" size={24} color="#4CAF50" />
+                                </TouchableOpacity>
                             </View>
-                        ) : (
+
                             <FlatList
                                 data={farmsWithRoles}
-                                renderItem={renderFarmCard}
+                                renderItem={({ item }) => (
+                                    <FarmCard
+                                        item={item}
+                                        navigation={navigation}
+                                        onFetchSensorData={fetchSensorDataForFarm}
+                                    />
+                                )}
                                 keyExtractor={(item) => item.id}
+                                scrollEnabled={false}
                                 showsVerticalScrollIndicator={false}
-                                contentContainerStyle={styles.farmsList}
-                                ListHeaderComponent={renderListHeader}
-                                ListFooterComponent={renderListFooter}
-                                refreshing={loading}
-                                onRefresh={fetchFarms}
                             />
-                        )}
-                    </>
-                )}
-            </View>
-            {/* Only keep Farm Request Modal - Remove redundant UserFarmRequests modal */}
+                        </>
+                    )}
+                </View>
+
+                <View style={styles.bottomSpacer} />
+            </ScrollView>
+
+            <BottomNavigation />
+
+            {/* Farm Request Modal */}
             <Modal
                 visible={showFarmRequestModal}
+                transparent
                 animationType="slide"
-                presentationStyle="pageSheet"
                 onRequestClose={() => setShowFarmRequestModal(false)}
             >
                 <CreateFarmRequest
                     onClose={() => setShowFarmRequestModal(false)}
-                    onSuccess={handleFarmRequestSuccess}
+                    onSubmit={handleFarmRequestSubmit}
                 />
             </Modal>
-            <BottomNavigation />
-        </LinearGradient>
+        </View>
     )
 }
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#f5f5f5',
+    },
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        flexGrow: 1,
+    },
+    headerGradient: {
+        paddingTop: 35, // Reduced from 50
+        paddingBottom: 12, // Reduced from 20
+        paddingHorizontal: responsivePadding,
     },
     header: {
-        paddingTop: 60,
-        paddingBottom: 20,
-        paddingHorizontal: 20,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        borderBottomLeftRadius: 25,
-        borderBottomRightRadius: 25,
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
     },
-    headerContent: {
-        flex: 1,
-    },
-    welcomeText: {
-        fontSize: 20,
-        color: 'white',
+    greeting: {
         fontWeight: 'bold',
+        color: '#fff',
+        textAlign: 'center',
+        marginBottom: 8,
     },
-    usernameText: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    headerActions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    headerActionButton: {
-        padding: 10,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    subGreeting: {
+        fontSize: responsiveFontSize.location,
+        color: '#fff',
+        opacity: 0.9,
+        textAlign: 'center',
     },
     content: {
-        flex: 1,
-        paddingHorizontal: 20,
-        paddingTop: 20,
+        paddingHorizontal: responsivePadding,
+        paddingTop: responsiveMargin,
     },
-    // Empty state styles
-    emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 40,
+        marginBottom: responsiveMargin,
     },
-    emptyTitle: {
-        fontSize: 24,
+    sectionTitle: {
         fontWeight: 'bold',
         color: '#333',
-        marginTop: 20,
-        marginBottom: 10,
-        textAlign: 'center',
-    },
-    emptySubtitle: {
-        fontSize: 16,
-        color: '#666',
-        textAlign: 'center',
-        marginBottom: 30,
-        lineHeight: 24,
     },
     addFarmButton: {
-        borderRadius: 25,
-        elevation: 3,
+        padding: 8,
+        backgroundColor: '#fff',
+        borderRadius: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-    },
-    addFarmButtonGradient: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: 25,
-    },
-    addFarmButtonText: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginLeft: 10,
-    },
-    // Action buttons styles
-    actionButtonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 20,
-        flexWrap: 'wrap',
-        gap: 10,
-    },
-    actionButton: {
-        flex: 1,
-        minWidth: 100,
-        borderRadius: 15,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowRadius: 4,
+        elevation: 3,
     },
-    actionButtonGradient: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 15,
-    },
-    actionButtonText: {
-        color: 'white',
-        fontSize: 14,
-        fontWeight: '600',
-        marginLeft: 6,
-    },
-    // Loading styles
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    loadingText: {
-        marginTop: 10,
-        fontSize: 16,
-        color: '#666',
-    },
-    // List styles
-    farmsList: {
-        paddingBottom: 20,
-    },
-    listHeaderContainer: {
-        marginBottom: 15,
-    },
-    listHeaderRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    listHeaderText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    requestFarmButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#4CAF50',
-        backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    },
-    requestFarmButtonText: {
-        fontSize: 14,
-        color: '#4CAF50',
-        fontWeight: '600',
-        marginLeft: 4,
-    },
-    listEndContainer: {
-        paddingVertical: 20,
-        alignItems: 'center',
-    },
-    listEndIndicator: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        backgroundColor: 'rgba(76, 175, 80, 0.1)',
-        borderRadius: 20,
-    },
-    listEndText: {
-        marginLeft: 8,
-        fontSize: 14,
-        color: '#4CAF50',
-        fontWeight: '500',
-    },
-    // Farm card styles
     farmCard: {
-        marginBottom: 16,
-        borderRadius: 16,
-        elevation: 3,
+        marginBottom: responsiveMargin,
+        borderRadius: 12,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
+        elevation: 3,
     },
     farmCardGradient: {
-        borderRadius: 16,
-        padding: 16,
+        borderRadius: 12,
+        padding: responsivePadding,
     },
     farmHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
+        alignItems: 'flex-start',
+        marginBottom: responsiveMargin,
     },
     farmInfo: {
         flex: 1,
     },
     farmName: {
-        fontSize: 20,
         fontWeight: 'bold',
         color: '#333',
         marginBottom: 4,
     },
     farmLocation: {
-        fontSize: 14,
         color: '#666',
-        marginBottom: 4,
+        marginBottom: 2,
     },
     farmAddress: {
-        fontSize: 14,
         color: '#666',
-        marginBottom: 4,
     },
     farmRole: {
-        fontSize: 12,
-        color: '#4CAF50',
-        fontWeight: '600',
-        textTransform: 'capitalize',
+        backgroundColor: '#4CAF50',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
     },
-    // Data container styles
+    roleText: {
+        color: '#fff',
+        fontWeight: '600',
+    },
     dataContainer: {
         flexDirection: 'row',
-        gap: 12,
-        alignItems: 'flex-start',
+        gap: responsiveMargin,
     },
     weatherSide: {
         flex: 1,
@@ -685,219 +614,122 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     weatherSectionTitle: {
-        fontSize: 14,
+        fontSize: responsiveFontSize.sensorName,
         fontWeight: '600',
         color: '#333',
         marginBottom: 8,
     },
     sensorSectionTitle: {
-        fontSize: 14,
+        fontSize: responsiveFontSize.sensorName,
         fontWeight: '600',
         color: '#333',
         marginBottom: 8,
     },
-    // Sensor grid styles
     sensorGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 6,
-        justifyContent: 'space-between',
+        gap: isSmallDevice ? 4 : 6,
     },
     sensorPanel: {
-        width: '48%',
+        flex: 1,
+        minWidth: isSmallDevice ? 70 : 80,
         backgroundColor: '#f8f9fa',
         borderRadius: 8,
-        padding: 8,
+        padding: isSmallDevice ? 6 : 8,
+        alignItems: 'center',
         position: 'relative',
         borderWidth: 1,
         borderColor: '#e9ecef',
-        minHeight: 60,
     },
     sensorContent: {
-        flex: 1,
+        alignItems: 'center',
+        width: '100%',
     },
     sensorIconValue: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 2,
+        marginBottom: 4,
+        gap: 4,
     },
     sensorValue: {
-        fontSize: 12,
         fontWeight: 'bold',
-        marginLeft: 4,
     },
     sensorName: {
-        fontSize: 10,
-        fontWeight: '600',
-        color: '#333',
-        marginBottom: 1,
+        color: '#666',
+        textAlign: 'center',
+        fontWeight: '500',
     },
     sensorUnit: {
-        fontSize: 9,
-        color: '#666',
+        color: '#999',
+        textAlign: 'center',
     },
     statusDot: {
         position: 'absolute',
-        top: 6,
-        right: 6,
-        width: 6,
-        height: 6,
-        borderRadius: 3,
+        top: 4,
+        right: 4,
     },
     sensorLoadingContainer: {
-        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20,
+        paddingVertical: 20,
     },
     sensorLoadingText: {
-        marginLeft: 8,
-        fontSize: 12,
+        fontSize: responsiveFontSize.sensorName,
         color: '#666',
+        marginTop: 8,
     },
-    // Modal styles
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        justifyContent: 'center',
+    emptyState: {
         alignItems: 'center',
+        paddingVertical: 60,
+        paddingHorizontal: 20,
     },
-    modalContainer: {
-        width: '90%',
-        maxHeight: '80%',
-        borderRadius: 16,
-        overflow: 'hidden',
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e9ecef',
-    },
-    modalTitle: {
-        fontSize: 20,
+    emptyTitle: {
+        fontSize: 24,
         fontWeight: 'bold',
         color: '#333',
-    },
-    closeButton: {
-        padding: 4,
-    },
-    modalContent: {
-        padding: 20,
-    },
-    inputContainer: {
-        marginBottom: 20,
-    },
-    inputLabel: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#333',
-        marginBottom: 8,
-    },
-    required: {
-        color: '#FF0000',
-        fontSize: 16,
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        fontSize: 16,
-        backgroundColor: '#fff',
-    },
-    notesInput: {
-        height: 80,
-        textAlignVertical: 'top',
-    },
-    provinceSelector: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        backgroundColor: '#fff',
-    },
-    provinceSelectorText: {
-        fontSize: 16,
-        color: '#333',
-    },
-    placeholderText: {
-        color: '#999',
-    },
-    createFarmButton: {
         marginTop: 20,
-        borderRadius: 12,
-        overflow: 'hidden',
+        marginBottom: 12,
     },
-    createFarmButtonGradient: {
+    emptyDescription: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: 24,
+        marginBottom: 30,
+    },
+    addFirstFarmButton: {
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    addButtonGradient: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
         paddingVertical: 16,
-        paddingHorizontal: 32,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        gap: 8,
     },
-    createFarmButtonText: {
-        color: 'white',
+    addButtonText: {
+        color: '#fff',
         fontSize: 18,
         fontWeight: 'bold',
-        marginLeft: 8,
     },
-    provinceList: {
+    loadingContainer: {
         flex: 1,
-    },
-    provinceItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
     },
-    provinceInfo: {
-        flex: 1,
-    },
-    provinceName: {
+    loadingText: {
+        marginTop: 16,
         fontSize: 16,
-        fontWeight: '600',
-        color: '#333',
-    },
-    provinceNameEn: {
-        fontSize: 14,
         color: '#666',
-        marginTop: 2,
     },
-    regionBadge: {
-        backgroundColor: '#e3f2fd',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 12,
-    },
-    regionText: {
-        fontSize: 12,
-        color: '#1976d2',
-        fontWeight: '500',
-    },
-    navigationTip: {
-        marginTop: 30,
-        padding: 15,
-        backgroundColor: 'rgba(74, 144, 226, 0.1)',
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(74, 144, 226, 0.2)',
-    },
-    tipText: {
-        fontSize: 14,
-        color: '#4A90E2',
-        textAlign: 'center',
-        lineHeight: 20,
+    bottomSpacer: {
+        height: 100,
     },
 })
+
 export default Home

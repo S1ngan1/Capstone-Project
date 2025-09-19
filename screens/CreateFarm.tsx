@@ -12,7 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
-import { Picker } from '@react-native-picker/picker'
+import { CustomPicker } from '../components/CustomPicker'
 import { useNavigation } from '@react-navigation/native'
 import { supabase } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
@@ -265,20 +265,12 @@ const CreateFarm = () => {
           <View style={styles.inputSection}>
             <Text style={styles.label}>Location *</Text>
             <View style={styles.pickerContainer}>
-              <Picker
+              <CustomPicker
                 selectedValue={selectedLocation}
                 onValueChange={setSelectedLocation}
-                style={styles.picker}
-              >
-                <Picker.Item label="Select a location" value="" />
-                {VIETNAM_LOCATIONS.map((location) => (
-                  <Picker.Item
-                    key={location}
-                    label={location}
-                    value={location}
-                  />
-                ))}
-              </Picker>
+                items={VIETNAM_LOCATIONS}
+                placeholder="Select a location"
+              />
             </View>
           </View>
           {/* Image Upload */}

@@ -401,4 +401,70 @@ Remember: **Every UI fix should be validated with UITestingBot to prevent regres
 
 ---
 
-This guide ensures consistent, user-friendly development that serves Vietnamese farmers effectively while maintaining high code quality and preventing UI regressions.
+## 🚨 CRITICAL ERRORS TO AVOID - TUTORIAL SYSTEM
+
+### **Floating Tutorial Bar Persistence Error**
+**❌ CRITICAL ISSUE: Tutorial components rendered at screen level disappear during navigation**
+
+**Problem:** When a tutorial component is rendered within individual screens (like Settings, Home, etc.), clicking "See in App" causes the floating tutorial bar to disappear immediately after navigation because the component gets unmounted when the screen changes.
+
+**Solution:** 
+1. **Move tutorial state to App.tsx level** - Use global context (TutorialProvider)
+2. **Render AppTutorial in App.tsx** - Place `<AppTutorial />` directly in the main app navigation container
+3. **Use global tutorial context** - All screens should use `useTutorial()` hook instead of local state
+4. **Persistent floating bar** - The floating bar will now persist across all screen navigations
+
+**Implementation:**
+```typescript
+// App.tsx - CORRECT
+<TutorialProvider>
+  <NavigationContainer>
+    <Stack.Navigator>
+      {/* All screens */}
+    </Stack.Navigator>
+    <AppTutorial /> {/* Global tutorial component */}
+  </NavigationContainer>
+</TutorialProvider>
+
+// Settings.tsx - CORRECT
+const { startTutorial } = useTutorial()
+// NOT: const [showTutorial, setShowTutorial] = useState(false)
+```
+
+**Testing:**
+1. Start tutorial from Settings
+2. Click "See in App" on any step
+3. Verify floating bar remains visible after navigation
+4. Verify floating bar controls work across different screens
+
+### **Navigation Error in Tutorial System**
+**❌ CRITICAL ISSUE: Generic navigation calls cause "You need to specify a name" error**
+
+**Problem:** Using `navigation.navigate(screen as never)` or generic navigation calls can cause React Navigation errors requiring specific screen name parameters.
+
+**Solution:**
+```typescript
+// WRONG - Generic navigation
+navigation.navigate(screen as never)
+
+// CORRECT - Specific navigation with switch statement
+switch (screen) {
+  case 'Home':
+    navigation.navigate('Home' as never)
+    break
+  case 'Suggestion':
+    navigation.navigate('Suggestion' as never)
+    break
+  case 'FarmDetails':
+    // Handle screens that need parameters properly
+    navigation.navigate('Home' as never) // Fallback to Home
+    break
+  default:
+    navigation.navigate('Home' as never)
+    break
+}
+```
+
+**Prevention:** Always use explicit screen names in navigation calls, handle parameterized screens appropriately.
+
+---
