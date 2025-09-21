@@ -8,6 +8,7 @@ import { useAuthContext } from '../context/AuthContext'
 import { useDialog } from '../context/DialogContext'
 import { supabase } from '../lib/supabase'
 import BottomNavigation from '../components/BottomNavigation'
+import DetailedSensorChart from '../components/Charts/DetailedSensorChart'
 import UVSimple from '../components/Charts/UVSimple'
 // Types
 interface SensorData {
@@ -170,27 +171,36 @@ const SensorDetail = () => {
     })
   }
   const renderChart = () => {
-    if (sensorData?.type === 'pH') {
-      // Simple pH chart fallback to avoid Skia conflicts
+    // Check if we have enough data for detailed chart
+    if (recentReadings.length >= 2 && sensorData) {
+      const statusColor = getStatusColor(sensorData.status)
       return (
-        <View style={{ height: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f0f0', borderRadius: 8, width: '100%' }}>
-          <Text style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>pH Chart</Text>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#4CAF50' }}>
-            {sensorData?.last_reading.toFixed(1)} pH
-          </Text>
-          <Text style={{ fontSize: 12, color: '#666', marginTop: 4 }}>Current Reading</Text>
-        </View>
+        <DetailedSensorChart
+          data={recentReadings}
+          color={statusColor}
+          unit={sensorData.unit}
+          sensorType={sensorData.type}
+          sensorName={sensorData.name}
+        />
       )
-    } else if (sensorData?.type === 'uv') {
+    }
+
+    // Fallback for special cases or insufficient data
+    if (sensorData?.type === 'uv') {
       return <UVSimple />
     }
+
+    // Default fallback for sensors with insufficient data
     return (
-      <View style={{ height: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f0f0', borderRadius: 8, width: '100%' }}>
-        <Text style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>Sensor Chart</Text>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#4CAF50' }}>
-          {sensorData?.last_reading} {sensorData?.unit}
+      <View style={styles.fallbackChart}>
+        <Ionicons name="analytics-outline" size={48} color="#ccc" />
+        <Text style={styles.fallbackTitle}>Sensor Data</Text>
+        <Text style={styles.fallbackValue}>
+          {sensorData?.last_reading.toFixed(2) || '0.00'} {sensorData?.unit || ''}
         </Text>
-        <Text style={{ fontSize: 12, color: '#666', marginTop: 4 }}>Current Reading</Text>
+        <Text style={styles.fallbackSubtext}>
+          {recentReadings.length < 2 ? 'Need more data points for chart' : 'Current Reading'}
+        </Text>
       </View>
     )
   }
@@ -492,6 +502,30 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 70,
+  },
+  fallbackChart: {
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    width: '100%',
+  },
+  fallbackTitle: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 8,
+  },
+  fallbackValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginTop: 4,
+  },
+  fallbackSubtext: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
   },
 })
 export default SensorDetail

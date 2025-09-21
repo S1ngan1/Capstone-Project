@@ -1,27 +1,36 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+
 type AuthContextType = {
   session: Session | null;
   user: User | null;
+  isAuthenticated: boolean;
   notifications: Notification[];
+  setNotifications: (notifications: Notification[]) => void;
 };
+
 type Notification = {
   id: string;
   content: string;
   level: "urgent" | "warning" | "normal";
   timestamp: string;
 };
+
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
 export const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuthContext must be used inside AuthContext.Provider");
   return context;
 };
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   useEffect(() => {
     console.log('AuthContext: Initializing authentication...');
     // Get initial session
@@ -32,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       setSession(session);
       setUser(session?.user ?? null);
+      setIsAuthenticated(!!session);
       if (session?.user) {
         console.log('AuthContext: User authenticated:', session.user.id);
         console.log('AuthContext: User email:', session.user.email);
@@ -44,6 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('AuthContext: Auth state changed:', event, session?.user?.id || 'No user');
       setSession(session);
       setUser(session?.user ?? null);
+      setIsAuthenticated(!!session);
       if (session?.user) {
         console.log('AuthContext: User logged in:', session.user.id);
       } else {
@@ -97,8 +108,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       userEmail: user?.email || 'null'
     });
   }, [session, user]);
+  const value: AuthContextType = {
+    session,
+    user,
+    isAuthenticated,
+    notifications,
+    setNotifications,
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user, notifications }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

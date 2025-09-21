@@ -11,6 +11,7 @@ export interface ActivityLog {
   ip_address?: string
   user_agent?: string
   created_at: string
+  viewed?: boolean // Add viewed property for activity counter
   username?: string
   email?: string
   user_role?: string
@@ -42,7 +43,8 @@ class ActivityLogService {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return null
-      // Direct insert instead of using database function
+
+      // Insert activity log with viewed = false for new activities
       const { data, error } = await supabase
         .from('activity_logs')
         .insert({
@@ -53,19 +55,24 @@ class ActivityLogService {
           old_data: params.oldData,
           new_data: params.newData,
           description: params.description,
+          viewed: false, // Critical: Set as unviewed for activity counter
           ip_address: null,
           user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null
         })
         .select('id')
         .single()
+
       if (error) {
         console.error('Error logging activity:', error)
         return null
       }
-      // Create a simple notification
+
+      // Create a notification for the activity
       if (data?.id) {
         await this.createNotificationForActivity(user.id, data.id, params.actionType, params.description)
       }
+
+      console.log(`✅ Activity logged: ${params.actionType} on ${params.tableName}`)
       return data?.id || null
     } catch (error) {
       console.error('Error in logActivity:', error)
@@ -582,5 +589,154 @@ class ActivityLogService {
       console.error('Error creating farm request submission notification:', error)
     }
   }
+  /**
+   * Create a farm request notification (for approval/rejection)
+   */
+  async createFarmRequestNotification(params: {
+    userId: string
+    farmRequestId: string
+    status: 'approved' | 'rejected'
+    farmName: string
+    adminFeedback?: string
+  }): Promise<void> {
+    try {
+      const { userId, farmRequestId, status, farmName, adminFeedback } = params
+
+      const title = status === 'approved'
+        ? '✅ Farm Request Approved'
+        : '❌ Farm Request Rejected'
+
+      const message = status === 'approved'
+        ? `Your farm request for "${farmName}" has been approved! Your farm has been created and is now available.`
+        : `Your farm request for "${farmName}" has been rejected. ${adminFeedback ? `Reason: ${adminFeedback}` : ''}`
+
+      const metadata = {
+        farmRequestId,
+        farmName,
+        status,
+        adminFeedback,
+        navigation: {
+          screen: 'UserRequests',
+          params: { tab: 'farms' }
+        }
+      }
+
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          title,
+          message,
+          type: status === 'approved' ? 'success' : 'error',
+          metadata
+        })
+
+      console.log(`Farm request notification created for user ${userId}: ${status}`)
+    } catch (error) {
+      console.error('Error creating farm request notification:', error)
+      // Don't throw error here, notification creation is not critical
+    }
+  }
+
+  /**
+   * Create a farm management notification (for farm creation, updates, etc.)
+   */
+  async createFarmManagementNotification(params: {
+    userId: string
+    farmId: string
+    farmName: string
+    actionType: 'created' | 'updated' | 'deleted'
+    details: string
+  }): Promise<void> {
+    try {
+      const { userId, farmId, farmName, actionType, details } = params
+
+      const title = (() => {
+        switch (actionType) {
+          case 'created': return '🌱 Farm Created'
+          case 'updated': return '📝 Farm Updated'
+          case 'deleted': return '🗑️ Farm Deleted'
+          default: return '🚜 Farm Management'
+        }
+      })()
+
+      const message = `Farm "${farmName}" has been ${actionType}. ${details}`
+
+      const metadata = {
+        farmId,
+        farmName,
+        actionType,
+        navigation: {
+          screen: 'FarmDetails',
+          params: { farmId }
+        }
+      }
+
+      const type = (() => {
+        switch (actionType) {
+          case 'created': return 'success'
+          case 'updated': return 'info'
+          case 'deleted': return 'warning'
+          default: return 'info'
+        }
+      })() as 'info' | 'success' | 'warning' | 'error'
+
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          title,
+          message,
+          type,
+          metadata
+        })
+
+      console.log(`Farm management notification created for user ${userId}: ${actionType} - ${farmName}`)
+    } catch (error) {
+      console.error('Error creating farm management notification:', error)
+      // Don't throw error here, notification creation is not critical
+    }
+  }
+
+  /**
+   * Helper method to log farm-related activities
+   */
+  async logFarmActivity(actionType: 'CREATE' | 'UPDATE' | 'DELETE', farmData: any, description: string) {
+    return await this.logActivity({
+      actionType,
+      tableName: 'farms',
+      recordId: farmData.id,
+      newData: farmData,
+      description
+    });
+  }
+
+  /**
+   * Helper method to log profile-related activities
+   */
+  async logProfileActivity(actionType: 'UPDATE', profileData: any, description: string) {
+    return await this.logActivity({
+      actionType,
+      tableName: 'profiles',
+      recordId: profileData.id,
+      newData: profileData,
+      description
+    });
+  }
+
+  /**
+   * Helper method to log member-related activities
+   */
+  async logMemberActivity(actionType: 'CREATE' | 'UPDATE' | 'DELETE', memberData: any, description: string) {
+    return await this.logActivity({
+      actionType,
+      tableName: 'farm_members',
+      recordId: memberData.id,
+      newData: memberData,
+      description
+    });
+  }
 }
+
+// Export singleton instance - Updated with farm request notification methods
 export const activityLogService = new ActivityLogService()

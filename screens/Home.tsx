@@ -606,40 +606,52 @@ const styles = StyleSheet.create({
     dataContainer: {
         flexDirection: 'row',
         gap: responsiveMargin,
+        minHeight: 140, // Base height for calculation
+        alignItems: 'stretch', // FIXED: Ensure both sides stretch to full height
     },
     weatherSide: {
         flex: 1,
+        minHeight: 140, // FIXED: Calculate based on sensor panel total area
+        maxHeight: 140, // FIXED: Prevent expansion
     },
     sensorSide: {
         flex: 1,
+        minHeight: 140, // FIXED: Match weather side exactly
+        maxHeight: 140, // FIXED: Prevent expansion
     },
     weatherSectionTitle: {
         fontSize: responsiveFontSize.sensorName,
         fontWeight: '600',
         color: '#333',
-        marginBottom: 8,
+        marginBottom: 6, // FIXED: Reduced margin to save space
     },
     sensorSectionTitle: {
         fontSize: responsiveFontSize.sensorName,
         fontWeight: '600',
         color: '#333',
-        marginBottom: 8,
+        marginBottom: 6, // FIXED: Match weather section
     },
     sensorGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: isSmallDevice ? 4 : 6,
+        flex: 1, // FIXED: Fill available space
+        justifyContent: 'space-between', // FIXED: Even distribution
+        alignContent: 'flex-start', // FIXED: Align to top
+        height: isSmallDevice ? 110 : 120, // FIXED: Specific height for 2x2 grid
     },
     sensorPanel: {
-        flex: 1,
-        minWidth: isSmallDevice ? 70 : 80,
+        width: isSmallDevice ? '47%' : '47%', // FIXED: Exact width for 2x2 grid with gap
+        height: isSmallDevice ? 50 : 55, // FIXED: Specific height for consistent sizing
         backgroundColor: '#f8f9fa',
         borderRadius: 8,
-        padding: isSmallDevice ? 6 : 8,
+        padding: isSmallDevice ? 4 : 6, // FIXED: Reduced padding for better fit
         alignItems: 'center',
+        justifyContent: 'center',
         position: 'relative',
         borderWidth: 1,
         borderColor: '#e9ecef',
+        marginBottom: isSmallDevice ? 4 : 6, // FIXED: Spacing between rows
     },
     sensorContent: {
         alignItems: 'center',

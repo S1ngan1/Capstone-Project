@@ -1,108 +1,103 @@
 import 'react-native-url-polyfill/auto';
-import { useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
-import { View, StyleSheet, Text } from 'react-native';
+import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AuthProvider, useAuthContext } from './context/AuthContext';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { AuthProvider } from './context/AuthContext';
 import { DialogProvider } from './context/DialogContext';
 import { TutorialProvider } from './context/TutorialContext';
-import AppTutorial from './components/AppTutorial';
+
+// Import screens
 import Home from './screens/Home';
-import Settings from './screens/Settings';
-import Auth from './components/Auth';
-import Onboarding from './screens/Onboarding';
-import Notification from './screens/Notification';
+import Farm from './screens/Farm';
 import FarmDetails from './screens/FarmDetails';
-import UserDetail from './screens/UserDetail';
 import SensorDetail from './screens/SensorDetail';
-import UserManagement from './screens/UserManagement';
-import Suggestion from './screens/Suggestion';
-import AdminFarmRequests from './screens/AdminFarmRequests';
-import AdminSensorRequests from './screens/AdminSensorRequests';
-import UserSensorRequests from './screens/UserSensorRequests';
-import UserRequests from './screens/UserRequests';
-import ActivityLogs from './screens/ActivityLogs';
-import CreateFarm from './screens/CreateFarm';
+import Settings from './screens/Settings';
 import Profile from './screens/Profile';
 import About from './screens/About';
+import Notification from './screens/Notification';
+import CreateFarm from './screens/CreateFarm';
+import UserRequests from './screens/UserRequests';
+import UserSensorRequests from './screens/UserSensorRequests';
+import AdminFarmRequests from './screens/AdminFarmRequests';
+import AdminSensorRequests from './screens/AdminSensorRequests';
+import UserManagement from './screens/UserManagement';
+import UserDetail from './screens/UserDetail';
+import ActivityLogs from './screens/ActivityLogs';
+import Suggestion from './screens/Suggestion';
+import Account from './screens/Account';
 import PrivacyPolicy from './screens/PrivacyPolicy';
+import Onboarding from './screens/Onboarding';
 
+// Import tutorial component
+import AppTutorial from './components/AppTutorial';
+
+// Define navigation stack param list
 export type RootStackParamList = {
-    Auth: undefined;
-    Onboarding: undefined;
-    Home: undefined;
-    FarmDetails: { farmId: string };
-    Suggestion: undefined;
-    Settings: undefined;
-    Notification: undefined;
-    UserManagement: undefined;
-    UserDetail: { userId: string };
-    SensorDetail: { sensorId: string };
-    AdminFarmRequests: undefined;
-    AdminSensorRequests: undefined;
-    UserSensorRequests: undefined;
-    UserRequests: undefined;
-    ActivityLogs: undefined;
-    CreateFarm: undefined;
-    Profile: undefined;
-    About: undefined;
-    PrivacyPolicy: undefined;
-    ViewRequests: undefined;
+  Home: undefined;
+  Farm: { farmId: string };
+  FarmDetails: { farmId: string };
+  SensorDetail: { sensorId: string; farmId: string };
+  Settings: undefined;
+  Profile: undefined;
+  About: undefined;
+  Notification: undefined;
+  CreateFarm: undefined;
+  UserRequests: undefined;
+  UserSensorRequests: undefined;
+  AdminFarmRequests: undefined;
+  AdminSensorRequests: undefined;
+  UserManagement: undefined;
+  UserDetail: { userId: string };
+  ActivityLogs: undefined;
+  Suggestion: undefined;
+  Account: undefined;
+  PrivacyPolicy: undefined;
+  Onboarding: undefined;
 };
 
-const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// Main app component that uses the AuthContext
-const AppContent = () => {
-    const { session } = useAuthContext();
-    const [showOnboarding, setShowOnboarding] = useState(true);
-
-    if (showOnboarding && !session) {
-        return <Onboarding onFinish={() => setShowOnboarding(false)} />;
-    }
-
-    if (!session) {
-        return <Auth />;
-    }
-
-    return (
-        <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AuthProvider>
+        <DialogProvider>
+          <TutorialProvider>
+            <NavigationContainer>
+              <Stack.Navigator
+                initialRouteName="Home"
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: '#f5f5f5' }
+                }}
+              >
                 <Stack.Screen name="Home" component={Home} />
+                <Stack.Screen name="Farm" component={Farm} />
                 <Stack.Screen name="FarmDetails" component={FarmDetails} />
-                <Stack.Screen name="Suggestion" component={Suggestion} />
-                <Stack.Screen name="Settings" component={Settings} />
-                <Stack.Screen name="Notification" component={Notification} />
-                <Stack.Screen name="UserManagement" component={UserManagement} />
-                <Stack.Screen name="UserDetail" component={UserDetail} />
                 <Stack.Screen name="SensorDetail" component={SensorDetail} />
-                <Stack.Screen name="AdminFarmRequests" component={AdminFarmRequests} />
-                <Stack.Screen name="AdminSensorRequests" component={AdminSensorRequests} />
-                <Stack.Screen name="UserSensorRequests" component={UserSensorRequests} />
-                <Stack.Screen name="UserRequests" component={UserRequests} />
-                <Stack.Screen name="ActivityLogs" component={ActivityLogs} />
-                <Stack.Screen name="CreateFarm" component={CreateFarm} />
+                <Stack.Screen name="Settings" component={Settings} />
                 <Stack.Screen name="Profile" component={Profile} />
                 <Stack.Screen name="About" component={About} />
+                <Stack.Screen name="Notification" component={Notification} />
+                <Stack.Screen name="CreateFarm" component={CreateFarm} />
+                <Stack.Screen name="UserRequests" component={UserRequests} />
+                <Stack.Screen name="UserSensorRequests" component={UserSensorRequests} />
+                <Stack.Screen name="AdminFarmRequests" component={AdminFarmRequests} />
+                <Stack.Screen name="AdminSensorRequests" component={AdminSensorRequests} />
+                <Stack.Screen name="UserManagement" component={UserManagement} />
+                <Stack.Screen name="UserDetail" component={UserDetail} />
+                <Stack.Screen name="ActivityLogs" component={ActivityLogs} />
+                <Stack.Screen name="Suggestion" component={Suggestion} />
+                <Stack.Screen name="Account" component={Account} />
                 <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
-            </Stack.Navigator>
-            <AppTutorial />
-        </NavigationContainer>
-    );
-};
-
-// Main App component with providers (without tutorial for now)
-export default function App() {
-    return (
-        <SafeAreaProvider>
-            <AuthProvider>
-                <DialogProvider>
-                    <TutorialProvider>
-                        <AppContent />
-                    </TutorialProvider>
-                </DialogProvider>
-            </AuthProvider>
-        </SafeAreaProvider>
-    );
+                <Stack.Screen name="Onboarding" component={Onboarding} />
+              </Stack.Navigator>
+              <AppTutorial />
+            </NavigationContainer>
+          </TutorialProvider>
+        </DialogProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
+  );
 }

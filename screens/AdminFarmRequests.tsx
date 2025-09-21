@@ -19,6 +19,110 @@ import { supabase } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import { activityLogService } from '../utils/activityLogService'
 import BottomNavigation from '../components/BottomNavigation'
+
+// Temporary fallback for farm request notifications until service cache refreshes
+const createFarmRequestNotificationFallback = async (params: {
+  userId: string
+  farmRequestId: string
+  status: 'approved' | 'rejected'
+  farmName: string
+  adminFeedback?: string
+}) => {
+  try {
+    const { userId, farmRequestId, status, farmName, adminFeedback } = params
+
+    const title = status === 'approved'
+      ? '✅ Farm Request Approved'
+      : '❌ Farm Request Rejected'
+
+    const message = status === 'approved'
+      ? `Your farm request for "${farmName}" has been approved! Your farm has been created and is now available.`
+      : `Your farm request for "${farmName}" has been rejected. ${adminFeedback ? `Reason: ${adminFeedback}` : ''}`
+
+    const metadata = {
+      farmRequestId,
+      farmName,
+      status,
+      adminFeedback,
+      navigation: {
+        screen: 'UserRequests',
+        params: { tab: 'farms' }
+      }
+    }
+
+    await supabase
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        title,
+        message,
+        type: status === 'approved' ? 'success' : 'error',
+        metadata
+      })
+
+    console.log(`Farm request notification created for user ${userId}: ${status}`)
+  } catch (error) {
+    console.error('Error creating farm request notification:', error)
+  }
+}
+
+// Temporary fallback for farm management notifications
+const createFarmManagementNotificationFallback = async (params: {
+  userId: string
+  farmId: string
+  farmName: string
+  actionType: 'created' | 'updated' | 'deleted'
+  details: string
+}) => {
+  try {
+    const { userId, farmId, farmName, actionType, details } = params
+
+    const title = (() => {
+      switch (actionType) {
+        case 'created': return '🌱 Farm Created'
+        case 'updated': return '📝 Farm Updated'
+        case 'deleted': return '🗑️ Farm Deleted'
+        default: return '🚜 Farm Management'
+      }
+    })()
+
+    const message = `Farm "${farmName}" has been ${actionType}. ${details}`
+
+    const metadata = {
+      farmId,
+      farmName,
+      actionType,
+      navigation: {
+        screen: 'FarmDetails',
+        params: { farmId }
+      }
+    }
+
+    const type = (() => {
+      switch (actionType) {
+        case 'created': return 'success'
+        case 'updated': return 'info'
+        case 'deleted': return 'warning'
+        default: return 'info'
+      }
+    })() as 'info' | 'success' | 'warning' | 'error'
+
+    await supabase
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        title,
+        message,
+        type,
+        metadata
+      })
+
+    console.log(`Farm management notification created for user ${userId}: ${actionType} - ${farmName}`)
+  } catch (error) {
+    console.error('Error creating farm management notification:', error)
+  }
+}
+
 interface FarmRequest {
   id: string
   farm_name: string
@@ -188,6 +292,20 @@ const AdminFarmRequests: React.FC = () => {
                 actionType: 'created',
                 details: 'Your farm request has been approved and the farm has been created.'
               })
+              // Fallback notifications
+              await createFarmRequestNotificationFallback({
+                userId: request.requested_by,
+                farmRequestId: request.id,
+                status: 'approved',
+                farmName: request.farm_name
+              })
+              await createFarmManagementNotificationFallback({
+                userId: request.requested_by,
+                farmId: farmData.id,
+                farmName: request.farm_name,
+                actionType: 'created',
+                details: 'Your farm request has been approved and the farm has been created.'
+              })
               Alert.alert('Success', `Farm request approved and farm "${request.farm_name}" created successfully`)
               fetchRequests()
             } catch (error: any) {
@@ -232,6 +350,14 @@ const AdminFarmRequests: React.FC = () => {
       })
       // Create notification for the user whose request was rejected
       await activityLogService.createFarmRequestNotification({
+        userId: currentRequest.requested_by,
+        farmRequestId: currentRequest.id,
+        status: 'rejected',
+        farmName: currentRequest.farm_name,
+        adminFeedback: adminFeedback
+      })
+      // Fallback notification
+      await createFarmRequestNotificationFallback({
         userId: currentRequest.requested_by,
         farmRequestId: currentRequest.id,
         status: 'rejected',

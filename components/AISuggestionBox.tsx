@@ -1,461 +1,351 @@
-import React, { useState, useEffect } from 'react'
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  ScrollView,
-} from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient'
-import { AIFarmingSpecialist } from '../services/aiChatService'
-import { useAuthContext } from '../context/AuthContext'
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import AIChatService, { AIResponse, UserFarmData } from '../services/aiChatService';
 
 interface AISuggestionBoxProps {
-  farmId: string
-  farmName: string
-  farmLocation: string
-  farmNotes?: string
-  sensorData: Array<{
-    id: string
-    name: string
-    type: string
-    value: number
-    unit: string
-    timestamp: string
-  }>
-  weatherData?: {
-    current?: any
-    forecast?: any[]
-  }
-  onChatWithAI?: () => void
+  farmData?: UserFarmData | null;
+  onSuggestionApplied?: (suggestion: string) => void;
+  style?: any;
 }
 
-interface Suggestion {
-  id: string
-  type: 'critical' | 'warning' | 'info' | 'success'
-  title: string
-  message: string
-  actions?: string[]
-  confidence?: number
-}
-
-const getSuggestionColor = (type: string) => {
-  switch (type) {
-    case 'critical': return '#F44336'
-    case 'warning': return '#FF9800'
-    case 'info': return '#2196F3'
-    case 'success': return '#4CAF50'
-    default: return '#666'
-  }
-}
-
-export const AISuggestionBox: React.FC<AISuggestionBoxProps> = ({
-  farmId,
-  farmName,
-  farmLocation,
-  farmNotes,
-  sensorData,
-  weatherData,
-  onChatWithAI
+const AISuggestionBox: React.FC<AISuggestionBoxProps> = ({
+  farmData,
+  onSuggestionApplied,
+  style
 }) => {
-  const { session } = useAuthContext()
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [aiSpecialist] = useState(() => new AIFarmingSpecialist())
+  const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [response, setResponse] = useState<AIResponse | null>(null);
+  const [chatService] = useState(() => new AIChatService());
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [serviceStatus, setServiceStatus] = useState({
+    isOnline: false,
+    isQuotaExceeded: false,
+    hasApiKey: false
+  });
 
   useEffect(() => {
-    generateSuggestions()
-  }, [sensorData, weatherData])
+    // Check service status on mount
+    updateServiceStatus();
 
-  const generateSuggestions = async () => {
-    if (!session?.user?.id) return
+    // Reset quota status periodically
+    const statusInterval = setInterval(() => {
+      chatService.resetQuotaStatus();
+      updateServiceStatus();
+    }, 60000); // Check every minute
 
+    return () => clearInterval(statusInterval);
+  }, []);
+
+  const updateServiceStatus = () => {
+    const status = chatService.getServiceStatus();
+    setServiceStatus(status);
+  };
+
+  const handleSendMessage = async () => {
+    if (!message.trim()) {
+      Alert.alert('Input Required', 'Please enter your farming question or concern.');
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      setIsLoading(true)
-      const newSuggestions: Suggestion[] = []
-
-      // Check if we have sensor data
-      if (sensorData.length === 0) {
-        newSuggestions.push({
-          id: 'no-sensors',
-          type: 'info',
-          title: '📡 No Sensor Data Available',
-          message: `I don't have any sensor data for ${farmName} yet. Install sensors to get personalized AI recommendations based on real-time conditions.`,
-          actions: ['Install pH sensor', 'Install moisture sensor', 'Install temperature sensor'],
-          confidence: 1.0
-        })
-      } else {
-        // Analyze each sensor
-        for (const sensor of sensorData) {
-          const timeSinceReading = new Date().getTime() - new Date(sensor.timestamp).getTime()
-          const hoursOld = timeSinceReading / (1000 * 60 * 60)
-
-          // Check if data is too old
-          if (hoursOld > 48) {
-            newSuggestions.push({
-              id: `stale-${sensor.id}`,
-              type: 'warning',
-              title: '⏰ Outdated Sensor Data',
-              message: `${sensor.name} hasn't reported data in ${Math.floor(hoursOld)} hours. Check sensor connectivity or battery.`,
-              actions: ['Check sensor battery', 'Verify connectivity'],
-              confidence: 0.9
-            })
-            continue
-          }
-
-          // Analyze sensor readings based on type
-          const sensorType = sensor.type.toLowerCase()
-          const value = sensor.value
-
-          if (sensorType.includes('ph')) {
-            if (value < 6.0) {
-              newSuggestions.push({
-                id: `ph-low-${sensor.id}`,
-                type: 'warning',
-                title: '🧪 Soil pH Too Acidic',
-                message: `pH level of ${value.toFixed(1)} is too low. Most crops prefer pH 6.0-7.5. Consider adding lime to raise pH.`,
-                actions: ['Apply agricultural lime', 'Test soil nutrients'],
-                confidence: 0.85
-              })
-            } else if (value > 8.0) {
-              newSuggestions.push({
-                id: `ph-high-${sensor.id}`,
-                type: 'warning',
-                title: '🧪 Soil pH Too Alkaline',
-                message: `pH level of ${value.toFixed(1)} is too high. Add organic matter or sulfur to lower pH.`,
-                actions: ['Add organic matter', 'Apply sulfur'],
-                confidence: 0.85
-              })
-            } else {
-              newSuggestions.push({
-                id: `ph-good-${sensor.id}`,
-                type: 'success',
-                title: '✅ Optimal Soil pH',
-                message: `pH level of ${value.toFixed(1)} is ideal for most crops. Great job!`,
-                confidence: 0.9
-              })
-            }
-          }
-
-          if (sensorType.includes('moisture') || sensorType.includes('humidity')) {
-            if (value < 30) {
-              newSuggestions.push({
-                id: `moisture-low-${sensor.id}`,
-                type: 'critical',
-                title: '💧 Low Soil Moisture',
-                message: `Soil moisture at ${value}% is critically low. Immediate irrigation needed.`,
-                actions: ['Increase irrigation', 'Check irrigation system'],
-                confidence: 0.95
-              })
-            } else if (value > 80) {
-              newSuggestions.push({
-                id: `moisture-high-${sensor.id}`,
-                type: 'warning',
-                title: '🌊 High Soil Moisture',
-                message: `Soil moisture at ${value}% is too high. Risk of root rot. Improve drainage.`,
-                actions: ['Improve drainage', 'Reduce irrigation'],
-                confidence: 0.85
-              })
-            }
-          }
-
-          if (sensorType.includes('temperature')) {
-            if (value < 10) {
-              newSuggestions.push({
-                id: `temp-low-${sensor.id}`,
-                type: 'warning',
-                title: '🥶 Low Temperature Alert',
-                message: `Temperature of ${value}°C may stress crops. Consider frost protection measures.`,
-                actions: ['Install frost protection', 'Monitor closely'],
-                confidence: 0.8
-              })
-            } else if (value > 35) {
-              newSuggestions.push({
-                id: `temp-high-${sensor.id}`,
-                type: 'warning',
-                title: '🔥 High Temperature Alert',
-                message: `Temperature of ${value}°C is stressing crops. Increase irrigation and provide shade.`,
-                actions: ['Increase irrigation', 'Provide shade'],
-                confidence: 0.8
-              })
-            }
-          }
-        }
-      }
-
-      // Weather-based suggestions
-      if (weatherData?.current) {
-        const temp = weatherData.current.temperature || weatherData.current.temp
-        const humidity = weatherData.current.humidity
-        const windSpeed = weatherData.current.wind_speed || weatherData.current.windSpeed
-
-        if (temp > 30 && humidity < 50) {
-          newSuggestions.push({
-            id: 'weather-hot-dry',
-            type: 'warning',
-            title: '☀️ Hot & Dry Conditions',
-            message: `Hot weather (${temp}°C) with low humidity (${humidity}%) detected. Increase irrigation frequency.`,
-            actions: ['Increase watering', 'Apply mulch'],
-            confidence: 0.8
-          })
-        }
-
-        if (windSpeed > 15) {
-          newSuggestions.push({
-            id: 'weather-windy',
-            type: 'info',
-            title: '💨 Windy Conditions',
-            message: `High winds (${windSpeed} km/h) may increase water evaporation. Monitor soil moisture closely.`,
-            actions: ['Monitor soil moisture', 'Protect young plants'],
-            confidence: 0.7
-          })
-        }
-      }
-
-      // Forecast-based suggestions
-      if (weatherData?.forecast && weatherData.forecast.length > 0) {
-        const tomorrow = weatherData.forecast[0]
-        const rainChance = tomorrow.pop || tomorrow.rain_chance || 0
-
-        if (rainChance > 70) {
-          newSuggestions.push({
-            id: 'forecast-rain',
-            type: 'info',
-            title: '🌧️ Rain Expected Tomorrow',
-            message: `${rainChance}% chance of rain tomorrow. Consider reducing irrigation schedule.`,
-            actions: ['Adjust irrigation', 'Prepare drainage'],
-            confidence: 0.75
-          })
-        }
-      }
-
-      // General farming tips if no specific issues
-      if (newSuggestions.length === 0) {
-        newSuggestions.push({
-          id: 'general-tip',
-          type: 'info',
-          title: '🌱 Farm Looking Good!',
-          message: 'All sensor readings appear normal. Keep up the great work! Consider asking me about crop rotation or seasonal planning.',
-          actions: ['Plan crop rotation', 'Schedule maintenance'],
-          confidence: 0.6
-        })
-      }
-
-      setSuggestions(newSuggestions)
+      const aiResponse = await chatService.sendMessage(message, farmData);
+      setResponse(aiResponse);
+      setMessage('');
+      updateServiceStatus();
     } catch (error) {
-      console.error('Error generating suggestions:', error)
-      setSuggestions([{
-        id: 'error',
-        type: 'warning',
-        title: '⚠️ Analysis Unavailable',
-        message: 'Unable to analyze farm data at the moment. Chat with AI for personalized advice.',
-        actions: ['Chat with AI'],
-        confidence: 0.5
-      }])
+      console.error('Error sending message:', error);
+      Alert.alert(
+        'Connection Error',
+        'Unable to get AI response. Please check your internet connection and try again.'
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const handleActionPress = (action: string) => {
-    // For now, all actions lead to chat with AI
-    if (onChatWithAI) {
-      onChatWithAI()
-    }
-  }
+  const handleSuggestionPress = (suggestion: string) => {
+    Alert.alert(
+      'Apply Suggestion',
+      `Would you like to apply this suggestion: "${suggestion}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Apply',
+          onPress: () => {
+            onSuggestionApplied?.(suggestion);
+            Alert.alert('Suggestion Applied', 'The suggestion has been noted in your farm records.');
+          }
+        }
+      ]
+    );
+  };
 
-  const prioritySuggestions = suggestions.filter(s => s.type === 'critical' || s.type === 'warning')
-  const displaySuggestions = isExpanded ? suggestions : prioritySuggestions.slice(0, 2)
+  const getStatusColor = () => {
+    if (serviceStatus.isOnline) return '#4CAF50';
+    if (serviceStatus.isQuotaExceeded) return '#FF9800';
+    return '#F44336';
+  };
+
+  const getStatusText = () => {
+    if (serviceStatus.isOnline) return 'AI Online';
+    if (serviceStatus.isQuotaExceeded) return 'Quota Exceeded - Offline Mode';
+    if (!serviceStatus.hasApiKey) return 'No API Key - Offline Mode';
+    return 'AI Offline';
+  };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#f8f9fa', '#ffffff']}
-        style={styles.gradient}
+    <View style={[styles.container, style]}>
+      {/* Header */}
+      <TouchableOpacity
+        style={styles.header}
+        onPress={() => setIsExpanded(!isExpanded)}
+        activeOpacity={0.7}
       >
-        <View style={styles.header}>
-          <View style={styles.titleRow}>
-            <Ionicons name="brain" size={24} color="#4CAF50" />
-            <Text style={styles.title}>AI Farm Analysis</Text>
-            {isLoading && <ActivityIndicator size="small" color="#4CAF50" style={{ marginLeft: 8 }} />}
-          </View>
-          <TouchableOpacity
-            onPress={() => setIsExpanded(!isExpanded)}
-            style={styles.expandButton}
-          >
-            <Ionicons
-              name={isExpanded ? "chevron-up" : "chevron-down"}
-              size={20}
-              color="#666"
-            />
-          </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <MaterialIcons name="smart-toy" size={24} color="#2196F3" />
+          <Text style={styles.headerTitle}>Dr. AgriBot AI Assistant</Text>
+          <View style={[styles.statusIndicator, { backgroundColor: getStatusColor() }]} />
         </View>
+        <MaterialIcons
+          name={isExpanded ? "expand-less" : "expand-more"}
+          size={24}
+          color="#666"
+        />
+      </TouchableOpacity>
 
-        <ScrollView style={styles.content} nestedScrollViewEnabled>
-          {displaySuggestions.map((suggestion) => (
-            <View key={suggestion.id} style={styles.suggestionCard}>
-              <View style={styles.suggestionHeader}>
-                <View style={[styles.typeIndicator, { backgroundColor: getSuggestionColor(suggestion.type) }]} />
-                <Text style={styles.suggestionTitle}>{suggestion.title}</Text>
+      {/* Status */}
+      <Text style={[styles.statusText, { color: getStatusColor() }]}>
+        {getStatusText()}
+      </Text>
+
+      {isExpanded && (
+        <>
+          {/* Input Section */}
+          <View style={styles.inputSection}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Ask me about soil, crops, pests, irrigation, or any farming question..."
+              placeholderTextColor="#999"
+              value={message}
+              onChangeText={setMessage}
+              multiline
+              maxLength={500}
+              editable={!isLoading}
+            />
+            <TouchableOpacity
+              style={[styles.sendButton, { opacity: isLoading ? 0.6 : 1 }]}
+              onPress={handleSendMessage}
+              disabled={isLoading}
+              activeOpacity={0.7}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : (
+                <MaterialIcons name="send" size={20} color="#FFF" />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Response Section */}
+          {response && (
+            <ScrollView style={styles.responseSection} showsVerticalScrollIndicator={false}>
+              {/* AI Response */}
+              <View style={[
+                styles.responseCard,
+                { backgroundColor: response.isOffline ? '#FFF3E0' : '#F3F7FF' }
+              ]}>
+                {response.isOffline && (
+                  <View style={styles.offlineIndicator}>
+                    <MaterialIcons name="cloud-off" size={16} color="#FF9800" />
+                    <Text style={styles.offlineText}>Offline Mode</Text>
+                  </View>
+                )}
+
+                <Text style={styles.responseText}>{response.content}</Text>
+
+                {response.error && (
+                  <Text style={styles.errorText}>
+                    ⚠️ {response.error}
+                  </Text>
+                )}
               </View>
-              <Text style={styles.suggestionMessage}>{suggestion.message}</Text>
 
-              {suggestion.actions && suggestion.actions.length > 0 && (
-                <View style={styles.actionsContainer}>
-                  {suggestion.actions.map((action, index) => (
+              {/* Suggestions */}
+              {response.suggestions && response.suggestions.length > 0 && (
+                <View style={styles.suggestionsContainer}>
+                  <Text style={styles.suggestionsTitle}>💡 Quick Actions:</Text>
+                  {response.suggestions.map((suggestion, index) => (
                     <TouchableOpacity
                       key={index}
-                      style={styles.actionButton}
-                      onPress={() => handleActionPress(action)}
+                      style={styles.suggestionChip}
+                      onPress={() => handleSuggestionPress(suggestion)}
+                      activeOpacity={0.7}
                     >
-                      <Text style={styles.actionText}>{action}</Text>
+                      <Text style={styles.suggestionText}>{suggestion}</Text>
+                      <MaterialIcons name="arrow-forward-ios" size={12} color="#2196F3" />
                     </TouchableOpacity>
                   ))}
                 </View>
               )}
-            </View>
-          ))}
-
-          {!isExpanded && suggestions.length > 2 && (
-            <TouchableOpacity
-              style={styles.showMoreButton}
-              onPress={() => setIsExpanded(true)}
-            >
-              <Text style={styles.showMoreText}>
-                Show {suggestions.length - 2} more suggestions
-              </Text>
-              <Ionicons name="chevron-down" size={16} color="#4CAF50" />
-            </TouchableOpacity>
+            </ScrollView>
           )}
-        </ScrollView>
 
-        <TouchableOpacity style={styles.chatButton} onPress={onChatWithAI}>
-          <Ionicons name="chatbubbles" size={20} color="#fff" />
-          <Text style={styles.chatButtonText}>Chat with AI Specialist</Text>
-        </TouchableOpacity>
-      </LinearGradient>
+          {/* Farm Context Info */}
+          {farmData && farmData.farms.length > 0 && (
+            <View style={styles.contextInfo}>
+              <MaterialIcons name="info" size={14} color="#666" />
+              <Text style={styles.contextText}>
+                Analyzing data for {farmData.farms[0].name} farm
+                {farmData.farms[0].sensors.length > 0 &&
+                  ` (${farmData.farms[0].sensors.length} sensors)`
+                }
+              </Text>
+            </View>
+          )}
+        </>
+      )}
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 16,
-    overflow: 'hidden',
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  gradient: {
-    padding: 16,
+    shadowRadius: 4,
+    margin: 16,
   },
   header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
-  titleRow: {
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginLeft: 8,
-  },
-  expandButton: {
-    padding: 4,
-  },
-  content: {
-    maxHeight: 400,
-  },
-  suggestionCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(76, 175, 80, 0.2)',
-  },
-  suggestionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  typeIndicator: {
-    width: 4,
-    height: 16,
-    borderRadius: 2,
-    marginRight: 8,
-  },
-  suggestionTitle: {
+  headerTitle: {
     fontSize: 16,
     fontWeight: '600',
+    marginLeft: 8,
+    color: '#333',
+  },
+  statusIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  statusText: {
+    fontSize: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    fontWeight: '500',
+  },
+  inputSection: {
+    flexDirection: 'row',
+    padding: 16,
+    alignItems: 'flex-end',
+  },
+  textInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    maxHeight: 100,
+    fontSize: 14,
+    backgroundColor: '#FAFAFA',
+  },
+  sendButton: {
+    backgroundColor: '#2196F3',
+    borderRadius: 20,
+    padding: 12,
+    marginLeft: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  responseSection: {
+    maxHeight: 300,
+    paddingHorizontal: 16,
+  },
+  responseCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  offlineIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  offlineText: {
+    fontSize: 12,
+    color: '#FF9800',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  responseText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#333',
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#F44336',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  suggestionsContainer: {
+    marginBottom: 16,
+  },
+  suggestionsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  suggestionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#2196F3',
+  },
+  suggestionText: {
+    fontSize: 13,
     color: '#333',
     flex: 1,
   },
-  suggestionMessage: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  actionsContainer: {
+  contextInfo: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#F5F5F5',
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
   },
-  actionButton: {
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(76, 175, 80, 0.3)',
-  },
-  actionText: {
+  contextText: {
     fontSize: 12,
-    color: '#4CAF50',
-    fontWeight: '500',
+    color: '#666',
+    marginLeft: 4,
   },
-  showMoreButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-  },
-  showMoreText: {
-    fontSize: 14,
-    color: '#4CAF50',
-    fontWeight: '500',
-    marginRight: 4,
-  },
-  chatButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 25,
-    marginTop: 12,
-  },
-  chatButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-})
+});
+
+export default AISuggestionBox;

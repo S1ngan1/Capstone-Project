@@ -20,7 +20,7 @@ import { ChatInput } from '../components/ChatInput'
 import { useAuthContext } from '../context/AuthContext'
 import { useDialog } from '../context/DialogContext'
 import { RootStackParamList } from '../App'
-import { AIFarmingSpecialist, ChatMessage } from '../services/aiChatService'
+import AIChatService, { ChatMessage } from '../services/aiChatService'
 
 const { width, height } = Dimensions.get('window')
 
@@ -43,7 +43,7 @@ const Suggestion: React.FC = () => {
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [aiSpecialist] = useState(() => new AIFarmingSpecialist())
+  const [aiSpecialist] = useState(() => new AIChatService())
   const [isInitializing, setIsInitializing] = useState(true)
   const [userFarms, setUserFarms] = useState<Array<{
     id: string

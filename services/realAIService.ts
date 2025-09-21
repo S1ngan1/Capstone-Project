@@ -22,6 +22,9 @@ interface AIResponse {
 export class RealAIService {
   private config: AIConfig
   private systemPrompt: string
+  private isQuotaExceeded = false
+  private lastQuotaCheck = 0
+  private readonly QUOTA_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
   constructor(config: AIConfig) {
     this.config = config
@@ -172,7 +175,7 @@ IMPORTANT: Always reference the user's specific farm data when available. Provid
     return 'Recently'
   }
 
-  // OpenAI Integration
+  // OpenAI Integration with quota handling
   private async callOpenAI(messages: any[]): Promise<AIResponse> {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -191,161 +194,129 @@ IMPORTANT: Always reference the user's specific farm data when available. Provid
     })
 
     if (!response.ok) {
-      throw new Error(`OpenAI API Error: ${response.status} ${response.statusText}`)
+      const errorText = await response.text();
+
+      // Handle quota exceeded error specifically
+      if (response.status === 429) {
+        this.isQuotaExceeded = true;
+        this.lastQuotaCheck = Date.now();
+        throw new Error(`429 OpenAI quota exceeded: ${errorText}`)
+      }
+
+      throw new Error(`OpenAI API Error: ${response.status} ${response.statusText} - ${errorText}`)
     }
 
     const data = await response.json()
-    const content = data.choices[0]?.message?.content || "I apologize, but I couldn't generate a proper response. Please try asking your question again."
+    const content = data.choices[0]?.message?.content ||
+      "I apologize, but I couldn't generate a proper response. Please try asking your question again."
 
     return {
       content,
       metadata: {
-        confidence: 0.95,
-        suggestedActions: this.extractSuggestedActions(content)
+        confidence: 0.9
       }
     }
   }
 
-  // Claude (Anthropic) Integration
+  // Claude Integration (placeholder)
   private async callClaude(messages: any[]): Promise<AIResponse> {
-    // Convert messages format for Claude
-    const systemMessage = messages.find(m => m.role === 'system')?.content || ''
-    const conversationMessages = messages.filter(m => m.role !== 'system')
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': this.config.apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: this.config.model || 'claude-3-sonnet-20240229',
-        max_tokens: 1000,
-        system: systemMessage,
-        messages: conversationMessages,
-        temperature: 0.7,
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Claude API Error: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    const content = data.content[0]?.text || "I apologize, but I couldn't generate a proper response. Please try asking your question again."
-
-    return {
-      content,
-      metadata: {
-        confidence: 0.95,
-        suggestedActions: this.extractSuggestedActions(content)
-      }
-    }
+    throw new Error('Claude integration not yet implemented')
   }
 
-  // GitHub Copilot Chat Integration (if available)
+  // Copilot Integration (placeholder)
   private async callCopilot(messages: any[]): Promise<AIResponse> {
-    // Note: This would require GitHub Copilot API access
-    // For now, fallback to OpenAI format with different endpoint
-    const response = await fetch(this.config.baseURL || 'https://api.github.com/copilot/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
-      },
-      body: JSON.stringify({
-        messages: messages,
-        model: this.config.model || 'gpt-4',
-        max_tokens: 1000,
-        temperature: 0.7,
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Copilot API Error: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    const content = data.choices[0]?.message?.content || "I apologize, but I couldn't generate a proper response. Please try asking your question again."
-
-    return {
-      content,
-      metadata: {
-        confidence: 0.95,
-        suggestedActions: this.extractSuggestedActions(content)
-      }
-    }
-  }
-
-  private extractSuggestedActions(content: string): string[] {
-    const actions: string[] = []
-
-    // Look for common action patterns in the response
-    const actionPatterns = [
-      /(?:try|consider|should|recommend|suggest)[\w\s]+(ing|ed|ion)\b/gi,
-      /(?:steps?|actions?|recommendations?):\s*([^.]+)/gi,
-      /(?:•|-|\*)\s*([^.•\-*\n]+)/g
-    ]
-
-    actionPatterns.forEach(pattern => {
-      const matches = content.match(pattern)
-      if (matches) {
-        matches.slice(0, 3).forEach(match => { // Limit to 3 actions
-          const cleaned = match.replace(/^(?:•|-|\*)\s*/, '').trim()
-          if (cleaned.length > 10 && cleaned.length < 60) {
-            actions.push(cleaned)
-          }
-        })
-      }
-    })
-
-    return actions.slice(0, 3) // Return top 3 actions
+    throw new Error('GitHub Copilot integration not yet implemented')
   }
 
   private getFallbackResponse(userMessage: string, error: Error): AIResponse {
+    const isQuotaError = error.message.includes('429') || error.message.includes('quota');
+
+    if (isQuotaError) {
+      return {
+        content: `🤖 I'm currently experiencing high demand and my OpenAI quota has been reached. However, I can still help with your farming question!\n\n${this.getOfflineAdvice(userMessage)}\n\n💡 **Tip**: My full AI capabilities will be restored soon. In the meantime, I'm providing guidance based on my agricultural knowledge base.`,
+        metadata: {
+          suggestedActions: this.getOfflineSuggestions(userMessage),
+          confidence: 0.7
+        }
+      }
+    }
+
     return {
-      content: `🤖 I'm experiencing some technical difficulties connecting to my AI systems right now.
-
-**Your question:** "${userMessage}"
-
-**Here's what I can suggest while I'm getting back online:**
-- If it's about plant problems: Check for proper watering, lighting, and soil drainage
-- For planting questions: Consider your local climate zone and current season
-- For soil issues: Most plants prefer well-draining soil with pH 6.0-7.0
-- For general farming: Focus on soil health as the foundation of good farming
-
-**Technical details:** ${error.message}
-
-Please try asking your question again in a moment, or feel free to ask about any specific farming topic! 🌱`,
+      content: `🌱 I encountered a technical issue, but I'm still here to help with your farming needs!\n\n${this.getOfflineAdvice(userMessage)}\n\n🔧 If this issue persists, please try again in a few moments.`,
       metadata: {
-        confidence: 0.5,
-        suggestedActions: ['Try asking again', 'Ask about specific crops', 'Check farming basics']
+        suggestedActions: this.getOfflineSuggestions(userMessage),
+        confidence: 0.6
       }
     }
   }
-}
 
-// Configuration helper
-export const createAIConfig = (
-  provider: AIProvider,
-  apiKey: string,
-  model?: string,
-  baseURL?: string
-): AIConfig => ({
-  provider,
-  apiKey,
-  model,
-  baseURL
-})
+  private getOfflineAdvice(message: string): string {
+    const lowerMessage = message.toLowerCase();
 
-// Factory function for easy setup
-export const createRealAI = (provider: AIProvider, apiKey: string): RealAIService => {
-  const configs = {
-    openai: { provider: 'openai' as const, apiKey, model: 'gpt-4o-mini' },
-    claude: { provider: 'claude' as const, apiKey, model: 'claude-3-sonnet-20240229' },
-    copilot: { provider: 'copilot' as const, apiKey, model: 'gpt-4' }
+    if (lowerMessage.includes('soil') || lowerMessage.includes('ph')) {
+      return `🌱 **Soil Health Guidelines:**\n• Test soil pH regularly (ideal: 6.0-7.0)\n• Add organic compost to improve structure\n• Avoid working wet soil to prevent compaction\n• Consider crop rotation for nutrient balance`;
+    }
+
+    if (lowerMessage.includes('water') || lowerMessage.includes('irrigation')) {
+      return `💧 **Water Management Best Practices:**\n• Water deeply but less frequently\n• Check soil moisture 2-3 inches deep\n• Water in early morning to reduce evaporation\n• Use mulch to retain soil moisture`;
+    }
+
+    if (lowerMessage.includes('pest') || lowerMessage.includes('disease')) {
+      return `🐛 **Pest & Disease Management:**\n• Inspect plants daily for early detection\n• Remove affected plant parts immediately\n• Encourage beneficial insects with companion plants\n• Use organic treatments when possible`;
+    }
+
+    return `🌾 **General Farming Advice:**\n• Monitor crops regularly for changes\n• Keep detailed farming records\n• Plan activities based on weather patterns\n• Maintain healthy soil as your foundation`;
   }
 
-  return new RealAIService(configs[provider])
+  private getOfflineSuggestions(message: string): string[] {
+    const lowerMessage = message.toLowerCase();
+
+    if (lowerMessage.includes('soil')) {
+      return ['Test soil pH', 'Add compost', 'Check drainage'];
+    }
+
+    if (lowerMessage.includes('water')) {
+      return ['Check soil moisture', 'Adjust irrigation', 'Apply mulch'];
+    }
+
+    if (lowerMessage.includes('pest')) {
+      return ['Daily plant inspection', 'Remove affected areas', 'Natural pest control'];
+    }
+
+    return ['Regular monitoring', 'Weather planning', 'Record keeping'];
+  }
+
+  // Reset quota status
+  resetQuotaStatus(): void {
+    if (this.isQuotaExceeded && Date.now() - this.lastQuotaCheck > this.QUOTA_CHECK_INTERVAL) {
+      this.isQuotaExceeded = false;
+      console.log('OpenAI quota status reset');
+    }
+  }
+
+  getServiceStatus(): { isOnline: boolean, isQuotaExceeded: boolean, hasApiKey: boolean } {
+    return {
+      isOnline: !!this.config.apiKey && !this.isQuotaExceeded,
+      isQuotaExceeded: this.isQuotaExceeded,
+      hasApiKey: !!this.config.apiKey
+    };
+  }
 }
+
+// Factory function to create AI service instances
+export const createAIService = (provider: AIProvider = 'openai'): RealAIService => {
+  const apiKey = provider === 'openai'
+    ? process.env.OPENAI_API_KEY || process.env.EXPO_PUBLIC_OPENAI_API_KEY
+    : '';
+
+  const configs = {
+    openai: { provider: 'openai' as const, apiKey, model: 'gpt-4o-mini' },
+    claude: { provider: 'claude' as const, apiKey: '', model: 'claude-3-haiku' },
+    copilot: { provider: 'copilot' as const, apiKey: '', model: 'gpt-4' },
+  }
+
+  return new RealAIService(configs[provider]);
+}
+
+export default RealAIService;
+

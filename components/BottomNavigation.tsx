@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useAuthContext } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { activityLogService } from '../utils/activityLogService'
 
 const { width, height } = Dimensions.get('window')
 
@@ -24,6 +25,81 @@ const BottomNavigation: React.FC = () => {
   const navigation = useNavigation()
   const { session } = useAuthContext()
   const [userRole, setUserRole] = useState<string | null>(null)
+
+  // Counter states with better initialization
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
+  const [newActivityCount, setNewActivityCount] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Fetch notification and activity counts with improved real-time updates
+  useEffect(() => {
+    if (!session?.user?.id) {
+      setUnreadNotificationCount(0)
+      setNewActivityCount(0)
+      setIsLoading(false)
+      return
+    }
+
+    const userId = session.user.id
+    let notificationSubscription: any = null
+    let activitySubscription: any = null
+
+    const initializeCounts = async () => {
+      try {
+        console.log('🚀 Initializing counter subscriptions for user:', userId)
+
+        // Get initial counts
+        const [unreadCount, newActivities] = await Promise.all([
+          activityLogService.getUnreadNotificationCount(),
+          activityLogService.getNewActivityLogCount()
+        ])
+
+        setUnreadNotificationCount(unreadCount)
+        setNewActivityCount(newActivities)
+
+        console.log(`📊 Initial counts - Notifications: ${unreadCount}, Activities: ${newActivities}`)
+
+        // Set up real-time subscriptions with proper callback handling
+        notificationSubscription = activityLogService.subscribeToNotifications(
+          userId,
+          async (notification) => {
+            console.log('🔔 New notification received:', notification)
+            // Refresh the notification count when a new notification arrives
+            const newCount = await activityLogService.getUnreadNotificationCount()
+            setUnreadNotificationCount(newCount)
+          }
+        )
+
+        activitySubscription = activityLogService.subscribeToActivityLogs(
+          userId,
+          async (activity) => {
+            console.log('📈 New activity logged:', activity)
+            // Refresh the activity count when a new activity is logged
+            const newCount = await activityLogService.getNewActivityLogCount()
+            setNewActivityCount(newCount)
+          }
+        )
+
+        setIsLoading(false)
+      } catch (error) {
+        console.error('❌ Error initializing counters:', error)
+        setIsLoading(false)
+      }
+    }
+
+    initializeCounts()
+
+    // Cleanup function
+    return () => {
+      console.log('🧹 Cleaning up bottom navigation subscriptions')
+      if (notificationSubscription) {
+        notificationSubscription.unsubscribe()
+      }
+      if (activitySubscription) {
+        activitySubscription.unsubscribe()
+      }
+    }
+  }, [session?.user?.id])
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -56,7 +132,14 @@ const BottomNavigation: React.FC = () => {
     navigation.navigate('UserRequests' as never)
   }
 
-  const navigateToNotifications = () => {
+  const navigateToNotifications = async () => {
+    // Reset notification counter when user views notifications
+    setUnreadNotificationCount(0)
+    try {
+      await activityLogService.markAllNotificationsAsRead()
+    } catch (error) {
+      console.error('Error marking notifications as read:', error)
+    }
     navigation.navigate('Notification' as never)
   }
 
@@ -78,9 +161,10 @@ const BottomNavigation: React.FC = () => {
 
   // Custom handler for Activity button: mark as viewed and navigate
   const handleActivityPress = async () => {
+    // Reset activity counter when user views activities
+    setNewActivityCount(0)
     try {
       // Mark all activities as viewed
-      const { activityLogService } = require('../utils/activityLogService')
       await activityLogService.markActivityLogsAsViewed()
     } catch (error) {
       console.error('Error marking activities as viewed:', error)
@@ -124,6 +208,13 @@ const BottomNavigation: React.FC = () => {
           <TouchableOpacity style={styles.navItem} onPress={navigateToNotifications}>
             <View style={styles.iconContainer}>
               <Ionicons name="notifications-outline" size={responsiveIconSize} color="#fff" />
+              {!isLoading && unreadNotificationCount > 0 && (
+                <View style={styles.counterBadge}>
+                  <Text style={styles.counterText}>
+                    {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+                  </Text>
+                </View>
+              )}
             </View>
             <Text style={styles.navText}>Noti</Text>
           </TouchableOpacity>
@@ -132,6 +223,13 @@ const BottomNavigation: React.FC = () => {
           <TouchableOpacity style={styles.navItem} onPress={handleActivityPress}>
             <View style={styles.iconContainer}>
               <Ionicons name="pulse-outline" size={responsiveIconSize} color="#fff" />
+              {!isLoading && newActivityCount > 0 && (
+                <View style={styles.counterBadge}>
+                  <Text style={styles.counterText}>
+                    {newActivityCount > 99 ? '99+' : newActivityCount}
+                  </Text>
+                </View>
+              )}
             </View>
             <Text style={styles.navText}>Activity</Text>
           </TouchableOpacity>
@@ -209,6 +307,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: responsiveFontSize + 2,
     numberOfLines: 1,
+  },
+  counterBadge: {
+    position: 'absolute',
+    right: -10,
+    top: -2,
+    backgroundColor: '#FF3B30', // ADG compliant red color
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff', // White border for better visibility
+  },
+  counterText: {
+    color: '#fff',
+    fontSize: 10, // Slightly smaller for better fit
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   adminNavigation: {
     flexDirection: 'row',

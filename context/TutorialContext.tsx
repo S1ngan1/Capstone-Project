@@ -1,81 +1,61 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import React, { createContext, useContext, useState, useRef, ReactNode } from 'react'
+import { findNodeHandle, UIManager, Platform } from 'react-native'
+
+interface ElementPosition {
+  x: number
+  y: number
+  width: number
+  height: number
+}
 
 interface TutorialContextType {
+  // Basic tutorial control
+  startTutorial: () => void
   showTutorial: boolean
   currentStep: number
   isMinimized: boolean
-  completedSteps: string[]
-  isFirstTimeUser: boolean
-  startTutorial: () => void
+
+  // Tutorial actions
   closeTutorial: () => void
   minimizeTutorial: () => void
   maximizeTutorial: () => void
   setCurrentStep: (step: number) => void
-  markStepCompleted: (stepId: string) => void
-  resetTutorial: () => void
-  checkFirstTimeUser: () => Promise<void>
-  navigateToDemo?: (screen: string) => void
+
+  // Navigation and interaction
   setNavigateToDemo: (fn: (screen: string) => void) => void
+  getElementPosition: (elementId: string) => Promise<ElementPosition>
+  setInteractionAllowed: (allowed: boolean) => void
+  isReady: boolean
+  isInteractionAllowed: boolean
+  registerElement: (id: string, ref: any) => void
 }
 
-const defaultContextValue: TutorialContextType = {
-  showTutorial: false,
-  currentStep: 0,
-  isMinimized: false,
-  completedSteps: [],
-  isFirstTimeUser: true,
-  startTutorial: () => {},
-  closeTutorial: () => {},
-  minimizeTutorial: () => {},
-  maximizeTutorial: () => {},
-  setCurrentStep: () => {},
-  markStepCompleted: () => {},
-  resetTutorial: () => {},
-  checkFirstTimeUser: async () => {},
-  setNavigateToDemo: () => {},
+const TutorialContext = createContext<TutorialContextType | undefined>(undefined)
+
+interface TutorialProviderProps {
+  children: ReactNode
 }
 
-const TutorialContext = createContext<TutorialContextType>(defaultContextValue)
-
-export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) => {
   const [showTutorial, setShowTutorial] = useState(false)
-  const [currentStep, setCurrentStepState] = useState(0)
+  const [currentStep, setCurrentStep] = useState(0)
   const [isMinimized, setIsMinimized] = useState(false)
-  const [completedSteps, setCompletedSteps] = useState<string[]>([])
-  const [isFirstTimeUser, setIsFirstTimeUser] = useState(true)
-  const [navigateToDemo, setNavigateToDemo] = useState<((screen: string) => void) | undefined>()
-
-  const checkFirstTimeUser = async () => {
-    try {
-      const hasSeenTutorial = await AsyncStorage.getItem('hasSeenTutorial')
-      const completed = await AsyncStorage.getItem('completedTutorialSteps')
-
-      setIsFirstTimeUser(hasSeenTutorial !== 'true')
-
-      if (completed) {
-        setCompletedSteps(JSON.parse(completed))
-      }
-    } catch (error) {
-      console.error('Error checking first time user:', error)
-    }
-  }
+  const [isReady, setIsReady] = useState(true)
+  const [isInteractionAllowed, setIsInteractionAllowed] = useState(true)
+  const elementRefs = useRef<Record<string, any>>({})
+  const navigateToDemo = useRef<((screen: string) => void) | null>(null)
 
   const startTutorial = () => {
     setShowTutorial(true)
-    setCurrentStepState(0)
+    setCurrentStep(0)
     setIsMinimized(false)
+    console.log('Tutorial started')
   }
 
-  const closeTutorial = async () => {
+  const closeTutorial = () => {
     setShowTutorial(false)
+    setCurrentStep(0)
     setIsMinimized(false)
-    try {
-      await AsyncStorage.setItem('hasSeenTutorial', 'true')
-      setIsFirstTimeUser(false)
-    } catch (error) {
-      console.error('Error saving tutorial completion:', error)
-    }
   }
 
   const minimizeTutorial = () => {
@@ -86,64 +66,78 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsMinimized(false)
   }
 
-  const setCurrentStep = (step: number) => {
-    setCurrentStepState(step)
+  const setNavigateToDemo = (fn: (screen: string) => void) => {
+    navigateToDemo.current = fn
   }
 
-  const markStepCompleted = async (stepId: string) => {
-    const updatedSteps = [...completedSteps, stepId]
-    setCompletedSteps(updatedSteps)
-
-    try {
-      await AsyncStorage.setItem('completedTutorialSteps', JSON.stringify(updatedSteps))
-    } catch (error) {
-      console.error('Error saving completed step:', error)
+  const registerElement = (id: string, ref: any) => {
+    if (ref) {
+      elementRefs.current[id] = ref
     }
   }
 
-  const resetTutorial = async () => {
-    try {
-      await AsyncStorage.removeItem('hasSeenTutorial')
-      await AsyncStorage.removeItem('completedTutorialSteps')
-      setIsFirstTimeUser(true)
-      setCompletedSteps([])
-      setCurrentStepState(0)
-      setIsMinimized(false)
-    } catch (error) {
-      console.error('Error resetting tutorial:', error)
-    }
+  const getElementPosition = async (elementId: string): Promise<ElementPosition> => {
+    return new Promise((resolve) => {
+      const element = elementRefs.current[elementId]
+
+      if (!element) {
+        // Return default position if element not found
+        resolve({ x: 0, y: 0, width: 100, height: 50 })
+        return
+      }
+
+      const nodeHandle = findNodeHandle(element)
+      if (!nodeHandle) {
+        resolve({ x: 0, y: 0, width: 100, height: 50 })
+        return
+      }
+
+      if (Platform.OS === 'android') {
+        UIManager.measureInWindow(nodeHandle, (x, y, width, height) => {
+          resolve({ x, y, width, height })
+        })
+      } else {
+        UIManager.measure(nodeHandle, (x, y, width, height, pageX, pageY) => {
+          resolve({ x: pageX, y: pageY, width, height })
+        })
+      }
+    })
   }
 
-  useEffect(() => {
-    checkFirstTimeUser()
-  }, [])
+  const setInteractionAllowedState = (allowed: boolean) => {
+    setIsInteractionAllowed(allowed)
+  }
 
-  const contextValue: TutorialContextType = {
+  const value: TutorialContextType = {
+    // Basic tutorial control
+    startTutorial,
     showTutorial,
     currentStep,
     isMinimized,
-    completedSteps,
-    isFirstTimeUser,
-    startTutorial,
+
+    // Tutorial actions
     closeTutorial,
     minimizeTutorial,
     maximizeTutorial,
     setCurrentStep,
-    markStepCompleted,
-    resetTutorial,
-    checkFirstTimeUser,
-    navigateToDemo,
+
+    // Navigation and interaction
     setNavigateToDemo,
+    getElementPosition,
+    setInteractionAllowed: setInteractionAllowedState,
+    isReady,
+    isInteractionAllowed,
+    registerElement,
   }
 
   return (
-    <TutorialContext.Provider value={contextValue}>
+    <TutorialContext.Provider value={value}>
       {children}
     </TutorialContext.Provider>
   )
 }
 
-export const useTutorial = () => {
+export const useTutorial = (): TutorialContextType => {
   const context = useContext(TutorialContext)
   if (context === undefined) {
     throw new Error('useTutorial must be used within a TutorialProvider')

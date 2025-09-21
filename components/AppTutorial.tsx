@@ -47,21 +47,6 @@ const tutorialSteps: TutorialStep[] = [
     showSeeInApp: false
   },
   {
-    id: 'getting-started',
-    title: '🏠 Getting Started',
-    description: 'First, you\'ll want to set up your farms and add sensors to monitor your crops.',
-    icon: 'home',
-    screen: 'Home',
-    gradient: ['#2196F3', '#1976D2', '#1565C0'],
-    keyFeatures: [
-      'Create and manage multiple farms',
-      'Add farm location and details',
-      'View your farm dashboard',
-      'Monitor all your farms in one place'
-    ],
-    showSeeInApp: true
-  },
-  {
     id: 'farm-details',
     title: '📊 Farm Management',
     description: 'Each farm has detailed information including sensor data, weather, and AI suggestions.',
@@ -137,29 +122,34 @@ const AppTutorial: React.FC = () => {
 
   const [fadeAnim] = useState(new Animated.Value(1))
 
-  // Set up navigation function in context
+  // Set up navigation function in context - Fixed to prevent setState during render
   useEffect(() => {
-    setNavigateToDemo((screen: string) => {
-      // Fix navigation call with proper typing
-      switch (screen) {
-        case 'Home':
-          navigation.navigate('Home' as never)
-          break
-        case 'FarmDetails':
-          // For FarmDetails, we need a farmId parameter, so navigate to Home instead
-          navigation.navigate('Home' as never)
-          break
-        case 'Suggestion':
-          navigation.navigate('Suggestion' as never)
-          break
-        case 'Notification':
-          navigation.navigate('Notification' as never)
-          break
-        default:
-          navigation.navigate('Home' as never)
-          break
-      }
-    })
+    // Use setTimeout to ensure this runs after the current render cycle
+    const timeoutId = setTimeout(() => {
+      setNavigateToDemo((screen: string) => {
+        // Fix navigation call with proper typing
+        switch (screen) {
+          case 'Home':
+            navigation.navigate('Home' as never)
+            break
+          case 'FarmDetails':
+            // For FarmDetails, we need a farmId parameter, so navigate to Home instead
+            navigation.navigate('Home' as never)
+            break
+          case 'Suggestion':
+            navigation.navigate('Suggestion' as never)
+            break
+          case 'Notification':
+            navigation.navigate('Notification' as never)
+            break
+          default:
+            navigation.navigate('Home' as never)
+            break
+        }
+      })
+    }, 0)
+
+    return () => clearTimeout(timeoutId)
   }, [navigation, setNavigateToDemo])
 
   const handleNext = () => {

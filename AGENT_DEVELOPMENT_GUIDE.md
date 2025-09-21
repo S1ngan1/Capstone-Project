@@ -84,387 +84,179 @@ const testConfig = {
 - **Rule**: All interactive elements must be at least 44px tap target
 - **Implementation**: Large buttons, adequate spacing, easy-to-tap areas
 
----
-
-## 🧪 UI Testing & Quality Assurance
-
-### **MANDATORY TESTING PROTOCOL**
-**⚠️ CRITICAL REQUIREMENT: Always run uiTestingBot before and after adding new functionality**
-
-#### Pre-Development Testing
-```typescript
-// Before making any UI changes, run:
-import { uiTestingBot } from './utils/uiTestingBot';
-
-const preTestResults = await uiTestingBot.runComprehensiveTests({
-  syntax: {
-    filePaths: ['path/to/files/being/modified'],
-    checkMissingSemicolons: true,
-    checkUnmatchedBraces: true,
-    checkUnexpectedTokens: true,
-    checkImportExportErrors: true
-  }
-});
-
-console.log('PRE-DEVELOPMENT REPORT:', uiTestingBot.generateReport());
-```
-
-#### Post-Development Testing
-```typescript
-// After completing changes, run full validation:
-const postTestResults = await uiTestingBot.runComprehensiveTests({
-  panels: [/* panel alignment configs */],
-  lists: [/* list component configs */],
-  components: [/* component structure configs */],
-  notifications: [/* notification counter configs */],
-  syntax: {
-    filePaths: ['all/modified/files'],
-    checkMissingSemicolons: true,
-    checkUnmatchedBraces: true,
-    checkUnexpectedTokens: true,
-    checkImportExportErrors: true
-  }
-});
-
-console.log('POST-DEVELOPMENT REPORT:', uiTestingBot.generateReport());
-```
-
-### **Testing Requirements by Component Type**
-
-#### 1. Notification Systems
-- **Red badge styling**: Background #FF3B30, white text, proper positioning
-- **Counter reset**: Must reset to 0 when user views notifications
-- **Real-time updates**: Subscribe to database changes
-- **99+ display**: Show "99+" when count exceeds 99
-
-#### 2. Panel Alignments (Farm Cards)
-- **Weather panel height**: Must equal total sensor grid height including spacing
-- **Fixed heights**: All panels must have consistent, fixed heights
-- **Responsive layout**: Proper alignment across different screen sizes
-
-#### 3. Filter Bars & Lists
-- **Equal distribution**: Filter buttons must be equally spaced
-- **Count badges**: Show accurate counts for each filter state
-- **Active state styling**: Clear visual indication of selected filter
-
-#### 4. Form UI Elements
-- **Required field indicators**: Red asterisk (*) before required fields
-- **Edit button visibility**: Must be clearly visible and accessible
-- **Gradient styling**: Use LinearGradient for primary action buttons
-- **Delete confirmations**: Require text input for destructive actions
-
-#### 5. Syntax Validation
-- **Import statements**: Must be at top of file, proper syntax
-- **Brace matching**: All opening braces must have closing braces
-- **Export statements**: Proper TypeScript export syntax
-- **Missing semicolons**: Critical syntax errors must be caught
-
-### **Error Prevention Strategy**
-
-#### Common Issues to Test For:
-1. **Duplicate keys in FlatList components**
-2. **Missing loading states for async operations**
-3. **Unmatched JSX braces or parentheses**
-4. **Import/export statement placement errors**
-5. **Missing accessibility labels**
-6. **Inconsistent panel heights in farm cards**
-7. **Filter button sizing and distribution**
-8. **Notification counter reset functionality**
-
-- **Test Coverage:** All interactive components must have UI tests
-
-### **Integration with Development Workflow**
-
-```typescript
-// Example: Adding UITestingBot to your component development
-export const YourNewComponent = () => {
-  // Your component implementation
-  
-  // Development-time testing (remove in production)
-  useEffect(() => {
-    if (__DEV__) {
-      const testResults = uiTestingBot.testFormUI({
-        componentName: 'YourNewComponent',
-        requiredFields: ['name', 'email'],
-        hasRequiredIndicators: true,
-        hasEditMode: true,
-        hasVisibleEditButton: true,
-        editButtonSize: 24,
-        hasGradientButtons: true
-      });
-      
-      if (testResults.some(r => r.severity === 'critical')) {
-        console.warn('🔴 Critical UI issues detected:', testResults);
-      }
-    }
-  }, []);
-  
-  return (
-    // Your JSX
-  );
-};
-```
+### 5. **Perfect Grid Layout Pattern** ⭐
+- **Rule**: When displaying multiple objects/cards, use balanced grid layouts with equal area distribution
+- **Implementation**: 50/50 split layouts, 2x2 grids, responsive sizing
+- **Example**: Weather card = 4 sensor panels total area (including gaps)
 
 ---
 
-## 📝 Farm Notes Display Requirements
+## 📐 **PERFECT GRID LAYOUT SYSTEM** ⭐
+**⚠️ CRITICAL PATTERN: Use this layout whenever displaying multiple objects or cards**
 
-### **Farm Notes Feature Specification**
-The FarmDetails screen MUST display farm notes prominently to provide context for both users and AI suggestions.
+### **Core Principle: Equal Area Distribution**
+When you have multiple UI elements to display (cards, panels, widgets), divide them into balanced grids where:
+- **Total areas are equal** between major sections
+- **Visual weight is balanced** across the layout
+- **Responsive design** works on all device sizes
+- **Perfect alignment** with consistent spacing
 
-#### **Positioning Requirements**
-- **Location**: Top of FarmDetails screen, immediately after header
-- **Priority**: Display BEFORE weather widget for maximum visibility
-- **Visibility**: Only show when farm has notes (hide section if notes are null/empty)
+### **Pattern 1: 50/50 Side-by-Side Layout**
+**Perfect for:** Main content + supporting content (like Weather + Sensors)
 
-#### **Styling Requirements**
-- **Container**: White card with shadow and rounded corners
-- **Visual Accent**: Green left border (4px width) to match app theme
-- **Header**: Document icon + "🌱 About This Farm" title
-- **Text Style**: Italicized notes text for better readability
-- **Typography**: 15px font size, 22px line height, #333 color
-
-#### **AI Integration Indicator**
-- **Purpose**: Explain how farm notes help AI provide better suggestions
-- **Design**: Brain icon + explanatory text in highlighted box
-- **Background**: Light red/pink background with border
-- **Text**: "This information helps AI provide better suggestions for your farm"
-
-#### **Database Integration**
-- **Table**: `farms` table
-- **Column**: `notes` field (text type)
-- **Fetching**: Include in farm details query: `SELECT id, name, location, notes FROM farms`
-
-#### **Implementation Example**
 ```typescript
-// Farm Notes Section in FarmDetails.tsx
-{farm?.notes && (
-  <View style={styles.farmNotesSection}>
-    <View style={styles.farmNotesHeader}>
-      <Ionicons name="document-text" size={20} color="#4CAF50" />
-      <Text style={styles.farmNotesTitle}>🌱 About This Farm</Text>
-    </View>
-    <View style={styles.farmNotesCard}>
-      <Text style={styles.farmNotesText}>{farm.notes}</Text>
-      <View style={styles.aiIndicator}>
-        <Ionicons name="brain" size={16} color="#FF6B6B" />
-        <Text style={styles.aiIndicatorText}>
-          This information helps AI provide better suggestions for your farm
-        </Text>
-      </View>
+// Layout Structure Example from Home.tsx
+const styles = StyleSheet.create({
+  dataContainer: {
+    flexDirection: 'row',
+    gap: responsiveMargin,
+    minHeight: 140, // Consistent base height
+    alignItems: 'stretch', // Both sides stretch equally
+  },
+  leftSide: {
+    flex: 1, // Exactly 50% width
+    minHeight: 140,
+    maxHeight: 140, // Prevent expansion
+  },
+  rightSide: {
+    flex: 1, // Exactly 50% width  
+    minHeight: 140,
+    maxHeight: 140, // Match left side exactly
+  }
+})
+```
+
+**Key Implementation Rules:**
+1. **Equal Flex Values**: Both sides must have `flex: 1`
+2. **Matching Heights**: `minHeight` and `maxHeight` must be identical
+3. **Stretch Alignment**: Use `alignItems: 'stretch'` on container
+4. **Consistent Gap**: Use `gap: responsiveMargin` for spacing
+
+### **Pattern 2: 2x2 Grid Layout** 
+**Perfect for:** Multiple similar objects (sensors, status panels, quick actions)
+
+```typescript
+// Grid Implementation Example
+const styles = StyleSheet.create({
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: isSmallDevice ? 4 : 6,
+    flex: 1,
+    justifyContent: 'space-between', // Even distribution
+    alignContent: 'flex-start',
+    height: isSmallDevice ? 110 : 120, // Fixed height for grid
+  },
+  gridItem: {
+    width: '47%', // Exact percentage for 2x2 with gap
+    height: isSmallDevice ? 50 : 55, // Consistent item height
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: isSmallDevice ? 4 : 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    marginBottom: isSmallDevice ? 4 : 6, // Row spacing
+  }
+})
+```
+
+**Key Implementation Rules:**
+1. **Exact Percentages**: Use `width: '47%'` for 2x2 grid (allows 6% for gaps)
+2. **Fixed Heights**: Set specific `height` values for consistency
+3. **Space-Between**: Use `justifyContent: 'space-between'` for even distribution
+4. **Responsive Sizing**: Different values for `isSmallDevice` vs normal
+
+### **Pattern 3: Responsive Component Sizing**
+**Perfect for:** Components that need to fill allocated space exactly
+
+```typescript
+// Component Styling Example (WeatherWidget compact mode)
+const styles = StyleSheet.create({
+  responsiveContainer: {
+    flex: 1, // Take full available space
+    height: '100%', // Fill parent height exactly
+    minHeight: 120, // Match grid counterparts
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  responsiveContent: {
+    flex: 1, // Fill available space
+    padding: 8, // Compact padding
+    justifyContent: 'center', // Center content vertically
+  },
+  responsiveLayout: {
+    flexDirection: 'column', // Stack vertically for space efficiency
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  }
+})
+```
+
+**Key Implementation Rules:**
+1. **Full Flex**: Use `flex: 1` to take all available space
+2. **Height Matching**: Use `height: '100%'` to fill parent exactly  
+3. **Center Content**: Use `justifyContent: 'center'` for optimal alignment
+4. **Compact Spacing**: Reduce padding/margins in tight spaces
+
+### **📱 Responsive Design Requirements**
+
+```typescript
+// Always include responsive calculations
+const { width, height } = Dimensions.get('window')
+const isSmallDevice = width < 350 || height < 600
+const isMediumDevice = width < 400 || height < 700
+const responsivePadding = isSmallDevice ? 12 : 16
+const responsiveMargin = isSmallDevice ? 8 : 12
+
+// Use in all grid layouts
+const responsiveFontSize = {
+  title: isSmallDevice ? 18 : isMediumDevice ? 20 : 22,
+  content: isSmallDevice ? 14 : 16,
+  small: isSmallDevice ? 10 : 12,
+}
+```
+
+### **✅ Perfect Grid Layout Checklist**
+Before implementing any multi-object layout, ensure:
+
+- [ ] **Equal Areas**: Total area of left side = total area of right side
+- [ ] **Consistent Heights**: All major sections have matching `minHeight` and `maxHeight`
+- [ ] **Responsive Values**: Different sizing for `isSmallDevice`, `isMediumDevice`, normal
+- [ ] **Proper Flex**: Use `flex: 1` for equal distribution
+- [ ] **Stretch Alignment**: Container uses `alignItems: 'stretch'`  
+- [ ] **Gap Consistency**: Use `gap: responsiveMargin` throughout
+- [ ] **Grid Percentages**: 2x2 grids use `width: '47%'` for perfect fit
+- [ ] **Content Centering**: Components use `justifyContent: 'center'` when appropriate
+- [ ] **Visual Balance**: Both sides have similar visual weight and importance
+
+### **🎯 Real-World Example: Farm Card Layout**
+```typescript
+// Perfect implementation from Home.tsx
+<View style={styles.dataContainer}> {/* 50/50 container */}
+  {/* Left Side: Weather Widget - takes exactly 50% */}
+  <View style={styles.weatherSide}>
+    <Text style={styles.weatherSectionTitle}>🌤️ Weather</Text>
+    <WeatherWidget location={location} compact={true} />
+  </View>
+  
+  {/* Right Side: 4 Sensors in 2x2 Grid - takes exactly 50% */}
+  <View style={styles.sensorSide}>
+    <Text style={styles.sensorSectionTitle}>📊 Sensors</Text>
+    <View style={styles.sensorGrid}>
+      {sensorData.map(sensor => (
+        <View key={sensor.type} style={styles.sensorPanel}>
+          {/* Sensor content */}
+        </View>
+      ))}
     </View>
   </View>
-)}
+</View>
 ```
 
-#### **Validation Testing**
-- **Test Script**: Use `scripts/validateFarmNotes.ts` for comprehensive validation
-- **UI Bot Test**: Run `uiTestingBot.testFarmNotesDisplay()` to verify implementation
-- **Requirements Check**: Positioning, styling, AI indicator, empty state handling
-
----
-
-## 🔧 Component Structure Requirements
-```
-#### Automated Checks:
-│   ├── "🌱 About This Farm" title
-
-### File Organization
-```
-src/
-├── components/
-│   ├── FarmCard.tsx
-│   ├── WeatherWidget.tsx
-│   ├── SensorGrid.tsx
-│   └── FarmNotes.tsx
-├── screens/
-│   ├── HomeScreen.tsx
-│   ├── FarmDetails.tsx
-│   └── UserProfile.tsx
-├── styles/
-│   ├── colors.ts
-│   ├── typography.ts
-│   └── globalStyles.ts
-└── utils/
-    ├── api.ts
-    ├── helpers.ts
-    └── uiTestingBot.ts
-```
-
----
-
-## 📋 Specific Implementation Guidelines
-
-### Farm Request System Implementation
-The app now uses a **farm request system** instead of direct farm creation:
-
-1. **User Flow**: Request → Admin Approval → Farm Access
-2. **Role Management**: App-level roles (admin, user) + Farm-level roles (owner, manager, viewer)
-3. **Components Required**:
-   - `CreateFarmRequest.tsx` - Request form
-   - `UserFarmRequests.tsx` - User's request history
-   - `AdminFarmRequests.tsx` - Admin approval panel
-
-### Data Fetching Patterns
-```typescript
-// Always include error handling and loading states
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState<string | null>(null);
-
-const fetchData = async () => {
-  try {
-    setLoading(true);
-    setError(null);
-    const { data, error } = await supabase.from('table').select('*');
-    if (error) throw error;
-    setData(data);
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-```
-
-### Sensor Data Handling
-```typescript
-// Differentiate between "no sensor" vs "no data"
-interface SensorData {
-  hasSensor: boolean; // Sensor exists in database
-  hasData: boolean;   // Recent data available
-  value: number;
-  status: 'normal' | 'warning' | 'critical';
-}
-
-// Display logic:
-// hasSensor = false → "No sensor"
-// hasSensor = true, hasData = false → "No data"
-// hasSensor = true, hasData = true → Show actual value
-```
-
----
-
-## 🚀 Deployment & Quality Assurance
-
-### Pre-Deployment Checklist
-- [ ] All UITestingBot tests pass
-- [ ] No TypeScript errors or warnings
-- [ ] All forms validate user input properly
-- [ ] Error boundaries catch and display errors gracefully
-- [ ] Loading states present for all async operations
-- [ ] Vietnamese text and UI patterns followed
-- [ ] Farm request system fully functional
-- [ ] Role-based access control working
-- [ ] Weather widget responsive and accurate
-- [ ] Sensor data displays correctly across all states
-
-### Performance Standards
-- [ ] App starts in under 3 seconds
-- [ ] Navigation transitions smooth (no lag)
-- [ ] Image loading optimized with placeholders
-- [ ] Database queries cached where appropriate
-- [ ] Minimal re-renders on state changes
-
----
-
-## 📞 Emergency Debugging Guide
-
-### Common Issues & Solutions
-
-1. **"Unable to resolve module" errors**
-   - Check import paths are correct
-   - Ensure all dependencies installed
-   - Restart Metro bundler
-
-2. **Supabase connection issues**
-   - Verify API keys in lib/supabase.ts
-   - Check network connectivity
-   - Validate database permissions
-
-3. **Navigation crashes**
-   - Verify all screen names in App.tsx match navigation calls
-   - Check for missing screen parameters
-   - Ensure proper TypeScript types for navigation
-
-4. **UI layout issues**
-   - Run UITestingBot for automated detection
-   - Check StyleSheet consistency
-   - Validate responsive design breakpoints
-
-### UITestingBot Error Resolution
-When UITestingBot reports issues:
-1. **Critical Issues**: Fix immediately, block deployment
-2. **Warning Issues**: Fix before next release
-3. **Info Issues**: Address during next refactoring cycle
-
-Remember: **Every UI fix should be validated with UITestingBot to prevent regression.**
-
----
-
-## 🚨 CRITICAL ERRORS TO AVOID - TUTORIAL SYSTEM
-
-### **Floating Tutorial Bar Persistence Error**
-**❌ CRITICAL ISSUE: Tutorial components rendered at screen level disappear during navigation**
-
-**Problem:** When a tutorial component is rendered within individual screens (like Settings, Home, etc.), clicking "See in App" causes the floating tutorial bar to disappear immediately after navigation because the component gets unmounted when the screen changes.
-
-**Solution:** 
-1. **Move tutorial state to App.tsx level** - Use global context (TutorialProvider)
-2. **Render AppTutorial in App.tsx** - Place `<AppTutorial />` directly in the main app navigation container
-3. **Use global tutorial context** - All screens should use `useTutorial()` hook instead of local state
-4. **Persistent floating bar** - The floating bar will now persist across all screen navigations
-
-**Implementation:**
-```typescript
-// App.tsx - CORRECT
-<TutorialProvider>
-  <NavigationContainer>
-    <Stack.Navigator>
-      {/* All screens */}
-    </Stack.Navigator>
-    <AppTutorial /> {/* Global tutorial component */}
-  </NavigationContainer>
-</TutorialProvider>
-
-// Settings.tsx - CORRECT
-const { startTutorial } = useTutorial()
-// NOT: const [showTutorial, setShowTutorial] = useState(false)
-```
-
-**Testing:**
-1. Start tutorial from Settings
-2. Click "See in App" on any step
-3. Verify floating bar remains visible after navigation
-4. Verify floating bar controls work across different screens
-
-### **Navigation Error in Tutorial System**
-**❌ CRITICAL ISSUE: Generic navigation calls cause "You need to specify a name" error**
-
-**Problem:** Using `navigation.navigate(screen as never)` or generic navigation calls can cause React Navigation errors requiring specific screen name parameters.
-
-**Solution:**
-```typescript
-// WRONG - Generic navigation
-navigation.navigate(screen as never)
-
-// CORRECT - Specific navigation with switch statement
-switch (screen) {
-  case 'Home':
-    navigation.navigate('Home' as never)
-    break
-  case 'Suggestion':
-    navigation.navigate('Suggestion' as never)
-    break
-  case 'FarmDetails':
-    // Handle screens that need parameters properly
-    navigation.navigate('Home' as never) // Fallback to Home
-    break
-  default:
-    navigation.navigate('Home' as never)
-    break
-}
-```
-
-**Prevention:** Always use explicit screen names in navigation calls, handle parameterized screens appropriately.
+**Result**: Weather widget area = Total area of 4 sensor panels (including gaps) ✅
 
 ---

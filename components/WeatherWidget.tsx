@@ -275,35 +275,34 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, compact = false
 }
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 15,
+    borderRadius: 12,
     overflow: 'hidden',
-    elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    marginVertical: 8,
+    elevation: 3,
   },
   compactContainer: {
+    flex: 1, // FIXED: Take full available space
+    height: '100%', // FIXED: Fill parent height exactly
+    minHeight: 120, // FIXED: Match sensor grid height
     borderRadius: 12,
     overflow: 'hidden',
-    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
-    marginVertical: 0,
-    minHeight: 140, // Calculated to match 2x2 sensor grid + gaps
-    maxHeight: 140, // Fixed height for consistent alignment
-    flex: 1, // Takes same flex space as sensor side
+    shadowRadius: 4,
+    elevation: 3,
   },
   gradient: {
+    flex: 1,
     padding: 16,
   },
   compactGradient: {
-    padding: 12,
-    height: '100%',
-    justifyContent: 'space-between',
+    flex: 1, // FIXED: Take full space
+    padding: 8, // FIXED: Reduced padding for compact mode
+    justifyContent: 'center', // FIXED: Center content vertically
   },
   loadingContainer: {
     flexDirection: 'row',
@@ -427,50 +426,42 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   compactContent: {
-    flex: 1,
-    justifyContent: 'space-between',
+    flex: 1, // FIXED: Fill available space
+    justifyContent: 'space-between', // FIXED: Distribute content evenly
   },
   compactRow: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    height: '100%',
+    flexDirection: 'column', // FIXED: Stack vertically for better space usage
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
   },
   compactIconTemp: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  compactDetails: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 8, // FIXED: Add spacing
   },
   compactTemperature: {
-    fontSize: 18,
+    fontSize: 20, // FIXED: Larger font for visibility
     fontWeight: 'bold',
-    marginLeft: 8,
-    color: '#1976D2',
+    marginTop: 4,
   },
-  compactFeelsLike: {
-    fontSize: 12,
-    color: '#555',
-    fontWeight: '500',
+  compactDetails: {
+    alignItems: 'center',
   },
   compactDescription: {
-    fontSize: 13,
+    fontSize: 11, // FIXED: Smaller font to fit
     color: '#1976D2',
     fontWeight: '500',
-    marginBottom: 6,
     textAlign: 'center',
+    marginBottom: 4,
   },
   compactDetailsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
   },
   compactDetailText: {
-    fontSize: 11,
+    fontSize: 10, // FIXED: Compact text size
     color: '#555',
     fontWeight: '500',
   },

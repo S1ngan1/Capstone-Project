@@ -8,7 +8,6 @@ import { useAuthContext } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import SensorDataTable from '../components/Charts/SensorDataTable'
 import WeatherWidget from '../components/WeatherWidget'
-import { AISuggestionBox } from '../components/AISuggestionBox'
 import BottomNavigation from '../components/BottomNavigation'
 import FarmSettingsModal from '../components/FarmSettingsModal'
 import CreateSensorRequest from '../components/CreateSensorRequest'
@@ -170,7 +169,8 @@ const FarmDetails = () => {
         setSensors(sensorsWithReadings)
         console.log('Processed sensors with readings:', sensorsWithReadings)
       } else {
-        console.error('Error fetching sensors or no sensors found:', sensorTableError)
+        // Changed from console.error to console.log - no sensors is a normal condition
+        console.log('No sensors configured for this farm yet:', farmId)
         setSensors([])
       }
     } catch (error) {
@@ -328,25 +328,6 @@ const FarmDetails = () => {
             <Text style={styles.sectionTitle}>📊 Sensor Data & Analytics</Text>
             <SensorDataTable farmId={farmId} />
           </View>
-
-          {/* AI Suggestions Section */}
-          {farm && (
-            <AISuggestionBox
-              farmId={farmId}
-              farmName={farm.name}
-              farmLocation={farm.location}
-              farmNotes={farm.notes}
-              sensorData={sensors.map(sensor => ({
-                id: sensor.id,
-                name: sensor.name,
-                type: sensor.type,
-                value: sensor.last_reading,
-                unit: sensor.unit,
-                timestamp: sensor.updated_at
-              }))}
-              onChatWithAI={() => navigation.navigate('Suggestion')}
-            />
-          )}
 
           {/* Sensors List */}
           <View style={styles.sensorsSection}>
