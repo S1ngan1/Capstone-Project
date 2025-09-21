@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   ScrollView,
   RefreshControl,
+  Dimensions,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -14,6 +15,23 @@ import { useAuthContext } from '../context/AuthContext'
 import { activityLogService, Notification as NotificationType } from '../utils/activityLogService'
 import { useNavigation } from '@react-navigation/native'
 import BottomNavigation from '../components/BottomNavigation'
+const { width: windowWidth } = Dimensions.get('window')
+
+// Responsive calculations
+const isSmallDevice = windowWidth < 350
+const isMediumDevice = windowWidth < 400
+const isLargeDevice = windowWidth >= 400
+
+// Dynamic button sizing based on available space
+const availableWidth = windowWidth - 32 // Account for container padding
+const buttonSpacing = 4 // Space between buttons
+const totalSpacing = buttonSpacing * 4 // 4 spaces between 5 buttons
+const buttonWidth = Math.max((availableWidth - totalSpacing) / 5, 60) // Minimum 60px width
+
+const responsivePadding = isSmallDevice ? 6 : isMediumDevice ? 8 : 10
+const responsiveFontSize = isSmallDevice ? 10 : isMediumDevice ? 11 : 12
+const iconSize = isSmallDevice ? 14 : 16
+
 const Notification = () => {
   const navigation = useNavigation()
   const { user } = useAuthContext()
@@ -291,32 +309,58 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    marginHorizontal: 10,
-    marginVertical: 10,
-    borderRadius: 15,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    marginHorizontal: 12,
+    marginVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   filterButton: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    paddingVertical: responsivePadding,
+    paddingHorizontal: 4,
+    borderRadius: 15,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    width: buttonWidth,
+    minHeight: isSmallDevice ? 48 : 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   filterButtonActive: {
     backgroundColor: '#4CAF50',
+    borderColor: '#45a049',
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
   },
   filterButtonText: {
-    marginLeft: 6,
-    fontSize: 12,
-    color: '#666',
+    marginTop: 3,
+    fontSize: responsiveFontSize,
+    color: '#6c757d',
+    fontWeight: '600',
+    textAlign: 'center',
+    numberOfLines: 1,
   },
   filterButtonTextActive: {
     color: 'white',
+    fontWeight: 'bold',
   },
   content: {
     flex: 1,

@@ -133,6 +133,7 @@ What farming challenge would you like to tackle first?`,
 
     try {
       setIsLoading(true)
+      console.log('🤖 UI Debug: Starting message send process')
 
       // Add user message to display immediately
       const userMessage: ChatMessage = {
@@ -142,28 +143,62 @@ What farming challenge would you like to tackle first?`,
         timestamp: new Date().toISOString()
       }
 
-      setMessages(prev => [...prev, userMessage])
+      console.log('🤖 UI Debug: Adding user message to display')
+      setMessages(prev => {
+        const newMessages = [...prev, userMessage]
+        console.log('🤖 UI Debug: Total messages after user:', newMessages.length)
+        return newMessages
+      })
 
       // Scroll to bottom
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true })
       }, 100)
 
+      console.log('🤖 UI Debug: Calling AI generateResponse...')
       // Generate AI response
       const aiResponse = await aiSpecialist.generateResponse(messageText, session.user.id)
+      console.log('🤖 UI Debug: AI response received:', aiResponse?.content?.substring(0, 100) + '...')
 
-      // Add AI response to display
-      setMessages(prev => [...prev, aiResponse])
+      if (aiResponse && aiResponse.content) {
+        console.log('🤖 UI Debug: Adding AI response to display')
+        // Add AI response to display
+        setMessages(prev => {
+          const newMessages = [...prev, aiResponse]
+          console.log('🤖 UI Debug: Total messages after AI:', newMessages.length)
+          return newMessages
+        })
 
-      // Scroll to bottom again for AI response
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true })
-      }, 100)
+        // Scroll to bottom again for AI response
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true })
+        }, 100)
+      } else {
+        console.error('🤖 UI Debug: AI response was empty or null')
+        // Add error message if no response
+        const errorMessage: ChatMessage = {
+          id: `error-${Date.now()}`,
+          role: 'assistant',
+          content: '⚠️ I apologize, but I had trouble generating a response. Please try asking your question again.',
+          timestamp: new Date().toISOString()
+        }
+        setMessages(prev => [...prev, errorMessage])
+      }
 
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error('🤖 UI Debug: Error in handleSendMessage:', error)
       showDialog('Failed to get response from AI specialist')
+
+      // Add error message to chat
+      const errorMessage: ChatMessage = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: '⚠️ I encountered an error while processing your request. Please try again.',
+        timestamp: new Date().toISOString()
+      }
+      setMessages(prev => [...prev, errorMessage])
     } finally {
+      console.log('🤖 UI Debug: Setting loading to false')
       setIsLoading(false)
     }
   }
@@ -171,6 +206,7 @@ What farming challenge would you like to tackle first?`,
   const handleActionPress = (action: string) => {
     // Convert suggested action to a question for the AI
     const actionQuestions: { [key: string]: string } = {
+      // Soil and analysis actions
       'Check soil conditions': 'Please analyze my current soil conditions and sensor readings',
       'Review irrigation schedule': 'Help me optimize my irrigation schedule based on my sensor data',
       'Get fertilizer recommendations': 'What fertilizer recommendations do you have for my farms?',
@@ -179,10 +215,45 @@ What farming challenge would you like to tackle first?`,
       'Add organic matter': 'What organic matter should I add to improve my soil?',
       'Test irrigation water': 'How should I test and manage my irrigation water quality?',
       'Increase irrigation': 'How should I adjust my irrigation schedule?',
-      'Improve drainage': 'What are the best ways to improve soil drainage?'
+      'Improve drainage': 'What are the best ways to improve soil drainage?',
+
+      // Goal and planning actions
+      'Ask any farming question': 'I have a general farming question I need help with',
+      'Share your farming goals': 'What should I consider when setting up my farming goals and planning for success?',
+      'Describe any challenges': 'I am facing some farming challenges and need expert guidance',
+      'Request guidance on any agricultural topic': 'I need comprehensive guidance on agricultural practices and farming techniques',
+
+      // Specific farming topics
+      'Ask about specific crops or techniques': 'What are the best crops and techniques for my specific farming situation?',
+      'Ask about growing requirements': 'What are the essential growing requirements I should know about for successful farming?',
+      'Get planting timeline': 'Help me create an optimal planting timeline and schedule for my farms',
+      'Learn about soil prep': 'Teach me about proper soil preparation and improvement techniques',
+      'Get detailed instructions': 'Provide me with detailed step-by-step farming instructions',
+      'Ask about timing': 'What timing considerations are most important for successful farming?',
+
+      // Farm management actions
+      'Plan harvest schedule': 'Help me plan an effective harvest schedule for my crops',
+      'Set up storage systems': 'What storage systems should I set up for my farm produce?',
+      'Learn preservation methods': 'Teach me about food preservation and post-harvest handling methods',
+      'Check climate compatibility': 'How can I assess climate compatibility for different crops on my farms?',
+      'Consider space requirements': 'Help me understand space planning and requirements for efficient farming',
+      'Explore alternative tropical fruits': 'What are some alternative tropical fruits I could consider growing?',
+
+      // Farm assessment and monitoring
+      'Assess climate compatibility': 'How do I properly assess climate compatibility for crop selection?',
+      'Choose appropriate variety': 'Guide me in choosing the right crop varieties for my specific conditions',
+      'Plan planting location': 'Help me plan optimal planting locations and layout for my farms',
+      'Check sensor readings': 'Analyze my current sensor readings and what they mean for my farm management',
+      'Review recommendations': 'Review and explain the farming recommendations based on my current farm data',
+      'Plan improvements': 'Help me plan strategic improvements for my farming operations',
+
+      // Farming goals and strategy
+      'tell me about your farming goals': 'I want to understand how to set effective farming goals and create a successful farming strategy. What should I consider for short-term and long-term farming success?',
+      'farming goals': 'Help me develop comprehensive farming goals that align with my resources, location, and experience level',
+      'set farming goals': 'Guide me through the process of setting realistic and achievable farming goals'
     }
 
-    const question = actionQuestions[action] || `Please help me with: ${action}`
+    const question = actionQuestions[action] || `I need specific guidance about ${action}. Please provide detailed farming advice on this topic.`
     handleSendMessage(question)
   }
 
